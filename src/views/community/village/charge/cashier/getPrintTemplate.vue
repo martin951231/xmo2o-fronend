@@ -25,7 +25,7 @@
 </style>
 <script>
   import villageApi from '@/api/community/village'
-  import PrintOrder from '@/views/community/village/charge/cashier/printOrder'
+  import PrintOrder from '@/views/community/village/charge/cashier/printOrder.vue'
 
   export default {
     components: { PrintOrder },

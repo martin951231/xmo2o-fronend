@@ -215,9 +215,12 @@
               </a-button>
           </template>
           <template v-if="showCommunityCommittee">
-            <a-button type="primary" style="float: right;margin-top: 15px;margin-right: 15px;" onclick="window.open(location.protocol + '//' + location.host + '/v20/public/platform/#/community/streetCommunity/dataScreen/index','_blank')">
-              可视化大数据
-            </a-button>
+<!--            <a-button type="primary" style="float: right;margin-top: 15px;margin-right: 15px;" onclick="window.open(location.protocol + '//' + location.host + '/v20/public/platform/#/community/streetCommunity/dataScreen/index','_blank')">-->
+<!--              可视化大数据-->
+<!--            </a-button>-->
+              <a-button type="primary" style="float: right;margin-top: 15px;margin-right: 15px;" onclick="window.open('http://jimu.mrsqfw.com/drag/share/view/1113360730782863360?shareToken=Fntil1vG9cCzB8Z2dibZCg0HzFSpYPsx&sid=2','_blank')">
+                  可视化大数据
+              </a-button>
           </template>
           <template v-if="showMeterCenter">
             <a-button type="primary" style="float: right;margin-top: 15px" onclick="window.open(location.protocol + '//' + location.host + '/v20/public/platform/#/meter/meterStatistics','_blank')">

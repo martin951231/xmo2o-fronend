@@ -63,6 +63,11 @@ const pageVillageComunityComponents = {
     //抄表管理
     getMeterProject: () => import('@/views/community/village/charge/houseMeter/getMeterProject'), // 抄表列表
 
+    //快递管理
+    expressPickupLocation: () => import('@/views/community/village/express/pickup/expressPickupLocation'), // 快递代取地点列表
+    commonPickupPerson: () => import('@/views/community/village/express/pickup/commonPickupPerson'), // 快递常用取件人
+    deliveryCollectionApplication: () => import('@/views/community/village/express/pickup/deliveryCollectionApplication'), // 快递代取申请
+
     //预存功能
     storageUserList: () => import('@/views/community/village/storage/storageUserList'), // 预存用户列表
     storageUserList_old: () => import('@/views/community/village/storage/storageUserList_old'), // 预存用户列表

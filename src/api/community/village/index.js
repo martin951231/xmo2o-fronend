@@ -354,6 +354,15 @@ const configVillageApi = {
     getChatLeftList: '/community/village_api.ChatSidebar/getChatLeftList', // 获取聊天记录左侧员工或群聊列表
     chatSessionlog: '/community/village_api.ChatSidebar/chatSessionlog', // 获取聊天记录列表
 
+    //---------------快递-------------------------------
+    getExpressPickupLocationList: '/community/village_api.ExpressPickUp/getExpressPickupLocationList', //快递代取地点
+    saveExpressPickupLocation: '/community/village_api.ExpressPickUp/saveExpressPickupLocation', //保存快递代取地点
+    delExpressPickupLocation: '/community/village_api.ExpressPickUp/delExpressPickupLocation', //删除快递代取地点
+    saveCommonPickupPerson: '/community/village_api.CommonPickupPerson/saveCommonPickupPerson', //添加常用取件人
+    getExpressPickupPersonList: '/community/village_api.CommonPickupPerson/getExpressPickupPersonList', //获取常用取件人
+    delCommonPickupPerson: '/community/village_api.CommonPickupPerson/delCommonPickupPerson', //删除常用取件人
+    getExpressApplicationList: '/community/village_api.ExpressPickUp/getExpressApplicationList', //删除常用取件人
+
     //----------------小区交易汇总-------------------------------
     feeSummaryList: '/community/village_api.TransactionSummary/houseSummaryList', //物业费汇总
     getChargeTypeList: '/community/village_api.TransactionSummary/getChargeTypeList', //物业费统计

@@ -505,7 +505,7 @@
     import SendType from '@/views/community/village/charge/cashier/sendType'
     import checkRefundInfo from '@/views/community/village/charge/cashier/checkRefundInfo'
     import GetPrintTemplate from '@/views/community/village/charge/cashier/getPrintTemplate'
-    import PrintOrder from '@/views/community/village/charge/cashier/printOrder'
+    import PrintOrder from '@/views/community/village/charge/cashier/printOrder.vue'
     import { Collapse } from 'ant-design-vue'
     import importBill from "../components/importBill.vue"
     import moment from 'moment'
@@ -560,7 +560,7 @@
           checkRefundInfo,
           GetPrintTemplate,
           importBill,
-          PrintOrder,
+            PrintOrder,
             'a-collapse': Collapse,
             'a-collapse-panel': Collapse.Panel
         },

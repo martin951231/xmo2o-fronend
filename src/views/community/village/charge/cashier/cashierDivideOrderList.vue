@@ -934,7 +934,7 @@
   import villageApi from '@/api/community/village'
   import TagSelectOption from '../../../../../components/TagSelect/TagSelectOption'
   import GetPrintTemplate from '@/views/community/village/charge/cashier/getPrintTemplate'
-  import PrintOrder from '@/views/community/village/charge/cashier/printOrder'
+  import PrintOrder from '@/views/community/village/charge/cashier/printOrder.vue'
   import PayableOrderList from '../components/payableOrderList.vue'
   import moment from 'moment'
   import { Collapse } from 'ant-design-vue'

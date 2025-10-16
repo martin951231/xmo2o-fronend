@@ -80,6 +80,7 @@
                             <a-select-option :value="1">模板一</a-select-option>
                             <a-select-option :value="2">模板二</a-select-option>
                             <a-select-option :value="3">模板三</a-select-option>
+                            <a-select-option :value="4">模板四</a-select-option>
                         </a-select>
                     </a-form-model-item>
                     
@@ -90,7 +91,7 @@
                     <a-form-model-item label="打印标题">
                         <a-input v-model="form.top_title" />
                     </a-form-model-item>
-                    <a-form-model-item required label="一行列数">
+                    <a-form-model-item v-if="templateType != 4" required label="一行列数">
                         <a-select v-model="form.col_num" placeholder="请选择模板类型">
                             <a-select-option :value="3">3</a-select-option>
                             <a-select-option :value="4">4</a-select-option>

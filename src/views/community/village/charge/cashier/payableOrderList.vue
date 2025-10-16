@@ -298,7 +298,7 @@
     import {
         Collapse
     } from 'ant-design-vue'
-    import PrintOrder from '@/views/community/village/charge/cashier/printOrder'
+    import PrintOrder from '@/views/community/village/charge/cashier/printOrder.vue'
     import moment from 'moment'
     import store from '@/store';
     const columns = [{

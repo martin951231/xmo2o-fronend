@@ -163,7 +163,7 @@
     import PayableOrderInfo from "@/views/community/village/charge/cashier/payableOrderInfo";
     import { Collapse } from 'ant-design-vue';
     import GetPrintTemplate from '@/views/community/village/charge/cashier/getPrintTemplate';
-    import PrintOrder from '@/views/community/village/charge/cashier/printOrder';
+    import PrintOrder from '@/views/community/village/charge/cashier/printOrder.vue';
 	import store from '@/store';
     const columns = [
         { title: store.getters.config.room_name+'号/车位号', dataIndex: 'numbers', key: 'numbers',},

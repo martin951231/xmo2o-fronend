@@ -180,7 +180,7 @@
     import GetPrintTemplate from '@/views/community/village/charge/cashier/getPrintTemplate'
     import checkRefundInfo from '@/views/community/village/charge/cashier/checkRefundInfo'
     import { Collapse } from 'ant-design-vue'
-    import PrintOrder from '@/views/community/village/charge/cashier/printOrder'
+    import PrintOrder from '@/views/community/village/charge/cashier/printOrder.vue'
 
     const columns = [
       { title: store.getters.config.room_name+'号/车位号', dataIndex: 'numbers', key: 'numbers' },
@@ -227,7 +227,7 @@
           GetPrintTemplate,
           AddRefundInfo,
           PayableOrderInfo,
-          PrintOrder,
+            PrintOrder,
           checkRefundInfo,
             'a-collapse': Collapse,
             'a-collapse-panel': Collapse.Panel

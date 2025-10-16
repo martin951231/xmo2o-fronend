@@ -731,3 +731,81 @@ export function changeFavicon(iconUrl) {
         link.href = iconUrl;
     }
 }
+
+/**
+ * 数字转中文大写金额（支持任意小数位数，默认保留2位小数）
+ * @param {number|string} num - 待转换的数字/数字字符串（如 0.01、"123.45"）
+ * @returns {string} 中文大写金额
+ */
+export function numberToChineseCapital(num) {
+    // 处理输入，确保是有效的数字字符串
+    let str = String(num).replace(/[^\d.]/g, '');
+    if (!str) return '';
+
+    // 拆分整数和小数部分，最多保留两位小数（角、分）
+    let [integer, decimal = ''] = str.split('.');
+    decimal = decimal.padEnd(2, '0').slice(0, 2); // 补零并截取两位
+
+    // 基础映射表
+    const digits = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+    const intUnits = ['', '拾', '佰', '仟', '万', '拾', '佰', '仟', '亿'];
+    const decUnits = ['角', '分'];
+
+    // 转换整数部分
+    function convertIntegerPart() {
+        if (!integer || integer === '0') return '';
+
+        let result = '';
+        let hasZero = false;
+
+        for (let i = 0; i < integer.length; i++) {
+            const digit = parseInt(integer[i]);
+            const unitIndex = integer.length - 1 - i;
+            const unit = intUnits[unitIndex];
+
+            if (digit === 0) {
+                hasZero = true;
+            } else {
+                if (hasZero) {
+                    result += '零';
+                    hasZero = false;
+                }
+                result += digits[digit] + unit;
+            }
+        }
+
+        return result ? result + '元' : '';
+    }
+
+    // 转换小数部分
+    function convertDecimalPart() {
+        if (decimal === '00') return '';
+
+        let result = '';
+        // 处理角
+        if (decimal[0] !== '0') {
+            result += digits[decimal[0]] + decUnits[0];
+        }
+        // 处理分
+        if (decimal[1] !== '0') {
+            // 如果角是0且有分，前面加"零"
+            if (decimal[0] === '0' && result === '') {
+                result += '零';
+            }
+            result += digits[decimal[1]] + decUnits[1];
+        }
+
+        return result;
+    }
+
+    // 组合结果
+    const intPart = convertIntegerPart();
+    const decPart = convertDecimalPart();
+
+    // 特殊情况处理
+    if (!intPart && !decPart) return '零元';
+    if (!intPart) return decPart.replace('零', ''); // 去掉"零分"中的"零"
+    if (!decPart) return intPart + '整';
+
+    return intPart + decPart;
+}
