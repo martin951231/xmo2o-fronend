@@ -362,6 +362,7 @@ const configVillageApi = {
     getExpressPickupPersonList: '/community/village_api.CommonPickupPerson/getExpressPickupPersonList', //获取常用取件人
     delCommonPickupPerson: '/community/village_api.CommonPickupPerson/delCommonPickupPerson', //删除常用取件人
     getExpressApplicationList: '/community/village_api.ExpressPickUp/getExpressApplicationList', //删除常用取件人
+    exportApplicationList: '/community/village_api.ExpressPickUp/exportApplicationList', //导出快递
 
     //----------------小区交易汇总-------------------------------
     feeSummaryList: '/community/village_api.TransactionSummary/houseSummaryList', //物业费汇总

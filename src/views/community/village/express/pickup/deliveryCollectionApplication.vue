@@ -113,6 +113,9 @@
                     <a-button class="ml-10" icon="redo" @click="resetList()">
                         重置
                     </a-button>
+                    <a-button :loading="exportLoading" class="ml-10" type="primary" icon="export" @click="exportList()">
+                        导出
+                    </a-button>
                 </a-col>
             </a-row>
         </div>
@@ -131,14 +134,23 @@
                  :pagination="pagination"
                  @change="tableChange"
                  :row-key="record=>record.id"
+                 :row-selection="{
+                    selectedRowKeys: selectedRowKeys,  // 绑定选中的行ID数组
+                    onChange: onSelectChange,          // 选中状态变化时的回调
+                    // 可选：设置是否可勾选（根据业务需求控制某些行是否允许选择）
+                    getCheckboxProps: record => ({
+                      disabled: !is_show,  // 示例：仅当is_show为true时允许勾选
+                      // 也可根据record的其他字段控制，如：disabled: record.status === 99
+                    })
+                  }"
         >
-        <span slot="action" slot-scope="text, record">
-          <a v-if="is_show" @click="">编辑</a>
-            <a-divider v-if="is_show" type="vertical" />
-          <a @click="">详情</a>
-            <a-divider v-if="is_show" type="vertical" />
-          <a class="error-color" @click="">删除</a>
-        </span>
+            <span slot="action" slot-scope="text, record">
+              <a v-if="is_show" @click="">编辑</a>
+                <a-divider v-if="is_show" type="vertical" />
+              <a @click="">详情</a>
+                <a-divider v-if="is_show" type="vertical" />
+              <a class="error-color" @click="">删除</a>
+            </span>
         </a-table>
         <DeliveryCollectionApplicationInfo ref="DeliveryCollectionApplicationModel" @ok="addActive"/>
     </a-card>
@@ -147,6 +159,7 @@
 <script>
 import villageApi from '@/api/community/village'
 import DeliveryCollectionApplicationInfo from './deliveryCollectionApplicationInfo'
+import Vue from 'vue'
 
 
 export default {
@@ -281,6 +294,8 @@ export default {
                 // },
             ],
             is_show: false,
+            exportLoading: false,
+            selectedRowKeys: [],
         }
     },
     mounted() {
@@ -335,6 +350,26 @@ export default {
                 current: 1,
             };
             this.getList();
+        },
+        //导出
+        async exportList(){
+                this.exportLoading = true
+                await this.request(villageApi.exportApplicationList, {
+                    ...this.searchForm,
+                    selectedRowKeys: this.selectedRowKeys,
+                }).then(
+                    res => {
+                        var downloadPath = res.url
+                        var downloadLink = document.createElement('a')
+                        downloadLink.style.display = 'none' // 使其隐藏
+                        downloadLink.href = downloadPath
+                        downloadLink.download = ''
+                        downloadLink.click()
+                        downloadLink.remove()
+                        this.exportLoading = false
+                    }).catch((error) => {
+                    this.exportLoading = false
+                })
         },
         // 添加
         addActive(val) {
@@ -448,6 +483,11 @@ export default {
                     }
                 });
             })
+        },
+        onSelectChange(selectedRowKeys) {
+            this.selectedRowKeys = selectedRowKeys;
+            // 可在此处处理选中逻辑，如：记录选中的行数据
+            console.log('选中的行ID：', selectedRowKeys);
         },
     },
 };
