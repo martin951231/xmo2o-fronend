@@ -54,7 +54,7 @@
                   <a-col :md="6" :sm="12" class="" style="padding-right: 5px;">
                       <label style="margin-top: 5px;">所属楼栋：</label>
                       <a-select mode="multiple" style="width:80%;" placeholder="请选择项目" v-model="search.single_id_arr">
-                  
+
                           <a-select-option :value="item_s.id" v-for="(item_s,index_s) in singleList" :key="index_s">
                               {{ item_s.name }}
                           </a-select-option>
@@ -72,8 +72,7 @@
               <a-col :md="6" :sm="12" class="">
                 <label style="margin-top: 5px;">收费项目：</label>
                 <a-select  style="width:80%" mode="multiple" placeholder="请选择项目" v-model="search.project_id"  @change="projectItemChange">
-
-                  <a-select-option :value="item1.id" v-for="(item1,index1) in project_list" :key="index1">
+                  <a-select-option :value="item1.id" v-for="(item1,index1) in project_list.filter(item => item.name.indexOf('删除')==-1)" :key="index1">
                     {{ item1.name }}
                   </a-select-option>
                 </a-select>
@@ -82,7 +81,7 @@
                 <label style="margin-top: 5px;">收费标准：</label>
                 <a-select style="width:80%" mode="multiple" placeholder="收费标准" v-model="search.rule_id">
 
-                    <a-select-option :value="item2.id" v-for="(item2,index2) in project_rule_list" :key="index2">
+                    <a-select-option :value="item2.id" v-for="(item2,index2) in project_rule_list.filter(item => item.charge_name.indexOf('删除')==-1)" :key="index2">
                       {{ item2.charge_name }}
                     </a-select-option>
                 </a-select>
@@ -106,7 +105,7 @@
               <a-col :md="2" :sm="24" class="a_col_btn" v-if="role_import_bill==1">
                 <a-button type="primary" @click="importBillOrder()" >导入欠费账单</a-button>
               </a-col>
-              
+
             </a-row>
 
           </div>
@@ -140,7 +139,7 @@
                 <label style="margin-top: 5px;">{{$store.getters.config.room_name}}：</label>
                 <a-cascader
                   class="cascader_style"
-                  
+
                   :options="options"
                   :load-data="loadDataFunc"
                   :placeholder="'请选择'+$store.getters.config.room_name"
@@ -190,7 +189,7 @@
                   <a-col :md="6" :sm="12" class="" style="display: flex; margin-top: 15px;">
                       <label style="margin-top: 5px;">所属楼栋：</label>
                       <a-select mode="multiple" style="width:80%;" placeholder="请选择项目" v-model="search__detail.single_id_arr">
-                  
+
                           <a-select-option :value="item_s.id" v-for="(item_s,index_s) in singleList" :key="index_s">
                               {{ item_s.name }}
                           </a-select-option>
@@ -207,7 +206,7 @@
               <a-col :md="6" :sm="12" style="display: flex; margin-top: 15px;">
                 <label style="margin-top: 5px;">收费项目：</label>
                 <a-select mode="multiple" style="width:80%" placeholder="请选择项目" v-model="search__detail.project_id"  @change="projectItemChange">
-                  <a-select-option :value="item1.id" v-for="(item1,index1) in project_list" :key="index1">
+                  <a-select-option :value="item1.id" v-for="(item1,index1) in project_list.filter(item => item.name.indexOf('删除')==-1)" :key="index1">
                     {{ item1.name }}
                   </a-select-option>
                 </a-select>
@@ -215,7 +214,7 @@
               <a-col :md="6" :sm="12" style="display: flex; margin-top: 15px;">
                 <label style="margin-top: 5px;">收费标准：</label>
                 <a-select  mode="multiple"  style="width:80%" placeholder="收费标准" v-model="search__detail.rule_id">
-                    <a-select-option :value="item2.id" v-for="(item2,index2) in project_rule_list" :key="index2">
+                    <a-select-option :value="item2.id" v-for="(item2,index2) in project_rule_list.filter(item => item.charge_name.indexOf('删除')==-1)" :key="index2">
                       {{ item2.charge_name }}
                     </a-select-option>
                 </a-select>
@@ -267,7 +266,7 @@
               <a-col :md="2" :sm="24" style="margin-top: 15px;padding-left:5px;width: 160px;">
                 <a-button type="primary" @click="$refs.PrintModel.add(0,0,2,1)">设置待缴打印模板</a-button>
               </a-col>
-              
+
               <a-col :md="2" :sm="24" style="margin-top: 15px;padding-left:5px;width: 105px;">
                 <a-button type="primary" @click="many_discard_order()" v-if="role_discard==1" >批量作废</a-button>
               </a-col>
@@ -552,7 +551,7 @@
           usernum: {
               type: String,
               default: ''
-          } 
+          }
         },
         components: {
           SendType,
@@ -657,8 +656,8 @@
           }
 
           console.log("pigcmsId======>", this.pigcmsId)
-          console.log("village_id======>", this.village_id)  
-          console.log("usernum======>", this.usernum) 
+          console.log("village_id======>", this.village_id)
+          console.log("usernum======>", this.usernum)
           if(this.pigcmsId>0){
               this.search.pigcms_id=this.pigcmsId;
               this.search__detail.pigcms_id=this.pigcmsId;
@@ -751,7 +750,7 @@
                         }) */
                     }
                 } else if (type == 2) {
-                   console.log('SendTypeModel',this.$refs.SendTypeModel) 
+                   console.log('SendTypeModel',this.$refs.SendTypeModel)
                     if (is_detail == 0) {
                         var list = this.selectedRows
                     } else {
@@ -1281,7 +1280,7 @@
 
                     })
             },
-            
+
             CheckExportOutStatus () {
                 let excelExportOutFileUrlCheck = this.excelExportOutFileUrl + '&ajax=village_ajax'
                 console.log('excelExportOutFileUrlCheck',this.excelExportOutFileUrlCheck)
@@ -1296,11 +1295,11 @@
                             this.setTimeoutS = null
                             window.location.href = this.excelExportOutFileUrl;
                             this.export_tips_visible = false;
-                  
+
                             return false;
                         } else if(res.error_code == 404){
                              this.export_tips_visible = false;
-                 
+
                             clearTimeout(this.setTimeoutS)
                             this.setTimeoutS = null
                             this.$message.error(res.error_msg)
@@ -1311,7 +1310,7 @@
                     }).catch((error) => {
                         this.$message.error('出错了，请刷新页面重试！')
                         this.export_tips_visible = false;
-            
+
                     })
             },
             // 日期切换，重新赋值
@@ -1427,12 +1426,12 @@
       margin: 15px;
       color: #666666;
   }
-  
+
   .a_row_dill{
       display: flex;
       flex-wrap: wrap;
   }
-  
+
   .a_col_dill{
       display: flex;
       width: 320px;
