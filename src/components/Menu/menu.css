@@ -1,0 +1,32 @@
+.appMenu{
+    font-size: 16px !important;
+    background-color: #ffffff !important;
+    min-height: 50px  !important;
+    line-height: 50px  !important;
+    vertical-align: middle !important;
+}
+
+.subMenu .ant-menu-submenu-title {
+    font-size: 16px !important;
+    background-color: #ffffff !important;
+    min-height: 50px  !important;
+    line-height: 50px  !important;
+    vertical-align: middle !important;
+    padding-left: 34px !important;
+    padding-right: 26px !important;
+}
+
+.appMenu:after {
+    border: none !important;
+}
+.appMenu a {
+    padding: 0 10px;
+    height: 50px;
+    line-height: 50px;
+    vertical-align: middle;
+    border-radius: 6px;
+}
+.appMenu a:hover {
+    background-color:rgba(0, 0, 0, 0.05) !important;
+    color: #1890ff!important;
+} 

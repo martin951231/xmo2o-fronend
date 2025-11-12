@@ -1,0 +1,56 @@
+.s_menu {
+  height: calc(100% - 65px);
+}
+.s_menu::-webkit-scrollbar {
+  width: 0;
+}
+.ant-custom-theme-light .ant-layout-sider-children,
+.ant-menu-light {
+  background-color: #ffffff !important;
+}
+.ant-custom-theme-light .s_menu {
+  background-color: #ffffff !important;
+}
+.ant-custom-theme-light .ant-menu,
+.ant-custom-theme-light .ant-menu-inline,
+.ant-custom-theme-light .ant-menu-sub,
+.ant-custom-theme-light .ant-menu-item,
+.ant-custom-theme-light .subMenu .ant-menu-submenu-title {
+  background-color: #ffffff !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+.ant-custom-theme-dark .ant-menu-dark.s_menu {
+  background-color: #002140 !important;
+}
+.ant-custom-theme-dark .ant-menu-dark .ant-menu-item {
+  background-color: #002140 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+.ant-custom-theme-dark .ant-menu-dark .ant-menu-item.ant-menu-item-selected {
+  background-color: rgba(43, 69, 93, 0.6) !important;
+}
+.ant-custom-theme-dark .ant-menu-dark .ant-menu-item > a,
+.ant-custom-theme-dark .ant-menu-dark .ant-menu-submenu > a,
+.ant-custom-theme-dark .ant-menu-dark .ant-menu-submenu > .ant-menu-submenu-title {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+.ant-custom-theme-dark .ant-menu-dark .ant-menu-item-active > a,
+.ant-custom-theme-dark .ant-menu-dark .ant-menu-submenu-active > a,
+.ant-custom-theme-dark .ant-menu-dark .ant-menu-submenu-selected,
+.ant-custom-theme-dark .ant-menu-dark .ant-menu-submenu-active > .ant-menu-submenu-title,
+.ant-custom-theme-dark .ant-menu-dark .ant-menu-submenu,
+.ant-custom-theme-dark .ant-menu-dark .ant-menu-submenu-inlinee,
+.ant-custom-theme-dark .ant-menu-dark .ant-menu-item-selected > a {
+  color: #ffffff !important;
+}
+.ant-custom-theme-dark .ant-menu-dark .ant-menu-inline,
+.ant-custom-theme-dark .ant-menu-dark .ant-menu-submenu-title {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  background-color: #002140 !important;
+}
+.ant-custom-theme-dark .ant-menu-inline-collapsed {
+  width: 100%;
+}

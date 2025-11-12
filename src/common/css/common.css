@@ -1,0 +1,70 @@
+/* 
+* @desc 全局生效的样式、包括穿透框架的样式
+* @author Liz 
+*/
+
+.ant-page-header-heading-title {
+  font-size: 24px !important;
+  font-weight: 400 !important;
+}
+.ant-form-item-with-help {
+  margin-bottom: 24px !important;
+}
+
+/* 隐藏滚动条 */
+.scroll_content::-webkit-scrollbar {
+    /*webkit内核*/
+     display: none;
+}
+.scroll_content{
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+}
+
+/* 隐藏table滚动条 */
+.ant-table-body::-webkit-scrollbar {
+    /*webkit内核*/
+     /* display: none; */
+}
+.ant-table-body{
+    /*scrollbar-width: none; */ /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+}
+
+ /* 隐藏滚动条 */
+.ant-layout-sider-children::-webkit-scrollbar {
+    /*webkit内核*/
+     display: none;
+}
+.ant-layout-sider-children{
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+}
+
+/* 上传列表 */
+.ant-upload-list {
+    margin-bottom: 0px !important;
+}
+.ant-upload-list-item-name {
+    /* width: 400px !important; */
+}
+
+/* 因页面缩放到90%，textarea autoSize属性导致文本域抖动 */
+textarea {
+    overflow-y: hidden !important;
+}
+
+/* 后台页面公共盒子样式 */
+.main-box-content{
+    background-color: #fff;
+    margin-bottom: 20px;
+    padding: 20px;
+    border-radius: 6px;
+}
+/* 缩小版后台页面公共盒子样式 */
+.main-box-content-min{
+    background-color: #fff;
+    margin-bottom: 12px;
+    padding: 20px;
+    border-radius: 6px;
+}

@@ -1,0 +1,42 @@
+const groupMerchantApi = {
+  addLabel: '/group/merchant.goods/addLabel', // 添加标签
+  getLabelList: '/group/merchant.goods/getLabelList', // 获得标签列表
+  getMerchantStoreList: '/group/merchant.goods/getMerchantStoreList', // 获得商家的店铺列表
+  getAllArea: '/common/common.area/getAllArea', // 获取区域
+  getGoodsCashingDetail: '/group/merchant.goods/getGoodsCashingDetail', // 获得代金券商品详情
+  getGroupEditInfo: '/group/merchant.goods/getGroupEditInfo', // 获得添加编辑团购商品所需的数据
+  getGoodsCashingDetail: '/group/merchant.goods/getGoodsCashingDetail', // 获得代金券详情接口
+  saveCashingGoods: '/group/merchant.goods/submitCashing', // 提交代金券
+  saveNomalGoods: '/group/merchant.goods/saveNomalGoods', // 新增编辑普通团购商品
+  getGoodsNormalDetail: '/group/merchant.goods/getGoodsNormalDetail', // 获得普通团购商品详情
+  getGoodsList: '/group/merchant.goods/getGoodsList', // 获得商品列表
+  courseAppoint: '/group/merchant.Goods/courseAppoint', // 添加课程预约
+  getCourseAppointDetail: '/group/merchant.Goods/getCourseAppointDetail', // 编辑课程预约
+  setStoreRecommend: '/group/merchant.goods/setStoreRecommend', // 设置店铺推荐
+  getStoreRecommend: '/group/merchant.goods/getStoreRecommend', // 获得店铺推荐
+  getGoodsOrderList: '/group/merchant.goods/getGoodsOrderList', // 获得订单列表
+  saveBookingAppoint: '/group/merchant.Goods/saveBookingAppoint', // 添加、编辑场次预约
+  showBookingAppoint: '/group/merchant.Goods/showBookingAppoint', // 获取场次预约详情
+  getStoreList: '/group/merchant.AppointManage/getStoreList', // 预约管理的店铺列表
+  getGiftMsg: '/group/merchant.AppointManage/getGiftMsg', // 预约管理的店铺列表
+  updateAppointGift: '/group/merchant.AppointManage/updateAppointGift', // 预约管理的预约礼编辑
+  getAppointArriveList: '/group/merchant.AppointManage/getAppointArriveList', // 预约到店列表
+  updateAppointArriveStatus: '/group/merchant.AppointManage/updateAppointArriveStatus', // 预约到店更新状态
+  getGoodsOrderDetail: '/group/merchant.goods/getGoodsOrderDetail', // 获得订单详情
+  orderExportUrl: '/group/merchant.goods/exportOrder', // 订单导出
+  noteInfo: '/group/merchant.goods/noteInfo', // 修改备注
+  orderDetail: '/group/merchant.goods/orderDetail', // 订单详情
+  updateOrderNote: '/group/merchant.goods/updateOrderNote', // 订单备注修改
+  getRatioList: '/group/merchant.goods/getRatioList', // 分销员列表
+  getGoodsCouponList: '/group/merchant.goods/getGoodsCouponList', // 获得团购券列表
+  couponDetail: '/group/merchant.goods/couponDetail', // 团购券详情
+  couponVerify: '/group/merchant.goods/couponVerify', // 团购券核销
+  exportGoodsCouponList: '/group/merchant.goods/exportGoodsCouponList', // 导出团购券列表
+  groupPackageLists: '/group/merchant.goods/groupPackageLists', // 团购套餐列表
+  showGroupPackage: '/group/merchant.goods/showGroupPackage', // 团购套餐展示
+  saveGroupPackage: '/group/merchant.goods/saveGroupPackage', // 团购套餐保存
+  delGroupPackage: '/group/merchant.goods/delGroupPackage', // 团购套餐删除
+  delPackageBindGroup: '/group/merchant.goods/delPackageBindGroup', // 删除套餐绑定的团购商品
+  getGroupRedemptionCodeList: '/group/merchant.GroupRedemptionCode/getList', // 虚拟兑换码管理
+}
+export default groupMerchantApi
