@@ -236,39 +236,39 @@
                             </div>
                         </div>
                     </div>
-                    <div class="left_box_4">
-                        <img src="../../../assets/images/border_1.png" class="border_1" alt="" />
-                        <img src="../../../assets/images/border_2.png" class="border_2" alt="" />
-                        <img src="../../../assets/images/border_3.png" class="border_3" alt="" />
-                        <img src="../../../assets/images/border_4.png" class="border_4" alt="" />
-                        <div class="top_title_box">
-                            <img src="../../../assets/images/left_icon.png" alt="" />
-                            <div class="mini_title">巡检数据</div>
-                            <img src="../../../assets/images/right_icon.png" alt="" />
-                        </div>
-                        <div v-if="msg6.patrol_show">
-                            <div class="mini_box_5" v-if="!msg6_nodata">
-                                <div class="right_mini_box_2" v-for="(item, index) in msg6.list">
-                                    <div class="mini_box3">
-                                        {{ item.cate_name }}
-                                    </div>
-                                    <div class="mini_box4" v-if="item.is_complete == 1">已完成</div>
-                                    <div class="mini_box4" style="color: rgba(231, 57, 111, 1)" v-else>未完成</div>
-                                </div>
-                            </div>
-                            <div class="tip_text_box" v-else>
-                                <div class="tip_text">暂无数据</div>
-                            </div>
-                        </div>
-                        <div class="tip_text_box" v-else>
-                            <div
-                                class="tip_text"
-                                style="text-align: center; margin-top: 5%; font-size: 14px; color: #179ee3"
-                            >
-                                该套餐不包含此功能
-                            </div>
-                        </div>
-                    </div>
+<!--                    <div class="left_box_4">-->
+<!--                        <img src="../../../assets/images/border_1.png" class="border_1" alt="" />-->
+<!--                        <img src="../../../assets/images/border_2.png" class="border_2" alt="" />-->
+<!--                        <img src="../../../assets/images/border_3.png" class="border_3" alt="" />-->
+<!--                        <img src="../../../assets/images/border_4.png" class="border_4" alt="" />-->
+<!--                        <div class="top_title_box">-->
+<!--                            <img src="../../../assets/images/left_icon.png" alt="" />-->
+<!--                            <div class="mini_title">巡检数据</div>-->
+<!--                            <img src="../../../assets/images/right_icon.png" alt="" />-->
+<!--                        </div>-->
+<!--                        <div v-if="msg6.patrol_show">-->
+<!--                            <div class="mini_box_5" v-if="!msg6_nodata">-->
+<!--                                <div class="right_mini_box_2" v-for="(item, index) in msg6.list">-->
+<!--                                    <div class="mini_box3">-->
+<!--                                        {{ item.cate_name }}-->
+<!--                                    </div>-->
+<!--                                    <div class="mini_box4" v-if="item.is_complete == 1">已完成</div>-->
+<!--                                    <div class="mini_box4" style="color: rgba(231, 57, 111, 1)" v-else>未完成</div>-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                            <div class="tip_text_box" v-else>-->
+<!--                                <div class="tip_text">暂无数据</div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        <div class="tip_text_box" v-else>-->
+<!--                            <div-->
+<!--                                class="tip_text"-->
+<!--                                style="text-align: center; margin-top: 5%; font-size: 14px; color: #179ee3"-->
+<!--                            >-->
+<!--                                该套餐不包含此功能-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </div>-->
                 </div>
             </div>
 
@@ -276,37 +276,46 @@
             <newLeftData v-if="!changeLeft" />
 
             <div class="flex_2">
-                <div class="map">
-                    <baidu-map
-                        :center="center"
-                        :zoom="zoom"
-                        @ready="handler"
-                        class="BMap"
-                        style="width: 100%; height: 100%"
-                    >
-                        <bm-marker
-                            v-for="(item, index) in msg10.list"
-                            :position="'{lng:' + item.lng + ',lat:' + item.lat + '}'"
-                            :dragging="false"
-                            animation="BMAP_ANIMATION_BOUNCE"
-                            :icon="{
-                                url: 'http://shequ-demo.fastwhale.com.cn/static/images/map-icon-data.png',
-                                size: { width: 300, height: 157 },
-                            }"
-                        ></bm-marker>
-                    </baidu-map>
-                    <div class="ceshi"></div>
-                </div>
+<!--                <div class="map">-->
+<!--                    <baidu-map-->
+<!--                        :center="center"-->
+<!--                        :zoom="zoom"-->
+<!--                        @ready="handler"-->
+<!--                        class="BMap"-->
+<!--                        style="width: 100%; height: 100%"-->
+<!--                    >-->
+<!--                        <bm-marker-->
+<!--                            v-for="(item, index) in msg10.list"-->
+<!--                            :position="'{lng:' + item.lng + ',lat:' + item.lat + '}'"-->
+<!--                            :dragging="false"-->
+<!--                            animation="BMAP_ANIMATION_BOUNCE"-->
+<!--                            :icon="{-->
+<!--                                url: 'http://shequ-demo.fastwhale.com.cn/static/images/map-icon-data.png',-->
+<!--                                size: { width: 300, height: 157 },-->
+<!--                            }"-->
+<!--                        ></bm-marker>-->
+<!--                    </baidu-map>-->
+<!--                    <div class="ceshi"></div>-->
+<!--                </div>-->
                 <div class="flex_center_2">
-                    <div
-                        class="center_box_1"
-                        style="cursor: pointer"
-                        @click="goUrl(item.url)"
-                        v-for="(item, index) in msg4"
-                    >
-                        <img :src="item.img" alt="" class="center_img" />
-                        <div class="center_title">{{ item.name }}</div>
+                    <img src="../../../assets/images/border_1.png" class="border_1" alt="" />
+                    <img src="../../../assets/images/border_2.png" class="border_2" alt="" />
+                    <img src="../../../assets/images/border_3.png" class="border_3" alt="" />
+                    <img src="../../../assets/images/border_4.png" class="border_4" alt="" />
+                    <div class="top_title_box">
+                        <img src="../../../assets/images/left_icon.png" alt="" />
+                        <div class="mini_title"></div>
+                        <img src="../../../assets/images/right_icon.png" alt="" />
                     </div>
+<!--                    <div-->
+<!--                        class="center_box_1"-->
+<!--                        style="cursor: pointer"-->
+<!--                        @click="goUrl(item.url)"-->
+<!--                        v-for="(item, index) in msg4"-->
+<!--                    >-->
+<!--                        <img :src="item.img" alt="" class="center_img" />-->
+<!--                        <div class="center_title">{{ item.name }}</div>-->
+<!--                    </div>-->
                 </div>
                 <div class="flex_center_3">
                     <img src="../../../assets/images/border_1.png" class="border_1" alt="" />
@@ -315,39 +324,39 @@
                     <img src="../../../assets/images/border_4.png" class="border_4" alt="" />
                     <div class="top_title_box">
                         <img src="../../../assets/images/left_icon.png" alt="" />
-                        <div class="mini_title">人脸门禁实时记录</div>
+                        <div class="mini_title"></div>
                         <img src="../../../assets/images/right_icon.png" alt="" />
                     </div>
-                    <div v-if="this.msg9.machine_show">
-                        <div class="center_box_2" v-if="!msg9_nodata">
-                            <div class="table-scroll">
-                                <div class="table-flex_body" v-for="(item, index) in msg9.list">
-                                    <div v-if="items.type == 1" class="text_6" v-for="(items, indexs) in item">
-                                        <img
-                                            @click="previewImage(items.title)"
-                                            :src="items.title"
-                                            style="width: 30px; height: 30px; display: inline-block"
-                                            alt=""
-                                        />
-                                    </div>
-                                    <div v-if="items.type == 0" class="text_6" v-for="(items, indexs) in item">
-                                        {{ items.title ? items.title : '暂无数据' }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="tip_text_box" v-else>
-                            <div class="tip_text">暂无人脸门禁开门记录</div>
-                        </div>
-                    </div>
-                    <div class="tip_text_box" v-else>
-                        <div
-                            class="tip_text"
-                            style="text-align: center; margin-top: 5%; font-size: 14px; color: #179ee3"
-                        >
-                            该套餐不包含此功能
-                        </div>
-                    </div>
+<!--                    <div v-if="this.msg9.machine_show">-->
+<!--                        <div class="center_box_2" v-if="!msg9_nodata">-->
+<!--                            <div class="table-scroll">-->
+<!--                                <div class="table-flex_body" v-for="(item, index) in msg9.list">-->
+<!--                                    <div v-if="items.type == 1" class="text_6" v-for="(items, indexs) in item">-->
+<!--                                        <img-->
+<!--                                            @click="previewImage(items.title)"-->
+<!--                                            :src="items.title"-->
+<!--                                            style="width: 30px; height: 30px; display: inline-block"-->
+<!--                                            alt=""-->
+<!--                                        />-->
+<!--                                    </div>-->
+<!--                                    <div v-if="items.type == 0" class="text_6" v-for="(items, indexs) in item">-->
+<!--                                        {{ items.title ? items.title : '暂无数据' }}-->
+<!--                                    </div>-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        <div class="tip_text_box" v-else>-->
+<!--                            <div class="tip_text">暂无人脸门禁开门记录</div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <div class="tip_text_box" v-else>-->
+<!--                        <div-->
+<!--                            class="tip_text"-->
+<!--                            style="text-align: center; margin-top: 5%; font-size: 14px; color: #179ee3"-->
+<!--                        >-->
+<!--                            该套餐不包含此功能-->
+<!--                        </div>-->
+<!--                    </div>-->
                 </div>
             </div>
             <div class="flex_3">
@@ -424,7 +433,7 @@
                     <img src="../../../assets/images/border_4.png" class="border_4" alt="" />
                     <div class="top_title_box">
                         <img src="../../../assets/images/left_icon.png" alt="" />
-                        <div class="mini_title">事项列表</div>
+                        <div class="mini_title">巡检</div>
                         <img src="../../../assets/images/right_icon.png" alt="" />
                     </div>
                     <div class="right_box_5">
@@ -2851,7 +2860,7 @@ export default {
             flex-direction: row;
 
             .left_box_3 {
-                width: 55%;
+                width: 100%;
                 height: 100%;
                 position: relative;
                 border: 1 / @rem * 1rem solid #0b1363;
