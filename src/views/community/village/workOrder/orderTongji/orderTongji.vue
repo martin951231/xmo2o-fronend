@@ -47,8 +47,12 @@
             </div>
             <div class="top_box" style="height: 130px; margin-top: 10px;">
                 <div class="worker_order_list" v-for="(item, index) in work_label_list" :key="index">
-                    <div class="name">{{item.name}}</div>
-                    <div class="value">{{item.value}}/起</div>
+                    <div class="name" style="text-align: center;"><div>{{item.name}}</div>
+                        <div v-if="item.name=='超时工单'" style="font-size: 12px;margin: 10px 15px 0px 15px;color: #959595;">指的是在及时率开启下，未及时结单的订单</div>
+                    </div>
+
+                    <div class="value" v-if="item.name=='超时工单'" style="margin-top: 10px;">{{item.value}}/起</div>
+                    <div class="value" v-else >{{item.value}}/起</div>
                 </div>
             </div>
             <div class="center_box">
@@ -120,6 +124,9 @@
                     </a-select-option>
                     <a-select-option value=70>
                         已评价
+                    </a-select-option>
+                    <a-select-option value="timely_1">
+                        超时工单
                     </a-select-option>
                     <a-select-option v-if="jz_open" value=16>
                         转供暖商

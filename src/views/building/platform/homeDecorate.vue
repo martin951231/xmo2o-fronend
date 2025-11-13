@@ -149,8 +149,9 @@ export default {
     // },
     watch: {
       $route() {
-        if(typeof this.$route.query.mall_id != 'undefined' && this.$route.query.mall_id > 0){
-            this.mall_id = this.$route.query.mall_id
+        let loginMallId = sessionStorage.getItem("login_mall_id");
+        if(typeof loginMallId != 'undefined' && loginMallId > 0){
+            this.mall_id = loginMallId;
             this.getUrlAndRecSwitch()
         }
       },
@@ -159,12 +160,11 @@ export default {
       
     },
     created() {
-        if(typeof this.$route.query.mall_id == 'undefined' || this.$route.query.mall_id < 1){
-            this.$message.error('参数有误')
-            return ;
+        let loginMallId = sessionStorage.getItem("login_mall_id");
+        if(typeof loginMallId != 'undefined' && loginMallId > 0){
+            this.mall_id = loginMallId;
+            this.getUrlAndRecSwitch()
         }
-        this.mall_id = this.$route.query.mall_id
-        this.getUrlAndRecSwitch()
     },
     methods: {
         //根据按钮调用不同方法

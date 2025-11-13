@@ -67,6 +67,7 @@ import PlatFormShopNewComponents from './shop_new/platform';
 
 import MerchantApplicationComponents from './merchant/application/index';
 import AppointPlatformComponents from './appoint/platform/index'//新版预约页面装修
+import AppointMerchantComponents from './appoint/merchant/index'
 import PlatFormClassifyInfoComponents from './classify_info/platform';
 import PlatformViewPageComponents from './common/plaform/viewpage';
 
@@ -95,6 +96,14 @@ import InternalCardMerchantComponents from './InternalCard/merchant/index'
 
 //商城系统
 import buildingPlatformComponents from  './building/platform/index'
+
+
+//跑腿
+import PaotuiPlatformComponents from './paotui/index'
+
+//问卷调查
+import QuestionnaireSurveyComponents from  './common/plaform/QuestionnaireSurvey'
+
 
 const routerComponents = {
   // 基础页面 layout 必须引入
@@ -175,6 +184,7 @@ const routerComponents = {
   ...MerchantApplicationComponents,
   ...MerchantMerComponents,
   ...AppointPlatformComponents,
+  ...AppointMerchantComponents,
   ...ActivityPlatformComponents,
   ...thirdRobotManageComponents,
   ...PlatFormClassifyInfoComponents,
@@ -185,5 +195,7 @@ const routerComponents = {
   ...InternalCardMerchantComponents,
   ...PlatformViewPageComponents,
   ...buildingPlatformComponents,
+  ...PaotuiPlatformComponents,
+  ...QuestionnaireSurveyComponents,
 }
 export default routerComponents

@@ -1,6 +1,6 @@
 <template>
     <a-modal :title="title" :width="960" :height="860" :visible="visible" @cancel="handelCancle" @ok="handelOK">
-        <a-tabs v-model="tabIndex" @change="tabCallback">
+        <a-tabs v-model="tabIndex" @change="tabCallback" v-if="!queryParam.cat_id">
             <a-tab-pane key="0" :tab="this.L('店铺活动')"></a-tab-pane>
             <a-tab-pane key="1" :tab="this.L('商品活动')"></a-tab-pane>
         </a-tabs>
@@ -203,7 +203,7 @@ export default {
                 })
             }
             if(flag)return
-            this.getList({ cat_id: 0, title: this.title })
+            this.getList({ cat_id: this.queryParam.cat_id, title: this.title })
         },
         //添加推荐商品
         addGoods(item) {

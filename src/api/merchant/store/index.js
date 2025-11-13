@@ -41,5 +41,7 @@ const storeMerchantApi = {
     getCircleList: '/merchant/merchant.MerchantShopManagement/getCircleList', // 获取商圈列表
 
     getPickAddress: '/merchant/merchant.MerchantShopManagement/getPickAddress', // 获取商家自提点列表
+
+    staffLogin: '/merchant/merchant.MerchantShopManagement/staffLogin', // 店员自动登录
 }
 export default storeMerchantApi

@@ -805,7 +805,7 @@
                                             v-decorator="['post.not_house_rate',{ initialValue: post.not_house_rate }]" />
                                     </div>
                                     <div class="label_desc">
-                                        房屋无人入住的状态下及没有绑定车辆的未使用车位可设置应收费用优惠折扣（以百分比计算，请输入1-100），例如输入80，则按80%进行收取，即100元仅需缴纳80元，优惠掉20元
+                                        房屋无人入住的状态下可设置应收费用优惠折扣（以百分比计算，请输入1-100），例如输入80，则按80%进行收取，即100元仅需缴纳80元，优惠掉20元
                                     </div>
                                 </div>
                             </a-form-item>
@@ -849,7 +849,7 @@
 
                 </div>
 
-                <div class="box_container" v-if="(isSpecial || project_type=='park_new') && project_type!='qrcode'  && project_type!='electricity_loss' && project_type!='qunuanfei'"
+                <div class="box_container" v-if="isSpecial && project_type!='qrcode'  && project_type!='electricity_loss' && project_type!='qunuanfei' &&  parking.fees_type*1!=4"
                     style="width: 100%; padding: 20px; border: 1px solid #dddddd; position: relative; min-height: 100px;margin-top: 30px;">
                     <div class="box_title"
                         style="position: absolute; width: 90px; height: 30px; background-color: #ffffff;top:-15px;
@@ -934,7 +934,7 @@
 
 
                         <!-- 月租车收费规则 -->
-                        <div v-if="project_type=='park_new' && parking.fees_type*1==4">
+                        <div v-if="false && project_type=='park_new' && parking.fees_type*1==4">
                             <a-form-item label="" :labelCol="labelCol" :wrapperCol="wrapperCol">
                                 <div class="form_con">
                                     <div class="label_title_three">
@@ -963,24 +963,6 @@
                                         </div>
                                         <div class="value_item value_item_txt" style="line-height: 20px;">
                                             可不填写
-                                        </div>
-                                    </div>
-                                </div>
-                            </a-form-item>
-                            <a-form-item label="" :labelCol="labelCol" :wrapperCol="wrapperCol">
-                                <div class="form_con">
-                                    <div class="label_title_three">
-                                        <span class="label_col">未入住房屋折扣</span>
-                                    </div>
-                                    <div class="input_container_three">
-                                        <div class="value_item" style="margin-top: 10px;">
-                                            <a-input-number :disabled="is_disabled" :min="0" :max="100"
-                                                :formatter="value => { if(value==0 || value=='0'){ value=100 ;}   return `${value} %`; }"
-                                                style="width: 182px" placeholder="请输入"
-                                                v-decorator="['post.not_house_rate',{ initialValue: post.not_house_rate }]" />
-                                        </div>
-                                        <div class="label_desc">
-                                            房屋无人入住的状态下及没有绑定车辆的未使用车位可设置应收费用优惠折扣（以百分比计算，请输入1-100），例如输入80，则按80%进行收取，即100元仅需缴纳80元，优惠掉20元
                                         </div>
                                     </div>
                                 </div>
@@ -2133,7 +2115,9 @@
                 this.confirmLoading = true;
                 this.is_have_prepaid = 1;
                 this.park_charge_type_show = 1;
-                this.project_type = charge_type
+                this.project_type = charge_type;
+                this.isSpecial = true
+                this.isSpecialSelect = false
                 this.post = {
                     id: id,
                     charge_project_id: '',

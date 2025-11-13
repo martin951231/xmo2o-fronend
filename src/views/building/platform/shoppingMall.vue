@@ -11,6 +11,9 @@
           <a-button type="primary" style="margin: 10px 10px" @click="onSearch">
             {{ L('搜索') }}
           </a-button>
+          <!-- <a-button type="primary" style="margin: 10px 10px" @click="addShoppingMall">
+              {{ L('创建商场') }}
+          </a-button> -->
         </a-col>
       </a-row>
   
@@ -39,18 +42,32 @@
             <a @click="bindAdminUser(item.id)">{{ L('管理') }}</a>
         </span>
 
-        <!-- <span slot="diypage_set" slot-scope="text,item"> -->
-          <router-link
-            v-if="item.id > 0"
-            :to="{path:'/system/building.platform/decorate', query: {mall_id:item.id}}"
-            slot="diypage_set"
-            slot-scope="text,item"
-          >
-          <a>去装修</a>
-        </router-link>
-          <!-- <a @click="goDecorate(item.id)">{{ L('去装修') }}</a> -->
-        <!-- </span> -->
+        <span slot="shopping_mall_center" slot-scope="text,item">
+            <a @click="goCenter(item.id)">{{ L('访问') }}</a>
+        </span>
+
+        <span slot="mobile_preview" slot-scope="text,item">
+            <a @click="goMobilePreview(item)">{{ L('查看') }}</a>
+        </span>
       </a-table>
+
+      <!-- 移动端预览 -->
+      <a-modal v-model:visible="mobilePreviewVisible" title="移动端" :footer="null">
+         <div class="content">
+          <div class="code-box">
+            <div class="code">
+              <img :src="wxappQrcode" v-if="wxappQrcode" />
+              <div>{{ L('小程序') }}</div>
+            </div>
+            <div class="code">
+              <img :src="h5Qrcode" v-if="h5Qrcode" />
+              <div>{{ L('H5链接') }}
+                <a-icon type="copy" theme="outlined"  v-clipboard:copy="h5Url" v-clipboard:success="copySuccess" v-clipboard:error="copyError"/>  
+              </div>
+            </div>
+          </div>
+        </div>
+      </a-modal>
 
       <!-- 查看详情 -->
       <a-drawer
@@ -63,15 +80,6 @@
         <shoppingMallDetail v-if="showDrawerVisible" :mall_id="showId" @cancel="closeShowDrawer"/>
       </a-drawer>
 
-      <a-drawer
-        title="关联店铺"
-        :width="750"
-        :visible="showBindShopVisible"
-        :body-style="{ paddingBottom: '80px' }"
-        @close="closeShowDrawer"
-      >
-        <bindStores v-if="showBindShopVisible" :mall_id="showId" @cancel="closeShowDrawer"/>
-      </a-drawer>
 
       <a-drawer
         title="绑定管理员"
@@ -83,21 +91,29 @@
         <bindAdminUser v-if="showBindAdminUserVisible" :mall_id="showId" @cancel="closeShowDrawer"/>
       </a-drawer>
 
+      <a-drawer
+        :title="L('创建商场')"
+        :width="750"
+        :visible="showAddDrawerVisible"
+        :body-style="{ paddingBottom: '5px' }"
+        @close="closeShowDrawer"
+      >
+        <EditShoppingMall v-if="showAddDrawerVisible" @refreshList="refreshList"/>
+      </a-drawer>
     </div>
   </template>
   
   <script>
   import buildingPlatformApi from '@/api/building/index'
   import shoppingMallDetail from '../modules/shoppingMallDetail'
-  import bindStores from '../modules/bindStores'
   import bindAdminUser from '../modules/bindAdminUser'
-
+  import EditShoppingMall from '@/views/building/modules/editShoppingMall'
 
   export default {
     components: {
         shoppingMallDetail,
-        bindStores,
-        bindAdminUser
+        bindAdminUser,
+        EditShoppingMall
     },
   
     data() {
@@ -105,12 +121,18 @@
         //查看详情
         showId:0,
         showDrawerVisible:false,
-
+        showAddDrawerVisible:false,
         //查看绑定店铺
         showBindShopVisible:false,
 
         //查看绑定的管理员
         showBindAdminUserVisible:false,
+
+        //移动端预览
+        mobilePreviewVisible:false,
+        wxappQrcode: '',
+        h5Qrcode: '',
+        h5Url : '',
 
         dataList:[],
         pagination: {
@@ -138,26 +160,19 @@
             title: this.L('详细地址'),
             dataIndex: 'address',
           },
-          {
-            title: this.L('联系电话'),
-            dataIndex: 'phone',
-          },
-          {
-            title: this.L('负责人'),
-            dataIndex: 'director',
-          },
+          // {
+          //   title: this.L('联系电话'),
+          //   dataIndex: 'phone',
+          // },
+          // {
+          //   title: this.L('负责人'),
+          //   dataIndex: 'director',
+          // },
           {
             title: this.L('状态'),
             dataIndex: 'status',
             scopedSlots: {
               customRender: 'status',
-            },
-          },
-          {
-            title: this.L('关联店铺'),
-            dataIndex: 'bind_store',
-            scopedSlots: {
-              customRender: 'bind_store',
             },
           },
           {
@@ -168,10 +183,17 @@
             },
           },
           {
-            title: this.L('可视化配置'),
-            dataIndex: 'diypage_set',
+            title: this.L('商场后台'),
+            dataIndex: 'shopping_mall_center',
             scopedSlots: {
-              customRender: 'diypage_set',
+              customRender: 'shopping_mall_center',
+            },
+          },
+          {
+            title: this.L('移动端'),
+            dataIndex: 'mobile_preview',
+            scopedSlots: {
+              customRender: 'mobile_preview',
             },
           },
           {
@@ -185,7 +207,6 @@
               customRender: 'operate',
             },
           },
-          
         ],
       }
     },
@@ -203,6 +224,7 @@
         this.showDrawerVisible = false;
         this.showBindShopVisible = false;
         this.showBindAdminUserVisible = false;
+        this.showAddDrawerVisible = false;
       },
       //切换商场状态
       onChangeStatus(id) {
@@ -219,7 +241,11 @@
           this.pagination.total = res.total
         })
       },
-  
+      refreshList() {
+        this.showAddDrawerVisible = false
+        this.pagination.current = 1
+        this.getLists()
+      },
       // 切换表格分页
       changePage(page, pageSize) {
         this.pagination.current = page.current
@@ -249,10 +275,31 @@
       },
       goDecorate(id){
         this.$router.replace({
-          path: '/system/building.platform/decorate',
-          query: {mall_id:id}
+          path: '/system/building.platform/decorate'
         })
-      }
+      },
+      goCenter(id){
+        let url = window.location.origin + window.location.pathname  + '#/dialog/building.platform/login?mall_id='+id;
+        window.open(url);
+      },
+      addShoppingMall() {
+        this.showAddDrawerVisible = true;
+      },
+      //移动端预览
+      goMobilePreview(item){
+        this.wxappQrcode = this.h5Qrcode = this.h5Url = '';
+
+        this.wxappQrcode = item.wxapp_qrcode||'';
+        this.h5Qrcode = item.h5_qrcode||'';
+        this.h5Url = item.h5_url||'';
+        this.mobilePreviewVisible = true;
+      },
+      copyError() {
+        this.$message.error('复制失败！')
+      },
+      copySuccess() {
+        this.$message.success('复制成功！')
+      },
     },
   }
   </script>
@@ -264,4 +311,21 @@
   .copyInput button{
     margin-left: 10px;
   }
+  .content {
+  overflow: hidden;
+}
+.code-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.code {
+  margin: 10px 20px;
+}
+.code img {
+  width: 180px;
+  height: 180px;
+  margin-bottom: 0.5rem;
+}
   </style>

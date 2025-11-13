@@ -135,10 +135,10 @@
       </div>
       <div class="flex_2">
         <div class="map">
-<!--          <baidu-map :center="center" :zoom="zoom" @ready="handler" class="BMap" style="width: 100%;height: 100%;">-->
-<!--            &lt;!&ndash; <bm-marker v-for="(item,index) in msg10.list" :position="'{lng:'+item.lng+',lat:'+ item.lat +'}'" :dragging="false"-->
-<!--              animation="BMAP_ANIMATION_BOUNCE" :icon="{url: 'http://shequ-demo.fastwhale.com.cn/static/image/map-icon-data.png', size: {width: 300, height: 157}}"></bm-marker> &ndash;&gt;-->
-<!--          </baidu-map>-->
+          <baidu-map :center="center" :zoom="zoom" @ready="handler" class="BMap" style="width: 100%;height: 100%;">
+            <!-- <bm-marker v-for="(item,index) in msg10.list" :position="'{lng:'+item.lng+',lat:'+ item.lat +'}'" :dragging="false"
+              animation="BMAP_ANIMATION_BOUNCE" :icon="{url: 'http://shequ-demo.fastwhale.com.cn/static/image/map-icon-data.png', size: {width: 300, height: 157}}"></bm-marker> -->
+          </baidu-map>
           <img src="../../../../assets/image/border_1.png" class="border_1" alt="">
           <img src="../../../../assets/image/border_2.png" class="border_2" alt="">
           <img src="../../../../assets/image/border_3.png" class="border_3" alt="">

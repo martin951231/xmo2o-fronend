@@ -1,6 +1,6 @@
 <template>
   <transition name="showHeader">
-    <div v-if="visible" class="header-animat c111">
+    <div v-if="visible && !isFromIframe()" class="header-animat c111">
       <a-layout-header
         v-if="visible"
         :class="[

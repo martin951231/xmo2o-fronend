@@ -1,18 +1,26 @@
 <template>
-  <a-modal :title="title" :width="800" :visible="visible" :maskClosable="false" :confirmLoading="confirmLoading"
+  <a-modal :title="title" :width="820" :visible="visible" :maskClosable="false" :confirmLoading="confirmLoading"
            @ok="handleSubmit()" @cancel="handleCancel">
       <span class="page_top">
-          <span class="notice">
+          <span class="notice" v-if="ruleItem.charge_type!='park_new'">
               注意：<br/>
               1、需要先在收费标准绑定页面，绑定房间数据。绑定成功后在进行操作生成账单<br/>
               2、手动生成账单是给已绑定该收费标准的房间，批量生成待缴账单<br/>
               <p v-if="xtype==1">3、每点一次确定批量生成一次</p>
           </span>
+          <span class="notice" v-if="ruleItem.charge_type=='park_new'">
+              注意：<br/>
+              1、需要先在收费标准绑定页面，绑车位数据。绑定成功后在进行操作生成账单<br/>
+              2、手动生成账单是给已绑定该收费标准且绑定了住户的车位，批量生成待缴账单<br/>
+              <p>3、当车位已经有待缴账单时，不进行生成新的订单。没绑定住户的车位，不进行生成订单</p>
+              <p>4、当前车位到期时间大于当前时间的，新生成的订单计费开始时间将顺延当前车位到期时间</p>
+              <p>5、当前车位到期时间小于当前时间 或者 当前车位没有到期时间的，新生成的订单计费开始时间将是当前日期</p>
+          </span>
       </span>
        <a-button type="primary" style="margin-bottom: 10px;" @click="$refs.BindModel.list(ruleItem.id, ruleItem.charge_type, ruleItem)">绑定费用对象</a-button>
         <div v-if="xtype==1">给一次性项目【{{project_name}}】的标准【{{charge_name}}】批量生成账单</div>
         <div v-if="xtype==0">请点击确定按钮给已绑定房间的【{{charge_name}}】标准生成账单</div>
-        <div style="height: 150px;margin-top: 20px;">
+        <div style="height: 150px;margin-top: 20px;" v-if="ruleItem.charge_type!='park_new'">
               <a-form :form="form" v-if="xtype==1">
                 <a-col  :sm="24" class="suggestions_col" >
                   <label style="margin-top: 5px;">计费开始时间：</label>
@@ -231,11 +239,12 @@
         start_time_int=parseInt(start_time_int);
         let start_end_time=this.service_end_time ? this.service_end_time.replace('-',''):0;
         start_end_time=parseInt(start_end_time);
-        if(this.xtype==1 && start_time_int > start_end_time){
+        if((this.xtype==1 && start_time_int > start_end_time) && this.ruleItem.charge_type!='park_new'){
              this.$message.error('计费结束时间不能小于计费开始时间！');
               return false
         }
         bindData1.xtype=this.xtype;
+        bindData1.charge_type=this.ruleItem.charge_type;
         bindData1.service_start_time=this.service_start_time;
         bindData1.service_end_time=this.service_end_time;
         
@@ -244,25 +253,28 @@
         this.confirmLoading=true;
         this.request(villageApi.standardCreateManyOrderByRuleId,bindData1)
           .then((res) => {
-            console.log('resx',res)
-            if(res.status==1000 && res.msg){
+            if(res.status==1001 && res.msg){
                  this.$message.error(res.msg)
                  this.confirmLoading=false;
             }else{
-            let retmsg='操作成功！';
-            if(res.standard_bind_count<1){
-                retmsg='此标准还没有绑定'+store.getters.config.room_name+'！';
-            }else {
-                retmsg='已成功生成'+res.ordercount+'个待缴账单';
-            }
-            this.$message.success(retmsg)
-            setTimeout(() => {
-              this.confirmLoading=false;
-              this.form = this.$form.createForm(this)
-              this.visible = false
-              this.loading = false
-              this.$emit('ok',this.rule_id)
-            }, 1500)
+              let retmsg='操作成功！';
+              if(res.standard_bind_count<1){
+                  retmsg='此标准还没有绑定任何数据！';
+                  this.$message.warn(retmsg)
+              }else if(res.ordercount<1){
+                retmsg='没有生成账单，没有符合生成账单的数据！';
+                this.$message.warn(retmsg)
+              }else {
+                  retmsg='已成功生成'+res.ordercount+'个待缴账单';
+                  this.$message.success(retmsg)
+              }
+              setTimeout(() => {
+                this.confirmLoading=false;
+                this.form = this.$form.createForm(this)
+                this.visible = false
+                this.loading = false
+                this.$emit('ok',this.rule_id)
+              }, 1500)
             }
           }).catch((error) => {
             this.confirmLoading=false;

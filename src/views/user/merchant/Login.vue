@@ -49,7 +49,7 @@
                     <a-tab-pane key="code" :tab="L('扫码登录')">
                         <!-- 扫码登录start -->
                         <div class="code-container">
-                            <img :class="!agreementChecked?'code-mask':''" class="code-img" v-if="codeInfo.qrcode" :src="codeInfo.qrcode" />
+                            <img class="code-img" v-if="codeInfo.qrcode" :src="codeInfo.qrcode" />
                             <div v-else class="code-img">
                                 <a-spin />
                             </div>
@@ -89,9 +89,10 @@
                     </span>
                 </div>
                 <div class="tip">
-                    <a-checkbox v-model="agreementChecked" style="height: 20px;">
+                    <a-checkbox v-if="loginType != 'code'" v-model="agreementChecked" style="height: 20px;">
                         <span style="font-size: 12px;">{{ L('登录代表你已经同意') }}</span>
                     </a-checkbox>
+                    <span v-else style="font-size: 12px;">{{ L('登录代表你已经同意') }}</span>
                     <router-link tag="a" target="_blank" :to="{ name: 'merchantAgreement',query:{actionType: 'login'} }"
                         >《{{ config.site_short_name }}{{ L('用户协议') }}》</router-link
                     >

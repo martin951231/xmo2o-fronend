@@ -163,7 +163,7 @@
     import PayableOrderInfo from "@/views/community/village/charge/cashier/payableOrderInfo";
     import { Collapse } from 'ant-design-vue';
     import GetPrintTemplate from '@/views/community/village/charge/cashier/getPrintTemplate';
-    import PrintOrder from '@/views/community/village/charge/cashier/printOrder.vue';
+    import PrintOrder from '@/views/community/village/charge/cashier/printOrder';
 	import store from '@/store';
     const columns = [
         { title: store.getters.config.room_name+'号/车位号', dataIndex: 'numbers', key: 'numbers',},
@@ -303,8 +303,8 @@
                 that.$message.error('当前仅支持同一个缴费人进行批量打印已缴账单')
                 return false
               }
-              if (choice_ids.length > 50) {
-                that.$message.error('最多可选择50个账单打印，您当前选中' + choice_ids.length + '个')
+              if (choice_ids.length > 100) {
+                that.$message.error('最多可选择100个账单打印，您当前选中' + choice_ids.length + '个')
                 return false
               }
             }

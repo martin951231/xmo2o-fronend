@@ -85,6 +85,9 @@ window.a = () => {
   // 当iframe中的报表提交按钮点击之后，回调此方法
   window.scrollTo(0, 0)
 }
+
+// 标识当前页面是否是O2O页面
+window.isO2OSystem = true
 </script>
 
 <style lang="less">

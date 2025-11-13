@@ -190,6 +190,7 @@
             <a-table :columns="columns" :data-source="data"
                 :row-selection="{ selectedRowKeys: selectedRowKeys, onChange: onSelectChange }"
                 class="components-table-demo-nested" :pagination="pagination" @change="table_change" :loading="loading">
+                 <span slot="project_name" slot-scope="text, record"><a-tag v-if="record.meter_reading_id*1>0 && record.order_type_flag=='split_order_by_balance'" color="orange" style="font-weight: bold;color: #f53405;">拆</a-tag>{{record.project_name}}</span>
                 <span slot="action" slot-scope="text, record">
                     <a @click="$refs.OrderModel.add(record.order_id,record.check_apply_id)">详情</a>
                     <a-divider type="vertical" />
@@ -309,12 +310,15 @@
     import {
         Collapse
     } from 'ant-design-vue'
-    import PrintOrder from "@/views/community/village/charge/cashier/printOrder.vue";
+    import PrintOrder from "@/views/community/village/charge/cashier/printOrder";
     import store from '@/store';
     const columns = [{
             title: '收费项目名称',
             dataIndex: 'project_name',
-            key: 'project_name'
+            key: 'project_name',
+            scopedSlots: {
+                customRender: 'project_name'
+            }
         },
         {
             title: '实际缴费金额',
@@ -645,7 +649,9 @@
                               title: '收费项目名称',
                               dataIndex: 'project_name',
                               key: 'project_name',
-                              width: 150,
+                              scopedSlots: {
+                                  customRender: 'project_name'
+                              }
                           },
                           {
                               title: '实际缴费金额',
@@ -655,7 +661,8 @@
                           {
                               title: '支付方式',
                               dataIndex: 'pay_type',
-                              key: 'pay_type'
+                              key: 'pay_type',
+                              width: 150,
                           },
                           {
                               title: '支付时间',
@@ -1012,8 +1019,8 @@
                         return false;
                     }
 
-                    if (choice_ids.length > 50) {
-                        that.$message.error('最多可选择50个账单打印，您当前选中' + choice_ids.length + '个')
+                    if (choice_ids.length > 100) {
+                        that.$message.error('最多可选择100个账单打印，您当前选中' + choice_ids.length + '个')
                         return false;
                     }
                 }

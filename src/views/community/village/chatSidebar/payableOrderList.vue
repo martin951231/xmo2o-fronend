@@ -180,7 +180,7 @@
     import GetPrintTemplate from '@/views/community/village/charge/cashier/getPrintTemplate'
     import checkRefundInfo from '@/views/community/village/charge/cashier/checkRefundInfo'
     import { Collapse } from 'ant-design-vue'
-    import PrintOrder from '@/views/community/village/charge/cashier/printOrder.vue'
+    import PrintOrder from '@/views/community/village/charge/cashier/printOrder'
 
     const columns = [
       { title: store.getters.config.room_name+'号/车位号', dataIndex: 'numbers', key: 'numbers' },
@@ -227,7 +227,7 @@
           GetPrintTemplate,
           AddRefundInfo,
           PayableOrderInfo,
-            PrintOrder,
+          PrintOrder,
           checkRefundInfo,
             'a-collapse': Collapse,
             'a-collapse-panel': Collapse.Panel
@@ -568,8 +568,8 @@
                 that.$message.error('当前仅支持同一个缴费人进行批量打印已缴账单')
                 return false
               }
-              if (choice_ids.length > 50) {
-                that.$message.error('最多可选择50个账单打印，您当前选中' + choice_ids.length + '个')
+              if (choice_ids.length > 100) {
+                that.$message.error('最多可选择100个账单打印，您当前选中' + choice_ids.length + '个')
                 return false
               }
             }

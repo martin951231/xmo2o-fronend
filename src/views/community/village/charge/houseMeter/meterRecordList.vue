@@ -1,6 +1,6 @@
 <template>
   <div>
-    <a-drawer :width="1600" title="抄表记录" :visible="visible_record" :maskClosable = "false" :confirm-loading="confirmLoading"
+    <a-drawer :width="1700" title="抄表记录" :visible="visible_record" :maskClosable = "false" :confirm-loading="confirmLoading"
              @close="handleCancel" :dialog-style="{ top: '20px' }" >
         <div>
             <a-tabs default-active-key="1" @change="changeType">
@@ -13,18 +13,23 @@
       <div class="message-suggestions-list-box">
         <div class="search-box" style="margin-top: 12px;margin-left: 10px" >
           <a-row :gutter="48" style="margin-bottom: 12px">
-            <a-col :md="6" :sm="14" style="padding-right:0px; ">
+            <a-col :md="5" style="padding-left: 10px;padding-right: 1px;" v-if="isAihorseCustomized">
+                <label style="margin-top: 5px;">拆单编号：</label>
+                <a-input style="width: 220px" placeholder="请输入拆单编号" v-model="split_record_no" />
+            </a-col>
+            
+            <a-col :md="5"  style="padding-left: 10px;padding-right: 5px;">
               <label style="margin-top: 5px;">{{$store.getters.config.room_name}}：</label>
-              <a-cascader class="cascader_style margin_left_10" :options="options" :load-data="loadDataFunc"
+              <a-cascader class="cascader_style margin_left_10" style="width:260px" :options="options" :load-data="loadDataFunc"
                           :placeholder="'请选择'+$store.getters.config.room_name" change-on-select @change="setVisionsFunc" v-model="room_id" />
             </a-col>
-            <a-col :md="8" :sm="20" class="padding-tp10" style="padding-left: 5px;padding-right: 1px;width: 470px" >
+            <a-col :md="8"  class="padding-tp10" style="padding-left: 5px;padding-right: 1px;width: 410px" >
               <label style="margin-top: 5px;">时间筛选：</label>
               <a-range-picker @change="dateChange" :allowClear='true'  style="width: 325px" v-model="date_time">
                 <a-icon slot="suffixIcon" type="calendar" />
               </a-range-picker>
             </a-col>
-              <a-col :md="6" :sm="24" class="padding-tp10" style="padding-left: 5px;padding-right: 1px;width: 210px" v-if="is_show">
+              <a-col :md="4"  class="padding-tp10" style="padding-left: 5px;padding-right: 1px;width: 200px" v-if="is_show">
                   <label class="label_title">交易类型：</label>
                   <a-select show-search placeholder="请选择" style="width: 110px" v-model="transaction_type">
                       <a-select-option v-for="(item,index) in pay_order_type" :value="item.value">
@@ -32,16 +37,16 @@
                       </a-select-option>
                   </a-select>
               </a-col>
-            <a-col :md="2" :sm="24"  style="padding-left: 0px;padding-right: 1px;width: 90px;">
+            <a-col :md="2"   style="padding-left: 0px;padding-right: 1px;width: 90px;">
               <a-button type="primary" icon="search" @click="searchList()">
                 查询
               </a-button>
             </a-col>
-            <a-col :md="2" :sm="24" v-if="role_export==1">
+            <a-col :md="2" v-if="role_export==1">
               <a-button  type="primary" @click="printList()">Excel导出</a-button>
             </a-col>
 
-            <a-col :md="2" :sm="24" v-if="role_import==1">
+            <a-col :md="2"  v-if="role_import==1">
               <a-button  type="primary" @click="$refs.createUploadModal.add(charge_name,project_id)" >导入</a-button>
             </a-col>
           </a-row>
@@ -63,12 +68,17 @@
                     <span v-else >
                          <span v-if="role_mfymeter==1">
                             <a @click="$refs.addMeter.edit(record)" v-if="record.is_edit==1" >修改</a>
+                            <!--
                             <a-divider type="vertical" v-if="record.order_is_pay==1 && record.mdy_change_ammeter>0 && record.mdy_change_money>0" />
-                            <a @click="createNewOrder(record)" v-if="record.order_is_pay==1 && record.mdy_change_ammeter>0 && record.mdy_change_money>0" :loading="createNewOrderLoading">生成收费账单</a>
+                            <a @click="createNewOrder(record)" v-if="record.order_is_pay==1 && record.mdy_change_ammeter>0 && record.mdy_change_money>0" :loading="createNewOrderLoading">生成账单</a>
+                            -->
                       </span>
                 </span>
           </span>
-          
+           <span slot="note_mark" slot-scope="text, record" >
+             <div v-if="record.note">{{record.note}}</div>
+             <div v-if="record.split_bak" style="color:red;margin-top: 5px;">{{record.split_bak}}</div>
+           </span>
         </a-table>
       </div>
     </a-drawer>
@@ -83,6 +93,7 @@
     import meterUpload from './uploadMeter.vue'
     import addMeter from "./addMeter.vue";
     const columns = [
+        { title: '抄表ID', dataIndex: 'id', key: 'id'},
         { title: '住址', dataIndex: 'address', key: 'address'},
         {title: '姓名', dataIndex: 'name', key: 'name' },
         { title: '电话',  dataIndex: 'phone', key: 'phone'},
@@ -97,6 +108,7 @@
         { title: '操作', dataIndex: '',width:190,key: 'action',scopedSlots: {customRender: 'action'}},
     ];
     const columns1 = [
+        { title: '抄表ID', dataIndex: 'id', key: 'id'},
         { title: '住址', dataIndex: 'address', key: 'address'},
         {title: '姓名', dataIndex: 'name', key: 'name' },
         { title: '电话',  dataIndex: 'phone', key: 'phone'},
@@ -163,6 +175,8 @@
                 total_info:[],
                 is_unusual:0,
                 jzwsxdsj_customized_meter:0,
+                isAihorseCustomized:0,
+                split_record_no:'',
             }
         },
         mounted(){
@@ -190,6 +204,7 @@
                 if(rule_name){
                     this.rule_name = rule_name;
                 }
+                this.split_record_no='';
                 this.getList(charge_name,project_id);
                 this.getSingleListByVillage()
                 this.visible_record = true;
@@ -204,6 +219,7 @@
                     rule_name:this.rule_name,
                     project_id:this.project_id,
                     is_unusual:this.is_unusual,
+                    split_record_no:this.split_record_no,
                 }).then((res) => {
                         window.location.href=res.url;
                         this.loading = false
@@ -260,23 +276,24 @@
                     room_id:this.room_id,
                     date_time : this.date_time,
                     tokenName: this.tokenName,
-                    single_id:this.single_id,
-                    floor_id:this.floor_id,
-                    layer_id:this.layer_id,
                     transaction_type:this.transaction_type,
-                    is_unusual:this.is_unusual
+                    is_unusual:this.is_unusual,
+                    split_record_no:this.split_record_no,
                 }).then((res)=>{
                     this.pagination.total = res.count ? res.count : 0
                     this.pagination.pageSize = res.total_limit ? res.total_limit : 10;
                     this.data = res.list;
                     this.total_info=res.total_info;
                     this.is_show = res.is_show;
-                    this.jzwsxdsj_customized_meter=0;
                     if(res.jzwsxdsj_customized_meter!=undefined && res.jzwsxdsj_customized_meter>0){
                         this.jzwsxdsj_customized_meter=res.jzwsxdsj_customized_meter;
                     }
+                    if(res.isAihorseCustomized!=undefined && res.isAihorseCustomized>0){
+                        this.isAihorseCustomized=res.isAihorseCustomized;
+                    }
                     if(this.jzwsxdsj_customized_meter>0){
                        this.columns = [
+                            { title: '抄表ID', dataIndex: 'id', key: 'id'},
                             { title: '住址', dataIndex: 'address', key: 'address'},
                             {title: '姓名', dataIndex: 'name', key: 'name' },
                             { title: '电话',  dataIndex: 'phone', key: 'phone'},
@@ -292,6 +309,26 @@
                             { title: '备注',  dataIndex: 'note', key: 'note'},
                             { title: '操作', dataIndex: '',width:190,key: 'action',scopedSlots: {customRender: 'action'}},
                         ];
+                    }else if(this.isAihorseCustomized>0){
+                      this.columns = [
+                           { title: '抄表ID', dataIndex: 'id', key: 'id',width:86},
+                           { title: '拆单编号', dataIndex: 'split_record_no', key: 'split_record_no',width: 130},
+                           { title: '拆分次数', dataIndex: 'split_num', key: 'split_num',width:90},
+                           { title: '住址', dataIndex: 'address', key: 'address'},
+                           {title: '姓名', dataIndex: 'name', key: 'name' ,width:90},
+                           { title: '电话',  dataIndex: 'phone', key: 'phone'},
+                           { title: '单价(元)',  dataIndex: 'unit_price', key: 'unit_price'},
+                           { title: '倍率',  dataIndex: 'rate', key: 'rate'},
+                           { title: '抄表时间',  dataIndex: 'add_time_txt', key: 'add_time_txt',width:110},
+                           { title: '拆分时间',  dataIndex: 'last_time_txt', key: 'last_time_txt',width:110},
+                           { title: '起度',  dataIndex: 'start_ammeter', key: 'start_ammeter'},
+                           { title: '止度',  dataIndex: 'last_ammeter', key: 'last_ammeter'},
+                           { title: '总价(元)',  dataIndex: 'cost_money', key: 'cost_money'},
+                           { title: '操作人',  dataIndex: 'realname', key: 'realname',width:100},
+                           { title: '备注',  dataIndex: 'note', key: 'note',width:180,scopedSlots: {customRender: 'note_mark'}},
+                           { title: '操作', dataIndex: '',width:100,key: 'action',scopedSlots: {customRender: 'action'}},
+                           
+                       ];
                     }
                     if(res.role_export!=undefined){
                         this.role_export=res.role_export;
@@ -307,7 +344,7 @@
             },
             // 进行搜索
             searchList() {
-                console.log('search', this.search);
+                this.page=1;
                 this.getList(this.charge_name,this.project_id)
             },
             // 楼栋号
@@ -435,7 +472,7 @@
             },
 
             changeType(e) {
-                console.log('here: ',e);
+                this.page=1;
                 if(e == 1){
                     this.is_unusual = 0;
                 }else{

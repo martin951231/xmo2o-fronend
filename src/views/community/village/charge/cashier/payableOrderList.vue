@@ -189,6 +189,7 @@
                 <span
                     :style="{color: record.pay_type_way==2 || record.pay_type_way==22?'#1890ff':''}">{{record.pay_type}}</span>
             </template>
+             <span slot="numbers_action" slot-scope="text, record"><a-tag v-if="record.meter_reading_id*1>0 && record.order_type_flag=='split_order_by_balance'" color="orange" style="font-weight: bold;color: #f53405;">拆</a-tag>{{record.numbers}}</span>
             <span slot="action" slot-scope="text, record">
                 <a @click="$refs.OrderModel.add(record.order_id,record.check_apply_id)">详情</a>
                 <a-divider type="vertical" />
@@ -298,14 +299,17 @@
     import {
         Collapse
     } from 'ant-design-vue'
-    import PrintOrder from '@/views/community/village/charge/cashier/printOrder.vue'
+    import PrintOrder from '@/views/community/village/charge/cashier/printOrder'
     import moment from 'moment'
     import store from '@/store';
     const columns = [{
             title: store.getters.config.room_name + '号/车位号',
             dataIndex: 'numbers',
             key: 'numbers',
-            width: 170
+            width: 170,
+            scopedSlots: {
+                customRender: 'numbers_action'
+            }
         },
         {
             title: '缴费人',
@@ -773,7 +777,10 @@
                               title: store.getters.config.room_name + '号/车位号',
                               dataIndex: 'numbers',
                               key: 'numbers',
-                              width: 170
+                              width: 170,
+                              scopedSlots: {
+                                  customRender: 'numbers_action'
+                              }
                           },
                           {
                               title: '缴费人',
@@ -1255,8 +1262,8 @@
                         that.$message.error('当前仅支持同一个缴费人进行批量打印已缴账单')
                         return false
                     }
-                    if (choice_ids.length > 50) {
-                        that.$message.error('最多可选择50个账单打印，您当前选中' + choice_ids.length + '个')
+                    if (choice_ids.length > 100) {
+                        that.$message.error('最多可选择100个账单打印，您当前选中' + choice_ids.length + '个')
                         return false
                     }
                 }

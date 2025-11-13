@@ -949,7 +949,7 @@
     import villageApi from '@/api/community/village'
     import TagSelectOption from '../../../../../components/TagSelect/TagSelectOption'
     import GetPrintTemplate from '@/views/community/village/charge/cashier/getPrintTemplate'
-    import PrintOrder from '@/views/community/village/charge/cashier/printOrder.vue'
+    import PrintOrder from '@/views/community/village/charge/cashier/printOrder'
     import PayableOrderList from '../components/payableOrderList.vue'
     import singleView from "../components/singleView.vue"
     import singleResourceMap from "../components/singleResourceMap.vue"

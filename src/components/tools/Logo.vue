@@ -57,9 +57,9 @@
             >
                 <a-tooltip>
                     <template slot="title" placement="right">
-                        {{ config.site_name }}
+                        {{ config.site_short_name?config.site_short_name:config.site_name }}
                     </template>
-                    {{ config.site_name }}
+                    {{ config.site_short_name?config.site_short_name:config.site_name }}
                 </a-tooltip>
             </h1>
         </router-link>

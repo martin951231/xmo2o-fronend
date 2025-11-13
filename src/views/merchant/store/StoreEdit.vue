@@ -261,7 +261,7 @@
                                 </a-row>
 
                                 <a-form-item label="餐饮">
-                                    <a-select v-model="formData.have_meal">
+                                    <a-select v-model="formData.have_meal" :disabled="store_open_meal">
                                         <a-select-option :value="0"> 关闭 </a-select-option>
                                         <a-select-option :value="1"> 开启 </a-select-option>
                                     </a-select>
@@ -1615,7 +1615,8 @@ export default {
             },
             disabled_status: true,
             is_cash_back: false, //是否开启店铺现金返现,
-            tw_shop_id:'' // 图维商户id
+            tw_shop_id:'', // 图维商户id
+            store_open_meal: false,//是否禁用餐饮
         }
     },
     computed: {
@@ -2193,6 +2194,7 @@ export default {
                     this.is_cash_back = res.now_store.is_cash_back ? res.now_store.is_cash_back : false
                     this.open_merchant_wxapp_score_plugin = res.plat_config.open_merchant_wxapp_score_plugin
                     this.platConfig = res.plat_config;
+                    this.store_open_meal = res.store_open_meal == 0?true:false
                 })
             } else {
                 this.request(mallMerchantApi.storeEdit, param).then((res) => {
@@ -2227,6 +2229,7 @@ export default {
                     this.disabled_status = res.now_store.disabled_status
                     this.plat_shunfeng_is_open = res.plat_config.shunfeng_is_open * 1
                     this.plat_ele_is_open = res.plat_config.ele_is_open * 1
+                    this.store_open_meal = res.store_open_meal == 0?true:false
                 })
             }
         },

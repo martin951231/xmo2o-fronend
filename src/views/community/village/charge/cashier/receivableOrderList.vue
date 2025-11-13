@@ -72,7 +72,8 @@
               <a-col :md="6" :sm="12" class="">
                 <label style="margin-top: 5px;">收费项目：</label>
                 <a-select  style="width:80%" mode="multiple" placeholder="请选择项目" v-model="search.project_id"  @change="projectItemChange">
-                  <a-select-option :value="item1.id" v-for="(item1,index1) in project_list.filter(item => item.name.indexOf('删除')==-1)" :key="index1">
+
+                  <a-select-option :value="item1.id" v-for="(item1,index1) in project_list" :key="index1">
                     {{ item1.name }}
                   </a-select-option>
                 </a-select>
@@ -81,7 +82,7 @@
                 <label style="margin-top: 5px;">收费标准：</label>
                 <a-select style="width:80%" mode="multiple" placeholder="收费标准" v-model="search.rule_id">
 
-                    <a-select-option :value="item2.id" v-for="(item2,index2) in project_rule_list.filter(item => item.charge_name.indexOf('删除')==-1)" :key="index2">
+                    <a-select-option :value="item2.id" v-for="(item2,index2) in project_rule_list" :key="index2">
                       {{ item2.charge_name }}
                     </a-select-option>
                 </a-select>
@@ -206,7 +207,7 @@
               <a-col :md="6" :sm="12" style="display: flex; margin-top: 15px;">
                 <label style="margin-top: 5px;">收费项目：</label>
                 <a-select mode="multiple" style="width:80%" placeholder="请选择项目" v-model="search__detail.project_id"  @change="projectItemChange">
-                  <a-select-option :value="item1.id" v-for="(item1,index1) in project_list.filter(item => item.name.indexOf('删除')==-1)" :key="index1">
+                  <a-select-option :value="item1.id" v-for="(item1,index1) in project_list" :key="index1">
                     {{ item1.name }}
                   </a-select-option>
                 </a-select>
@@ -214,7 +215,7 @@
               <a-col :md="6" :sm="12" style="display: flex; margin-top: 15px;">
                 <label style="margin-top: 5px;">收费标准：</label>
                 <a-select  mode="multiple"  style="width:80%" placeholder="收费标准" v-model="search__detail.rule_id">
-                    <a-select-option :value="item2.id" v-for="(item2,index2) in project_rule_list.filter(item => item.charge_name.indexOf('删除')==-1)" :key="index2">
+                    <a-select-option :value="item2.id" v-for="(item2,index2) in project_rule_list" :key="index2">
                       {{ item2.charge_name }}
                     </a-select-option>
                 </a-select>
@@ -287,6 +288,7 @@
             @change="table_change_detail"
              :row-key="record => record.order_id"
             :loading="loading_detail" >
+            <span slot="numbers_action" slot-scope="text, record"><a-tag v-if="record.meter_reading_id*1>0 && record.order_type_flag=='split_order_by_balance'" color="orange" style="font-weight: bold;color: #f53405;">拆</a-tag>{{record.number}}</span>
             <span slot="action_detail" slot-scope="text, record">
               <a v-if="(!record.my_check_status || record.my_check_status==0) && role_discard==1" @click="discard_order(record.order_id)">作废账单</a>
               <a v-if="record.my_check_status==3" style="color: #808080;">已审核</a>
@@ -504,7 +506,7 @@
     import SendType from '@/views/community/village/charge/cashier/sendType'
     import checkRefundInfo from '@/views/community/village/charge/cashier/checkRefundInfo'
     import GetPrintTemplate from '@/views/community/village/charge/cashier/getPrintTemplate'
-    import PrintOrder from '@/views/community/village/charge/cashier/printOrder.vue'
+    import PrintOrder from '@/views/community/village/charge/cashier/printOrder'
     import { Collapse } from 'ant-design-vue'
     import importBill from "../components/importBill.vue"
     import moment from 'moment'
@@ -517,20 +519,22 @@
         { title: '操作', key: 'action', dataIndex: '', scopedSlots: { customRender: 'action' } }
     ]
     const columns_detail = [
-        { title: store.getters.config.room_name+'号/车位号', dataIndex: 'number', key: 'number' },
-        { title: '业主名', dataIndex: 'name', key: 'name' },
+        { title: store.getters.config.room_name+'号/车位号', dataIndex: 'number', key: 'number',scopedSlots: {
+                customRender: 'numbers_action'
+            }},
+        { title: '业主名', dataIndex: 'name', key: 'name',width: 100},
         { title: '电话', dataIndex: 'phone', key: 'phone' },
-        { title: '收费标准', dataIndex: 'charge_name', key: 'charge_name' },
-        { title: '收费项目名称', dataIndex: 'project_name', key: 'project_name' },
-        { title: '收费所属科目', dataIndex: 'charge_number_name', key: 'charge_number_name' },
+        { title: '收费标准', dataIndex: 'charge_name', key: 'charge_name',width: 150},
+        { title: '收费项目名称', dataIndex: 'project_name', key: 'project_name',width: 140},
+        { title: '收费所属科目', dataIndex: 'charge_number_name', key: 'charge_number_name',width: 120},
         { title: '应收费用', dataIndex: 'total_money', key: 'total_money' },
         { title: '计费开始时间', dataIndex: 'service_start_time_txt', key: 'service_start_time_txt' },
         { title: '计费结束时间', dataIndex: 'service_end_time_txt', key: 'service_end_time_txt' },
         { title: '账单生成时间', dataIndex: 'add_time_txt', key: 'add_time_txt' },
         { title: '上次度数', dataIndex: 'last_ammeter', key: 'last_ammeter' },
         { title: '本次度数', dataIndex: 'now_ammeter', key: 'now_ammeter' },
-        { title: '审核状态', dataIndex: 'check_status_str', key: 'check_status_str' },
-        { title: '操作', key: 'action_detail', width: '120px', dataIndex: '', scopedSlots: { customRender: 'action_detail' } }
+        { title: '审核状态', dataIndex: 'check_status_str', key: 'check_status_str',width: 72},
+        { title: '操作', key: 'action_detail', width: 120, dataIndex: '', scopedSlots: { customRender: 'action_detail' } }
     ]
     const data = []
     const data_detail = []
@@ -559,7 +563,7 @@
           checkRefundInfo,
           GetPrintTemplate,
           importBill,
-            PrintOrder,
+          PrintOrder,
             'a-collapse': Collapse,
             'a-collapse-panel': Collapse.Panel
         },
@@ -1339,16 +1343,16 @@
                 console.log('choice_nopay_ids',choice_nopay_ids);
                 let room_idArr=this.arrUnique(choice_nopay_ids, 'room_id');
                 if (room_idArr.length > 1) {
-                  that.$message.error('当前仅支持同一个'+that.$store.getters.config.room_name+'进行打印已缴账单')
+                  that.$message.error('当前仅支持同一个'+that.$store.getters.config.room_name+'进行打印未缴账单')
                   return false
                 }
                 let position_idArr=this.arrUnique(choice_nopay_ids, 'position_id');
                 if ((room_idArr['0']==0||room_idArr['0']=='0') && position_idArr.length > 1) {
-                  that.$message.error('当前仅支持同一个车位进行打印已缴账单')
+                  that.$message.error('当前仅支持同一个车位进行打印未缴账单')
                   return false
                 }
-                if (choice_nopay_ids.length > 50) {
-                  that.$message.error('最多可选择50个账单打印，您当前选中' + choice_nopay_ids.length + '个')
+                if (choice_nopay_ids.length > 100) {
+                  that.$message.error('最多可选择100个账单打印，您当前选中' + choice_nopay_ids.length + '个')
                   return false
                 }
               }

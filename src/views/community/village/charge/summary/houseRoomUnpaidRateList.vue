@@ -23,9 +23,17 @@
           <a-row  style="display: flex; flex-wrap: wrap;margin-top: 20px;margin-bottom: 10px;">
                   <a-col :span="6" style="padding-left: 5px; padding-right: 1px;">
                     <label style="margin-top: 5px;">选择楼栋管家：</label>
-                    <a-select  style="width: 280px" placeholder="请选择楼栋管家" v-model="search.w_singles" mode="multiple" >
-                      <a-select-option  v-for="(item,index) in singleheeper_list" :value="item.key_id" :key="item.key_id" >
+                    <a-select  style="width: 280px" placeholder="请选择楼栋管家" v-model="search.wids" mode="multiple" @change="handleSelectChange">
+                      <a-select-option  v-for="(item,index) in singleheeper_list" :value="item.wid" :key="item.wid" >
                         {{item.title_name}}
+                      </a-select-option>
+                    </a-select>
+                  </a-col>
+                  <a-col :span="6" style="padding-left: 5px; padding-right: 1px;">
+                    <label style="margin-top: 5px;">选择楼栋：</label>
+                    <a-select  style="width: 280px" placeholder="请选择楼栋" v-model="search.single_ids" mode="multiple" >
+                      <a-select-option  v-for="(item1,index1) in singleList" :value="item1.single_id" :key="item1.single_id" >
+                        {{item1.single_name}}
                       </a-select-option>
                     </a-select>
                   </a-col>
@@ -122,13 +130,14 @@
         list:[],
         id:0,
         columns,
-        search: {year_v:moment().format('YYYY')*1,w_singles:[]},
+        search: {year_v:moment().format('YYYY')*1,w_singles:[],wids:[],single_ids:[]},
         tips_year_v:moment().format('YYYY')*1,
         singleheeper_list: [],
         exportFeeVisible:false,
         loading:false,
         yearV:moment().format('YYYY')*1+3,
         yearLen:100,
+        singleList:[],
       };
     },
     mounted(){
@@ -148,12 +157,28 @@
       getVillageSingleKeepers(){
          this.search.w_singles=[];
          this.singleheeper_list=[];
-        this.request(villageApi.getVillageSingleKeepers, {})
+         this.singleList=[];
+         this.search.wids=[];
+         this.search.single_ids=[];
+        this.request('/community/village_api.TransactionSummary/getVillageKeepersList', {})
               .then((res) => {
                 this.singleheeper_list = res.list
         }).catch((error) => {
                   
           }); 
+      },
+      handleSelectChange(){
+          this.search.single_ids=[];
+          this.singleList=[];
+          if(this.search.wids.length<1){
+               return true;
+          }
+          this.request('/community/village_api.TransactionSummary/getVillageSingleListByWid', {wids:this.search.wids})
+                .then((res) => {
+                  this.singleList= res.list
+          }).catch((error) => {
+                    
+        }); 
       },
     },
   };

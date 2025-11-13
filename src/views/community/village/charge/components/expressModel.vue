@@ -287,11 +287,8 @@
                 let start_time = ''
                 if (this.dateValue) {
                     const d = new Date(this.dateValue)
-                    console.log('dateEndTime22',d)
                     start_time = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate()
                 }
-                console.log('dateEndTime11',this.dateEndTime)
-                console.log('end_time11',end_time)
                 this.bill_create_set_tmp=0;
                 this.request(villageApi.getQuickRuleInfo, {
                     rule_id: rule_id,
@@ -397,7 +394,6 @@
                 console.log('change事件', value)
             },
             onChangeTime (date, dateString) {
-                console.log(dateString)
                 const d1 = dateString
                 const d2 = this.valid_time
                 const d3 = this.contract_time_end
@@ -409,7 +405,7 @@
                     this.$message.error('账单生效时间不能大于'+this.contract_time_end)
                     return false;
                 }
-                this.dateValue = date
+                this.dateValue = dateString
                 this.cycleChange()
             },
             onChangeTime1(date, dateString) {

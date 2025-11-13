@@ -336,6 +336,9 @@
     vertical-align: middle;
     color: #999999;
 }
+.cursor-pointer {
+  cursor: pointer;
+}
 
 .error-color{
     color: #ff0c08;

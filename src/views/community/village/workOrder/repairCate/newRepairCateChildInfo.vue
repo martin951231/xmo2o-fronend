@@ -8,11 +8,11 @@
                     <a-input style="width: 45%;margin-left: 24px;" placeholder="请输入分类名称" v-model="group.name"/>
                 </div>
                 <div class="card-set" v-if="is_timely">
-                    <label class="ant-form-item-required">及时接单时间:</label>
+                    <label class="ant-form-item-required">及时结单时间:</label>
                     <a-time-picker
                             :value="moment(group.timely_time, 'HH:mm')"
                             format="HH:mm"
-                            style="width: 15%;margin-left: 8px" placeholder="请选择及时接单时间"
+                            style="width: 15%;margin-left: 8px" placeholder="请选择及时结单时间"
                             @change="onTimeChange"
                             :allowClear="false"
                     />
@@ -818,7 +818,7 @@
             handleSubmit() {
                 if(this.is_timely){
                     if(!this.group.timely_time || (Number(this.group.timely_time.split(':')[0]) <= 0 && Number(this.group.timely_time.split(':')[1]) <= 0)){
-                        this.$message.error('请选择及时接单时间（大于0）');
+                        this.$message.error('请选择及时结单时间（大于0）');
                         return false;
                     }
                 }else{

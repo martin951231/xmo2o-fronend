@@ -28,7 +28,7 @@
                     </a-descriptions-item>
                     <a-descriptions-item label="支付凭证" :span="2">
                         <div class="flex">
-                            <BeautifulImage v-for="val, key in record.pay_pic" :key="key" :src="val" width="65px"
+                            <BeautifulImage v-for="(val, key) in record.pay_pic" :key="key" :src="val" width="65px"
                                 height="65px" style="margin-right: 2px;" visible></BeautifulImage>
                         </div>
                     </a-descriptions-item>
@@ -91,8 +91,6 @@
                  </a-table>
             </a-tab-pane>
         </a-tabs>
-
-
     </div>
 </template>
 

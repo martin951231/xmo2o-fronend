@@ -956,6 +956,32 @@ export const constantRouterMap = [
                     },
                 ],
             },
+            // 优惠券核销
+            {
+                path: path.staffCouponVerifiy,
+                name: 'staffCouponVerifiy',
+                redirect: path.staffCouponVerifiy + '/CouponVerifiy',
+                component: () => import('@/views/coupon/storestaff/Index'),
+                keepAlive: false,
+                children: [
+                    {
+                        path: 'couponVerifiy',
+                        name: 'CouponVerifiy',
+                        component: () => import('@/views/coupon/storestaff/CouponVerifiy'),
+                        meta: {
+                            title: '优惠券核销'
+                        }
+                    },
+                    {
+                        path: 'verifiyList',
+                        name: 'VerifiyList',
+                        component: () => import('@/views/coupon/storestaff/VerifiyList'),
+                        meta: {
+                            title: '核销记录'
+                        }
+                    }
+                ]
+            }
         ],
     },
 
@@ -1144,6 +1170,19 @@ export const constantRouterMap = [
     //商场导航栏装修
     //商场猜你喜欢装修
     //商场广告装修
+
+
+    //骑手跑腿佣金设置
+    {
+        path: '/dialog/paotui.platform/RiderCommissionSetting',
+        name: 'RiderCommissionSetting',
+        component: () => import('@/views/paotui/platform/RiderCommissionSetting')
+    },
+    {
+      path: '/dialog/building.platform/login',
+      name: 'SystemBuildingPlatformLogin',
+      component: () => import('@/views/building/platform/login')
+    },
   ]
 },
   {
@@ -1239,7 +1278,18 @@ export const constantRouterMap = [
           hidden: true,
           permission: ['system']
         }
-      }
+      },
+      {
+        path: '/common/platform.QuestionnaireSurvey/QuestionnaireSurveyDetail',
+        name: 'KFChatHistory',
+        component: () => import('@/views/common/platform/QuestionnaireSurvey/QuestionnaireSurveyDetail'),
+        meta: {
+          title: '问卷调查详情',
+          keepAlive: true,
+          hidden: true,
+          permission: ['system']
+        }
+      },
     ]
   },
   {

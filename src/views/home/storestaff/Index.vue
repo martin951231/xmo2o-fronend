@@ -83,8 +83,8 @@
 import Vue from 'vue'
 import { mapActions } from 'vuex'
 import userStorestaffApi from '@/api/user/storestaff'
-import { getTokenName, delCookie, getLangDisplay } from '@/utils/util'
-import {orderNotice,clearNotice} from '@/utils/storestaff'
+import { getTokenName, delCookie, getLangDisplay} from '@/utils/util'
+import {orderNotice,clearNotice,stopNotice} from '@/utils/storestaff'
 export default {
   name: 'StoreStaffIndex',
   data() {
@@ -111,6 +111,8 @@ export default {
       print_paper: '',
       print_image: '',
       print_mkey: '',
+      system_config: {},
+      shanshu_custom: 0,//定制 www.esstc.cn浙江云尚商业管理发展有限公司
     }
   },
   computed: {
@@ -139,6 +141,8 @@ export default {
     this.config = this.$store.getters.config
     this.now_lang = this.$store.getters.nowLang
     this.lang_txt = getLangDisplay(this.now_lang)
+    this.system_config = this.$getCache('system_config')
+    this.shanshu_custom = this.system_config.shanshu_custom
   },
   mounted() {
     this.getPageInfo()
@@ -172,6 +176,19 @@ export default {
           this.init()
           if (this.checkAndroidApp()) {
             window.pigcmspackapp.get_printer('get_printer')
+          }
+
+          //如果是定制并且在收银机下的app里面时，更新机器视图
+          if(this.shanshu_custom && this.checkAndroidApp()){
+            const params = {
+              merchantName: res.merchant_name,
+              merchantAddress: res.full_address,
+              operator: this.staffName,
+              smallScreenBanner: res.cashier_page_advs,
+              bigScreenBanner: res.cashier_desk_advs,
+            }
+            window.pigcmspackapp.secondScreenBasicsInfo(JSON.stringify(params))
+            window.pigcmspackapp.showProductUi(0)//1 结算界面 0广告页
           }
         }
       })
@@ -288,12 +305,17 @@ export default {
       this.$confirm({
         title: '真的要退出登录吗?',
         centered: true,
-        onOk() {
+        onOk:()=> {
           const tokenName = getTokenName(_this.$route.path)
           Vue.ls.remove(tokenName)
           Vue.ls.remove('storestaff_page_info')
           delCookie(tokenName)
-          window.location.reload()
+          stopNotice()
+          if(this.checkAndroidApp()){
+            this.$router.replace('/usernew/storestaff/login')
+          }else{
+            window.location.reload()
+          }
         },
         onCancel() {
           console.log('Cancel')

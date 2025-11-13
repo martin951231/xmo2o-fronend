@@ -38,6 +38,20 @@
                             <span v-else>--</span>
                         </span>
 
+                        <span slot="toLogin" slot-scope="text,record">
+                            <a-popconfirm
+                                ok-text="去登录"
+                                cancel-text="取消"
+                                @confirm="staffAutoLogin(record)"
+                            >
+                            <template slot="title">
+                                <p>为避免账号串号影响操作安全，同一浏览器暂不支持同时登录商家中心与店员中心账号。</p>
+                                <p>店员登录成功，商家中心将自动退出登录，确定登录吗?</p>
+                            </template>
+                                <a-icon type="login" />
+                            </a-popconfirm>
+                        </span>
+
                         <span slot="is_change" slot-scope="text">
                             <span v-if="text == 0" style="color: red;">不能</span>
                             <span v-else>能</span>
@@ -185,8 +199,12 @@
 </template>
 
 <script>
+import Vue from 'vue'
+import { mapActions } from 'vuex'
+import { getTokenName, getSystemName, setCookie } from '@/utils/util'
 import mallMerchantApi from '@/api/merchant/store'
 import JobPersonList from './JobPersonList'
+import path from '@/router/router-path.js'
 
 const columns = [
     {
@@ -223,6 +241,12 @@ const columns = [
         title: '微信（点击可复制）',
         dataIndex: 'openid',
         scopedSlots: { customRender: 'openid' },
+        width:120
+    },
+    {
+        title: '伪登录',
+        dataIndex: 'toLogin',
+        scopedSlots: { customRender: 'toLogin' },
         width:120
     },
     {
@@ -276,6 +300,7 @@ export default {
             addressList: [],
             columns,
             password_str: '请输入密码',
+            baseUrl: '/v20/public/platform/#',
         }
     },
     mounted() {
@@ -293,8 +318,7 @@ export default {
         this.formData.store_id = this.$route.query.store_id
     },
     methods: {
-
-
+        ...mapActions(['Logout', 'SetLang']),
         handleChange(value) {
             console.log(`selected ${value}`)
             this.formData.pick_addr_ids = value
@@ -401,6 +425,40 @@ export default {
         staffLogin() {
             let href = this.site_url + '/v20/public/platform/#/usernew/storestaff/login'
             window.open(href)
+        },
+        staffAutoLogin(staff) {
+            this.request(mallMerchantApi.staffLogin, { staff_id: staff.id }).then((response) => {
+                const tokenName = getTokenName(path.storestaffIndex)
+                Vue.ls.set(tokenName, response.ticket, null) // vue.ls存储到localstorage,持久化存储
+                setCookie(tokenName, response.ticket, null) // 存入到cookie中
+                window.open(this.baseUrl + path.storestaffIndex, '_blank')
+
+                this.handleLogout();
+            })
+        },
+        handleLogout() {
+            let sysName = getSystemName(location.hash)
+            if (!sysName) {
+                sysName = getSystemName(this.$route.path)
+            }
+            console.log('sysName', sysName)
+            let tokenName = getTokenName(this.$route.path) // 路由变更后 this.$route.path
+            console.log('tokenName', tokenName)
+            if (!tokenName) {
+                tokenName = sysName + '_access_token'
+            }
+            return this.Logout(tokenName)
+                .then(() => {
+                    setTimeout(() => {
+                        window.location.reload()
+                    }, 16)
+                })
+                .catch((err) => {
+                    this.$message.error({
+                        title: '错误',
+                        description: err.message,
+                    })
+                })
         },
         // 页码变化
         onPageChange(page, pageSize) {

@@ -98,7 +98,7 @@ export default {
       }
 
       this.request('/foodshop/storestaff.order/verificationPackage', params).then((res) => {
-        this.$message.success(L('核销成功') + '！')
+        this.$message.success(this.L('核销成功') + '！')
         this.searchContent = ''
         // 更新核销列表
         this.$emit('updateVerificPackageList')

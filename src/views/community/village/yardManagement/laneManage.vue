@@ -23,7 +23,8 @@
                     <a-switch checked-children="开启" un-checked-children="关闭" :checked="record.status==1 || record.status=='1' ? true:false" @change="(value)=>switchChange(value, record)" />
                 </template>
                 <template slot="mac_address" slot-scope="text, record">
-                    <a :href="record.mac_address_uri" target="_blank">{{record.mac_address}}</a>
+                    <a :href="record.mac_address_uri" target="_blank" v-if="record.mac_address_uri" >{{record.mac_address}}</a>
+                    <span v-if="!record.mac_address_uri" >{{record.mac_address}}</span>
                 </template>
                 <span slot="action" slot-scope="text, record">
                     <a v-if="record.is_button_show && (record.park_sys_type=='D3' || record.park_sys_type=='A11' || record.park_sys_type=='HXT85' )" @click="$refs.showScreenSetModel.add(record.id)">设置显屏内容</a>

@@ -31,7 +31,7 @@
       </div>
     </div>
     <side-menu
-      v-if="isSideMenu()&&!isMobile()"
+      v-if="isSideMenu() && !isMobile() && !isFromIframe()"
       mode="inline"
       :menus="menus"
       :theme="navTheme"
@@ -61,7 +61,7 @@
 
       <!-- layout content -->
       <a-layout-content :style="{ height: '100%', margin: contentMargin, paddingTop: fixedHeader ? '64px' : '0' }">
-        <multi-tab v-if="multiTab"></multi-tab>
+        <multi-tab v-if="multiTab && !isFromIframe()"></multi-tab>
         <transition name="page-transition">
           <route-view />
         </transition>

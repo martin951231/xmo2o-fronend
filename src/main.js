@@ -82,6 +82,7 @@ Vue.prototype.L = switchLang
 //获取缓存
 Vue.prototype.$getCache = getCache
 Vue.prototype.$tiandituMapKey = ''
+Vue.prototype.$mapConfig = ''
 
 if (process.env.NODE_ENV === 'development') {
   console.log('开发环境')
@@ -191,7 +192,7 @@ window.getMapConfig = ()=>{
   request("/common/platform.index/getWebBaiduKey", {}).then((res) => {
     Vue.prototype.$mapConfig = res.map_config
     var baidu_web_ak = res.baidu_map_ak_web ? res.baidu_map_ak_web : '4c1bb2055e24296bbaef36574877b4e2';
-     //ak 是在百度地图开发者平台申请的密钥 详见 http://lbsyun.baidu.com/apiconsole/key 
+     //ak 是在百度地图开发者平台申请的密钥 详见 http://lbsyun.baidu.com/apiconsole/key
     Vue.use(BaiduMap, {
       ak: baidu_web_ak
     })
@@ -212,20 +213,24 @@ window.getMapConfig = ()=>{
     }
   
     const BMap_URL = "https://api.map.baidu.com/api?ak=" + baidu_web_ak + "&v=2.0&s=1&callback=onBMapCallback";
-      return new Promise((resolve, reject) => {
-          // 如果已加载直接返回
-          if(typeof BMap !== "undefined") {
-              resolve(BMap);
-              return true;
-          }
-          // 百度地图异步加载回调处理
-          window.onBMapCallback = function () {
-              console.log("百度地图脚本初始化成功");
-              resolve(BMap);
-          };
-          // 插入script脚本
-          loadJs(BMap_URL);
-      });
+    if(baidu_web_ak){
+      loadJs("https://mapv.baidu.com/gl/examples/static/common.js");
+      loadJs("https://api.map.baidu.com/api?type=webgl&v=1.0&ak=" + baidu_web_ak);
+    }
+    return new Promise((resolve, reject) => {
+        // 如果已加载直接返回
+        if(typeof BMap !== "undefined") {
+            resolve(BMap);
+            return true;
+        }
+        // 百度地图异步加载回调处理
+        window.onBMapCallback = function () {
+            console.log("百度地图脚本初始化成功");
+            resolve(BMap);
+        };
+        // 插入script脚本
+        loadJs(BMap_URL);
+    });
   })
 }
 

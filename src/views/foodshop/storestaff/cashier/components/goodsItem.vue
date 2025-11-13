@@ -5,30 +5,25 @@
         <div>{{ goods.counts }}</div>
       </div>
       <div class="topcontent" @click="checkmenuFood(goods)">
-        <div class="tableinfo">
-          <div class="tablenumber">
-            {{ goods.product_abbreviation ? goods.product_abbreviation : goods.product_name }}
+        <img class="goods-image" style="object-fit: fill;" :src="goods.product_image" />
+        <div class="content">
+          <div class="tableinfo">
+            <div class="tablenumber">
+              {{ goods.product_abbreviation ? goods.product_abbreviation : goods.product_name }}
+            </div>
+          </div>
+          <div class="food_price">
+            <div class="left" style="flex: 1;">{{ L('￥') }}{{ goods.product_price }} <span v-if="(goods.has_format || goods.has_spec) && isClear">起</span> </div>
+            <div class="status_text">
+              <div class="acs_food_tips" v-if="goods.is_subsidiary_goods">
+                <span>{{ L('附') }}</span>
+              </div>
+              <div class="acs_food_tips" v-if="goods.only_staff">
+                <span>{{ L('店') }}</span>
+              </div>
+            </div>
           </div>
         </div>
-        <!-- 有规格有起购 起购无效 -->
-        <div class="minCounts" v-if="!goods.has_format && !goods.has_spec && goods.mini_num && goods.mini_num > 1">
-          {{ goods.mini_num > 1 ? L('X1份起购', { X1: goods.mini_num }) : '' }}
-        </div>
-        <div class="minCounts" v-if="(goods.has_format || goods.has_spec) && isClear">
-          {{ L('多规格') }}
-        </div>
-        <div class="food_price">
-          <div class="left">{{ L('￥') }}{{ goods.product_price }}</div>
-          <div class="only_straff" v-if="goods.only_staff">
-            <span>{{ L('由店员下单') }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="status_text" @click="checkmenuFood(goods)">
-        <div class="acs_food_tips" v-if="goods.is_subsidiary_goods">
-          <span>{{ L('附') }}</span>
-        </div>
-        <div class="food_fullname">{{ goods.product_name }}</div>
       </div>
        <!--  || ((goods.has_format) && isClear) -->
       <div
@@ -187,21 +182,22 @@ export default {
     }
     .topcontent {
       width: 100%;
-      padding: 0 20 / @rem * 1rem;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       flex: 1;
+      .content{
+        padding: 4 / @rem * 1rem 8 / @rem * 1rem;
+      }
       .tableinfo {
         width: 100%;
         display: flex;
         align-items: flex-end;
         justify-content: space-between;
-        margin-top: 15 / @rem * 1rem;
         .tablenumber {
           width: 100%;
-          font-size: 26 / @rem * 1rem;
+          font-size: 20 / @rem * 1rem;
           font-weight: bold;
           color: #333333;
           overflow: hidden;
@@ -209,7 +205,7 @@ export default {
           text-overflow: ellipsis; 
           display: -webkit-box; // 弹性伸缩盒
           -webkit-box-orient: vertical; // 设置伸缩盒子元素排列方式
-          -webkit-line-clamp: 2;
+          -webkit-line-clamp: 1;
           z-index: 3;
         }
       }
@@ -225,7 +221,7 @@ export default {
         align-items: center;
         justify-content: space-between;
         .left {
-          font-size: 26 / @rem * 1rem;
+          font-size: 20 / @rem * 1rem;
           color: #666666;
         }
         .only_straff {
@@ -251,35 +247,24 @@ export default {
       }
     }
     .status_text {
-      width: 100%;
-      padding: 0 20 / @rem * 1rem;
-      border-bottom-left-radius: 10 / @rem * 1rem;
-      border-bottom-right-radius: 10 / @rem * 1rem;
-      box-sizing: border-box;
       display: flex;
       align-items: center;
-      background-color: #f7f7f7;
+      justify-content: end;
       .acs_food_tips {
-        width: 25 / @rem * 1rem;
-        height: 25 / @rem * 1rem;
+        width: 24 / @rem * 1rem;
+        height: 24 / @rem * 1rem;
         border: 1 / @rem * 1rem solid #00cbb3;
         box-sizing: border-box;
         border-radius: 4 / @rem * 1rem;
         position: relative;
         background-color: #ffffff;
+        margin-left: 4 / @rem * 1rem;
         span {
-          width: 200%;
-          height: 200%;
-          left: -50%;
-          top: -50%;
           display: block;
-          font-size: 36 / @rem * 1rem;
+          font-size: 15 / @rem * 1rem;
           font-weight: 500;
           color: #00cbb3;
-          line-height: 40 / @rem * 1rem;
           text-align: center;
-          position: absolute;
-          transform: scale(0.5);
         }
       }
       .food_fullname {
@@ -320,7 +305,7 @@ export default {
   }
 }
 .goods_item {
-  width: 25%;
+  width: 20%;
   padding: 0 15 / @rem * 1rem;
   box-sizing: border-box;
   .card_container {
@@ -379,5 +364,10 @@ export default {
       }
     }
   }
+}
+.goods-image{
+  width: 100%;
+  height: 160 / @rem * 1rem;
+  border-radius: 10 / @rem * 1rem 10 / @rem * 1rem 0 0;
 }
 </style>

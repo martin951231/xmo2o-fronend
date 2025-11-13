@@ -199,3 +199,12 @@ export function clearNotice(business_type){
    }
 }
 
+// 停止订单轮询
+export function stopNotice(){
+  clearInterval(timer)
+  if (timer && window.clearInterval) {
+    window.clearInterval(timer)
+  }
+}
+
+

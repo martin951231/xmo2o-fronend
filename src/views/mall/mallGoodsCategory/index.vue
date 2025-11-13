@@ -5,7 +5,16 @@
           :columns="columns"
           :data-source="dataForm"
           rowKey="cat_id"
-          :pagination="false">
+          :pagination="true">
+        <template slot="expandIcon" slot-scope="props">
+          <template v-if="props.record.copyChildren && props.record.copyChildren.length">
+            <div role="button" tabindex="0" :title="L(!props.expanded?'展开行':'关闭行')"
+            class="ant-table-row-expand-icon" :class="!props.expanded?'ant-table-row-collapsed': 'ant-table-row-expanded'" @click="expandClick($event,props)"></div>
+          </template>
+          <template v-else>
+            <span class="ant-table-row-indent indent-level-2" style="padding-left: 26px;"></span>
+          </template>
+        </template>
       <template slot="pcImg" slot-scope="text, record">
         <a-button class="pcButton" v-if="record.level === 1" @click="showModal(record, 'pc')">设置轮播图</a-button>
       </template>
@@ -391,7 +400,23 @@ export default {
     loadList() {
       this.request(packageCategory.getSearchHotList, this.searchForm).then(res => {
         // console.log(res);
-        this.dataForm = res.list;
+        this.dataForm = res.list.map(v => {
+          if (v.children) {
+            // 如果 children 存在，赋值给 copyChildren
+            v.copyChildren = v.children;
+            v.copyChildren.forEach(s=>{
+              if(s.children){
+                s.copyChildren = s.children
+              }
+            })
+
+            // 清空一级分类的 children
+            v.children = [];
+          }
+          return v;
+        });
+
+
         this.total = res.count
         // console.log(this.dataForm);
       });
@@ -824,6 +849,10 @@ export default {
         });
       });
 
+    },
+    expandClick(e,props){
+      props.record.children = props.record.copyChildren
+      props.onExpand(props.record, e)
     },
   }
 };

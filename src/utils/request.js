@@ -5,14 +5,10 @@ import notification from 'ant-design-vue/es/notification'
 import { VueAxios } from './axios'
 import { getTokenName, getCookie, setCookie, getSystemName } from './util'
 
-// const baseUrl = location.protocol + '//' + location.host + '/v20/public/index.php' // 后端基础地址
-// const old_baseUrl = location.protocol + '//' + location.host
-
-/**
- * 这里的baseurl最好写相对路径，不要写域名，否则的话不会走代理，请求接口的时候会报跨域错误
- */
-const baseUrl = '/v20/public/index.php' // 后端基础地址
-const old_baseUrl = ''
+const baseUrl = location.protocol + '//' + location.host + '/v20/public/index.php' // 后端基础地址
+const old_baseUrl = location.protocol + '//' + location.host
+// const baseUrl = 'https://www.zhongxiang2020.com/v20/public/index.php' // 后端基础地址
+// const old_baseUrl = 'https://www.zhongxiang2020.com'
 // 创建 axios 实例
 const service = axios.create({
     baseURL: baseUrl, // api base_url

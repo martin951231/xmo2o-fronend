@@ -7,17 +7,17 @@
 class Coordinate {
     // WGS-84 (Tianditu) to BD-09 (Baidu)
     static wgs84ToBd09(wgs84_lng, wgs84_lat) {
-        const gcj = this.wgs84ToGcj02(wgs84_lng, wgs84_lat);
-        return this.gcj02ToBd09(gcj[0], gcj[1]);
+        const gcj = Coordinate.wgs84ToGcj02(wgs84_lng, wgs84_lat);
+        return Coordinate.gcj02ToBd09(gcj[0], gcj[1]);
     }
 
     // WGS-84 (Tianditu) to GCJ-02 (Gaode/Tencent)
     static wgs84ToGcj02(wgs84_lng, wgs84_lat) {
-        if (this.outOfChina(wgs84_lng, wgs84_lat)) {
+        if (Coordinate.outOfChina(wgs84_lng, wgs84_lat)) {
             return [wgs84_lng, wgs84_lat];
         }
-        const dLat = this.transformLat(wgs84_lng - 105.0, wgs84_lat - 35.0);
-        const dLng = this.transformLng(wgs84_lng - 105.0, wgs84_lat - 35.0);
+        const dLat = Coordinate.transformLat(wgs84_lng - 105.0, wgs84_lat - 35.0);
+        const dLng = Coordinate.transformLng(wgs84_lng - 105.0, wgs84_lat - 35.0);
         const radLat = wgs84_lat / 180.0 * Math.PI;
         let magic = Math.sin(radLat);
         magic = 1 - 0.00669342162296594323 * magic * magic;
@@ -42,8 +42,8 @@ class Coordinate {
 
     // GCJ-02 (Gaode/Tencent) to WGS-84 (Tianditu)
     static gcj02ToWgs84(gcj_lng, gcj_lat) {
-        const d = this.transformLat(gcj_lng - 105.0, gcj_lat - 35.0);
-        const e = this.transformLng(gcj_lng - 105.0, gcj_lat - 35.0);
+        const d = Coordinate.transformLat(gcj_lng - 105.0, gcj_lat - 35.0);
+        const e = Coordinate.transformLng(gcj_lng - 105.0, gcj_lat - 35.0);
         const radLat = gcj_lat / 180.0 * Math.PI;
         let magic = Math.sin(radLat);
         magic = 1 - 0.00669342162296594323 * magic * magic;
@@ -68,8 +68,8 @@ class Coordinate {
 
     // BD-09 (Baidu) to WGS-84 (Tianditu)
     static bd09ToWgs84(bd_lng, bd_lat) {
-        const gcj = this.bd09ToGcj02(bd_lng, bd_lat);
-        return this.gcj02ToWgs84(gcj[0], gcj[1]);
+        const gcj = Coordinate.bd09ToGcj02(bd_lng, bd_lat);
+        return Coordinate.gcj02ToWgs84(gcj[0], gcj[1]);
     }
 
     // Check if coordinates are outside China

@@ -107,7 +107,7 @@
 import atlasArticleCreate from '@/views/atlas/merchant/AtlasArticleCreate'
 import atlasArticleView from '@/views/atlas/merchant/AtlasArticleView'
 import atlascategoryPlatformApi from '@/api/atlas/merchant'
-import StandardFormRow from '@/components'
+import StandardFormRow from '@/components/StandardFormRow'
 
 export default {
   name: 'GroupSearchHotList',

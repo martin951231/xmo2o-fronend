@@ -331,6 +331,7 @@
                     :row-selection="rowSelection" :rowKey="record=>record.key" :columns="columns" :data-source="data"
                     :scroll="{ x: 1100 }">
                     <a slot="name" slot-scope="text">{{ text }}</a>
+                    <span slot="rule_name" slot-scope="text, record"><a-tag v-if="record.meter_reading_id*1>0 && record.order_type_flag=='split_order_by_balance'" color="orange" style="font-weight: bold;color: #f53405;">拆</a-tag>{{record.rule_name}}</span>
                     <span slot="action" slot-scope="text, record">
                         <a @click="showpopup_detailsList(record)" v-if="!record.children">详情</a>
                         <span v-if="record.is_discard*1!=3">
@@ -1200,7 +1201,7 @@
         <PayableOrderList ref="PayableOrderModel"></PayableOrderList>
         <ChildrenPosition ref="ChildrenPositionModel"></ChildrenPosition>
         <CarList ref="CarListModel"></CarList>
-        <allBalanceMoneyInfo ref="allBalanceMoneyInfo" />
+        <allBalanceMoneyInfo ref="allBalanceMoneyInfo" @ok="reload"  />
     </div>
 </template>
 
@@ -1210,7 +1211,7 @@
     import villageApi from '@/api/community/village'
     import TagSelectOption from '../../../../../components/TagSelect/TagSelectOption'
     import GetPrintTemplate from '@/views/community/village/charge/cashier/getPrintTemplate'
-    import PrintOrder from '@/views/community/village/charge/cashier/printOrder.vue'
+    import PrintOrder from '@/views/community/village/charge/cashier/printOrder'
     import PayableOrderList from '../components/payableOrderList.vue'
     import moment from 'moment'
     import {
@@ -1261,12 +1262,15 @@
     const columns = [{
             title: '收费项目',
             dataIndex: 'charge_name',
-            width: 140
+            width: 140,
         },
         {
             title: '收费标准',
             dataIndex: 'rule_name',
-            width: 120,
+            width: 140,
+            scopedSlots: {
+                customRender: 'rule_name'
+            }
         },
         {
             title: '收费模式',
@@ -1281,12 +1285,12 @@
         {
             title: '预计计费开始时间',
             dataIndex: 'service_start_time',
-            width: 160
+            width: 140
         },
         {
             title: '预计计费结束时间',
             dataIndex: 'service_end_time',
-            width: 160
+            width: 140
         },
         {
             title: '收费周期',
@@ -1296,7 +1300,7 @@
         {
             title: '账单生成时间',
             dataIndex: 'add_time',
-            width: 160
+            width: 150
 
         },
         {
@@ -4045,8 +4049,8 @@
                         return false
                     }
                     console.log('choice_nopay_ids', choice_nopay_ids);
-                    if (choice_nopay_ids.length > 50) {
-                        that.$message.error('最多可选择50个账单打印，您当前选中' + choice_nopay_ids.length + '个')
+                    if (choice_nopay_ids.length > 100) {
+                        that.$message.error('最多可选择100个账单打印，您当前选中' + choice_nopay_ids.length + '个')
                         return false
                     }
                 }

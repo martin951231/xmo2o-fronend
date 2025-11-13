@@ -934,7 +934,7 @@
   import villageApi from '@/api/community/village'
   import TagSelectOption from '../../../../../components/TagSelect/TagSelectOption'
   import GetPrintTemplate from '@/views/community/village/charge/cashier/getPrintTemplate'
-  import PrintOrder from '@/views/community/village/charge/cashier/printOrder.vue'
+  import PrintOrder from '@/views/community/village/charge/cashier/printOrder'
   import PayableOrderList from '../components/payableOrderList.vue'
   import moment from 'moment'
   import { Collapse } from 'ant-design-vue'
@@ -2877,8 +2877,8 @@
               return false
             }
             console.log('choice_nopay_ids',choice_nopay_ids);
-            if (choice_nopay_ids.length > 50) {
-              that.$message.error('最多可选择50个账单打印，您当前选中' + choice_nopay_ids.length + '个')
+            if (choice_nopay_ids.length > 100) {
+              that.$message.error('最多可选择100个账单打印，您当前选中' + choice_nopay_ids.length + '个')
               return false
             }
           }

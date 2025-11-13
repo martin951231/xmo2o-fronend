@@ -27,6 +27,15 @@ const mixin = {
     },
     isSideMenu () {
       return !this.isTopMenu()
+    },
+    //来源是否存在iframe
+    isFromIframe(){
+      let from = this.$route.query.from
+      if(from == 'iframe'){
+        return true
+      }else{
+        return false
+      }
     }
   }
 }

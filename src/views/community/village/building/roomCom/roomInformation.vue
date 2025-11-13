@@ -150,7 +150,7 @@
                 </a-form-model-item>
             </div>
             
-            <div class="form_title" style="font-weight: 600;margin-top: 10px; diplay:flex; align-items:center;" v-if="water_electric_gas_module.status || many_water_electric_meter.is_open==1">
+            <div class="form_title" style="font-weight: 600;margin-top: 10px; diplay:flex; align-items:center;" v-if="water_electric_gas_module.status || many_water_electric_meter.is_open==1 || yumenlao_special_meter.is_open==1">
                 设备管理
                 <span  v-if="water_electric_gas_module.status" style="font-weight: 500; color:green; margin-left:20px; font-size:14px;">注意：对接水电燃仪表设备，由设备方提供水电燃设备接口</span>
                 <span style="font-weight: 500; color: red; margin-left:20px; font-size:14px;">表号具有唯一性，不可重复填写</span>
@@ -170,7 +170,12 @@
                     <a-input v-model="roomForm.gas_number" placeholder="请输入燃气表编号" />
                 </a-form-model-item>
             </div>
-               
+            
+            <div class="form_con" style="margin-top: 10px;" v-if="yumenlao_special_meter.meters.length>0">
+                   <a-form-model-item :label="yitem.xtitle" v-for="(yitem,yindex) in yumenlao_special_meter.meters" class="form_item">
+                   <a-input  placeholder="请输入表编号"  v-model="yitem.meter_code" />
+                   </a-form-model-item>
+            </div>
             <a-divider v-if="many_water_electric_meter.is_open==1" />
             <div class="form_con many_water_electric_meter" style="margin-top: 10px;" v-if="many_water_electric_meter.is_open==1">
                 <div class="water_meter" style="display: block;width: 100%;">
@@ -275,6 +280,7 @@
             })
             let water_electric_gas_module = ref({})
             let many_water_electric_meter = ref({})
+            let yumenlao_special_meter= ref({})
             let delayPost = ref(false)
             
             let fileListStart= ref([])
@@ -299,6 +305,7 @@
                 roomForm.value.room_imgs=room_imgs.value;
                 roomForm.value.water_meter_data=many_water_electric_meter.value.water_data;
                 roomForm.value.electric_meter_data=many_water_electric_meter.value.electric_data;
+                roomForm.value.yumenlao_special_meter=yumenlao_special_meter.value.meters;
                 delayPost.value = true
                 Vue.prototype.request('/community/village_api.Building/subRoomAttribute', roomForm.value).then((res) => {
                     delayPost.value = false
@@ -329,7 +336,7 @@
             }
             
             const resetForm = ()=>{}
-            const labelCol=ref({ span: 4 })
+            const labelCol=ref({ span: 5 })
             const wrapperCol=ref({ span: 18 })
             const dateFormat = ref('YYYY/MM/DD')
             let a185_indoor_module = ref({})
@@ -396,6 +403,7 @@
                     a185_indoor_module.value = res.a185_indoor_module
                     water_electric_gas_module.value = res.water_electric_gas_module
                     many_water_electric_meter.value = res.many_water_electric_meter
+                    yumenlao_special_meter.value = res.yumenlao_special_meter
                     roomForm.value = {...res.room_info, ...res.a185_indoor_module.data, ...res.water_electric_gas_module.data}
                     if(roomForm.value.village_contract_time_start && roomForm.value.village_contract_time_end){
                         disabledDate()
@@ -484,6 +492,7 @@
                 previewImageStart,
                 getBase64,
                 onDateLeaseChange,
+                yumenlao_special_meter,
             }
         }
     })

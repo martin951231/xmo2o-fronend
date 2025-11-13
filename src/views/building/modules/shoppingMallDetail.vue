@@ -46,11 +46,7 @@
             </div>
         </a-descriptions-item>
     </a-descriptions>
-
-    
-     
 </template>
-
 <script>
 import buildingPlatformApi from '@/api/building/index'
 import TiandituMap from '@/components/TiandituMap/indexMap' 

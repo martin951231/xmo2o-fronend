@@ -15,6 +15,9 @@ const CouponPlatformComponents = {
 
     //商家优惠券核销记录
     'MerUseRecords': () => import('@/views/coupon/merchant/MerUseRecords'),
+
+    //商家智能发券
+    'SmartCoupon': () => import('@/views/coupon/merchant/SmartCoupon'),
 }
 export default CouponPlatformComponents
   

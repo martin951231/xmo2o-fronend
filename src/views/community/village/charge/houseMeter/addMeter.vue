@@ -119,7 +119,7 @@
                     <a-col :span="18">
                         <a-input-number :maxLength="10" :min="0" :precision="2" :step="0.01" style="width: 300px" v-model="start_ammeter"  :disabled='start_ammeter_disabled' />
                         <br/>
-                        <a-button v-if="reset_btn_show" type="primary" class="margin_left_10 margin_top_20" @click="resetForm">表数重置</a-button>
+                        <a-button v-if="reset_btn_show && !edit_disabled" type="primary" class="margin_left_10 margin_top_20" @click="resetForm">表数重置</a-button>
                     </a-col>
                     <a-col :span="6">
                     </a-col>
@@ -394,6 +394,7 @@
                 electric_service_project_id:'',
                 start_ammeter_disabled:false,
                 is_exceed:0,
+                isAihorseCustomized:0,
             }
         },
         methods: {
@@ -525,6 +526,12 @@
                       this.meter_use_v=res.meter_use_v;
                       this.start_ammeter_disabled = this.reset_btn_show ? false : true;
                   }
+                  if (res && res.isAihorseCustomized) {
+                       this.isAihorseCustomized=1;
+                       //编辑时也要能改
+                       this.start_ammeter_disabled=false;
+                  }
+
                 })
             },
             changeXTab(index){
@@ -672,14 +679,15 @@
                 if(this.xtype!='revise_data'){
 					let tmp_start_ammeter=parseFloat(this.start_ammeter);
 					let tmp_last_ammeter=parseFloat(this.last_ammeter);
-                    if (tmp_start_ammeter >= tmp_last_ammeter && !this.jz_wsxdsj_customized_open) {
-                        this.$message.warning('止度需要大于起度');
+                  if (tmp_start_ammeter<=0 && tmp_last_ammeter <=0 ) {
+                      this.$message.warning('起度/止度不能都为空');
+                      return false;
+                  }
+                    if (tmp_last_ammeter < tmp_start_ammeter && !this.jz_wsxdsj_customized_open) {
+                        this.$message.warning('止度不能小于起度');
                         return false;
                     }
-                    if (tmp_start_ammeter<=0 && tmp_last_ammeter <=0 ) {
-                        this.$message.warning('起度/止度不能为空');
-                        return false;
-                    }
+
                 }
                 var start_ammeter = this.start_ammeter ? this.start_ammeter : 0;
                 var meter_num = this.last_ammeter - start_ammeter;

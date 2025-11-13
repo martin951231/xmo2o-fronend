@@ -150,7 +150,7 @@
                         </div>
                     </div>
 
-                    <div class="out_btn">
+                    <div class="out_btn" >
                         <div class="out_btn_left">
                             <a-button type="primary" class="in_btn_red" @click="handle_open(item,1)">手动抬杆</a-button>
                         </div>
@@ -232,7 +232,7 @@
                         </div>
                     </div>
 
-                    <div class="out_btn">
+                    <div class="out_btn" >
                         <div class="out_btn_left">
                             <a-button type="primary" class="in_btn_green" @click="handle_open(item,2)">免费放行</a-button>
                         </div>
@@ -855,11 +855,9 @@
         beforeDestroy() {
             this.isComponentVisible = false
             // 在组件销毁前清除定时器
-            if (this.timer) {
-                clearInterval(this.timer)
-            }
+            this.clearTimer()
             if (this.tableTimer) {
-                clearInterval(this.tableTimer)
+                clearTimeout(this.tableTimer)
             }
         },
         methods: {
@@ -892,13 +890,19 @@
                     this.getNow_video()
                     this.startPolling()
 
-                    //轮询
-                    this.tableTimer = setInterval(() => {
-                        if(this.pagination.current == 1){
-                            this.pagination.current = 1
-                            this.getTableData()
+                    // 使用 setTimeout 实现轮询
+                    const poll = () => {
+                        if (this.pagination.current == 1) {
+                            this.pagination.current = 1;
+                            this.getTableData();
                         }
-                    }, 1000 * 10)
+                        
+                        // 递归调用，模拟轮询
+                        this.tableTimer = setTimeout(poll, 6000 * 10);
+                    };
+
+                    // 启动轮询
+                    this.tableTimer = setTimeout(poll, 2000 * 10);
                 })
             },
 
@@ -906,19 +910,24 @@
                 this.is_public_v = !this.is_public_v
                 this.handleCreatePublicVideo()
             },
+            
             closeParkPassage(parkPassage) {
+              const watch_login_role = localStorage.getItem('watch_login_role')
                 let param={passage_id:parkPassage.id,garage_id:parkPassage.garage_id,current_village_id:parkPassage.village_id};
+                if (watch_login_role == '202' || watch_login_role == '201') {
+                    let sysName = 'property'
+                    param.tokenName = sysName + '_access_token'
+                }
                 this.request('/community/village_api.HouseSentryWatch/closeParkPassageCmd', param).then((res) => {        
                     this.$message.success(res.tips_msg)
                 }).catch((error) => {
                     
                 })
             },
+            
             startPolling() {
-                if (this.timer) {
-                    clearInterval(this.timer) // 清除已存在的定时器
-                }
-                this.timer = setInterval(() => {
+                this.clearTimer()
+                const pollStatistic = () => {
                     const watch_login_role = localStorage.getItem('watch_login_role')
                     let param = {
                         current_village_id: this.Left_info.current_village_id,
@@ -931,8 +940,7 @@
                         .then(
                             (res) => {
                                 if (res.err_code == '2') {
-                                    clearInterval(this.timer)
-                                    this.timer = null
+                                    return
                                 }
                                 this.Left_info.cash_money = res.cash_money
                                 this.Left_info.online_money = res.online_money
@@ -950,9 +958,11 @@
                                 if (res.car_park_info && res.car_park_info.position_count) {
                                     this.Left_info.position_count = res.car_park_info.position_count
                                 }
-                            }
-                        )
-                }, 100000) // 每 100 秒调用一次
+
+                                this.timer = setTimeout(pollStatistic, 120000);
+                            })
+                }
+                   this.timer = setTimeout(pollStatistic, 10000);
             },
 
             getVideoList() {
@@ -967,8 +977,7 @@
                 this.request('/community/village_api.HouseSentryWatch/getCurrentSentryStatistics', param).then((
                     res) => {
                     if (res.err_code == '2') {
-                        clearInterval(this.timer)
-                        this.timer = null
+                        this.clearTimer()
                     }
                     this.Left_info.cash_money = res.cash_money
                     this.Left_info.online_money = res.online_money
@@ -1022,8 +1031,7 @@
                 this.isComponentVisible = false;
                 this.request('/community/village_api.HouseSentryWatch/getCarParkPassages', param).then((res) => {
                     if (res.err_code == '2') {
-                        clearInterval(this.timer)
-                        this.timer = null
+                        this.clearTimer()
                     }
                     this.isComponentVisible = true;
                     if (res.list && res.list.length > 0) {
@@ -1206,8 +1214,7 @@
                 }
                 this.request('/community/village_api.HouseSentryWatch/handOverToNext', param).then((res) => {
                     if (res.err_code == '2') {
-                        clearInterval(this.timer)
-                        this.timer = null
+                        this.clearTimer()
                     }
                     this.change_work_list.user_name = res.user_name
                     this.change_work_list.start_time_str = res.start_time_str
@@ -1232,8 +1239,7 @@
 
                 this.request('/community/village_api.HouseSentryWatch/handOverToNextOut ', param).then((res) => {
                     if (res.err_code == '2') {
-                        clearInterval(this.timer)
-                        this.timer = null
+                        this.clearTimer()
                     }
                     this.$message.success(res.msg)
                     localStorage.removeItem('watch_login_role')
@@ -1317,8 +1323,7 @@
                         }
                         this.request('/community/village_api.HouseSentryWatch/open_gate', param).then((res) => {
                             if (res.err_code == '2') {
-                                clearInterval(this.timer)
-                                this.timer = null
+                                this.clearTimer()
                             }
                             this.closehandle()
                             this.$message.success('抬杠成功!')
@@ -1370,8 +1375,7 @@
                         }
                         this.request('/community/village_api.HouseSentryWatch/open_gate', param).then((res) => {
                             if (res.err_code == '2') {
-                                clearInterval(this.timer)
-                                this.timer = null
+                                this.clearTimer()
                             }
                             this.closePay()
                             this.$message.success('费用收取成功!')
@@ -1401,8 +1405,7 @@
                         this.request('/community/village_api.HouseSentryWatch/addParkInfo', param).then((
                             res) => {
                             if (res.err_code == '2') {
-                                clearInterval(this.timer)
-                                this.timer = null
+                                this.clearTimer()
                             }
                             this.closeRecord()
                             this.$message.success('入场记录添加成功!')
@@ -1441,8 +1444,7 @@
                 }
                 this.request('/community/village_api.HouseSentryWatch/getOfflineList', param).then((res) => {
                     if (res.err_code == '2') {
-                        clearInterval(this.timer)
-                        this.timer = null
+                        this.clearTimer()
                     }
                     this.selectArray = res
                     if (res && res.length > 0) {
@@ -1546,6 +1548,12 @@
                     this.video_List[index].errorState = true
                 }
             },
+            clearTimer(){
+                if (this.timer) {
+                    clearTimeout(this.timer)
+                    this.timer = null
+                }
+            }
         },
     }
 </script>

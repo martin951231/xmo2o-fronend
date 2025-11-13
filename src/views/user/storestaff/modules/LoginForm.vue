@@ -4,7 +4,9 @@
       <template v-if="loginType == 'phoneCode'">
         <a-form-item>
           <a-input
+            @focus="handleFocus"
             size="large"
+            type="number"
             v-decorator="[
               'account',
               {
@@ -22,7 +24,9 @@
           <a-row :gutter="8">
             <a-col :span="16">
               <a-input
+              @focus="handleFocus"
               size="large"
+              type="number"
                 v-decorator="[
                   'smscode',
                   {
@@ -45,6 +49,7 @@
       <template v-else>
       <a-form-item>
         <a-input
+          @focus="handleFocus"
           size="large"
           v-decorator="[
             'account',
@@ -62,6 +67,7 @@
       </a-form-item>
       <a-form-item>
         <a-input
+          @focus="handleFocus"
           size="large"
           v-decorator="[
             'pwd',
@@ -82,7 +88,9 @@
         <a-row :gutter="8">
           <a-col :span="12">
             <a-input
+              @focus="handleFocus"
               size="large"
+              type="number"
               v-decorator="[
                 'verify',
                 {
@@ -216,6 +224,11 @@ export default {
         }
       })
     },
+    handleFocus(e) {
+      setTimeout(() => {
+        e.target.scrollIntoView({ block: "center", behavior: "smooth" });
+      }, 400);
+    }
   },
 }
 </script>

@@ -51,7 +51,7 @@
 <script>
     import Vue from 'vue';
     import villageApi from '@/api/community/village';
-    import PrintOrder from '@/views/community/village/charge/cashier/printOrder.vue';
+    import PrintOrder from '@/views/community/village/charge/cashier/printOrder';
     import 'viewerjs/dist/viewer.css';
     import Viewer from 'v-viewer';
     Vue.use(Viewer)

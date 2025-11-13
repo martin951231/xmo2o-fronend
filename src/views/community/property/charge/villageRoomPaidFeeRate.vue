@@ -15,24 +15,31 @@
       </a-collapse>
         <div class="search-box">
           <a-row  style="display: flex; flex-wrap: wrap;margin-top: 20px;margin-bottom: 10px;">
-                  <a-col :span="6" style="padding-left: 5px; padding-right: 1px;">
+                  <a-col :span="6" style="padding-left: 5px; padding-right: 1px;width:370px;">
                     <label style="margin-top: 5px;">请选择小区：</label>
-                    <a-select style="width: 280px" placeholder="请选择小区" mode="multiple" v-model="search.village_ids" @change="handleVillageChange">
-
+                    <a-select style="width: 280px;" placeholder="请选择小区" mode="multiple" v-model="search.village_ids" @change="handleVillageChange">
                       <a-select-option  v-for="(item,index) in villageList" :value="item.village_id" :key="item.village_id" >
                         {{item.village_name}}
                       </a-select-option>
                     </a-select>
                   </a-col>
-                  <a-col :span="6" style="padding-left: 5px; padding-right: 1px;">
+                  <a-col :span="6" style="padding-left: 5px; padding-right: 1px;width:380px;">
                     <label style="margin-top: 5px;">选择楼栋管家：</label>
-                    <a-select  style="width: 280px" placeholder="请选择楼栋管家" v-model="search.w_singles" mode="multiple" >
-                      <a-select-option  v-for="(item,index) in singleheeper_list" :value="item.key_id" :key="item.key_id" >
+                    <a-select  style="width: 270px" placeholder="请选择楼栋管家" v-model="search.wids" mode="multiple" @change="handleSelect3Change">
+                      <a-select-option  v-for="(item,index) in singleheeper_list" :value="item.wid" :key="item.wid" >
                         {{item.title_name}}
                       </a-select-option>
                     </a-select>
                   </a-col>
-                <a-col :md="5"  style="padding-left: 5px;padding-right: 1px;">
+                  <a-col :span="6" style="padding-left: 5px; padding-right: 1px;width:370px;">
+                    <label style="margin-top: 5px;">选择楼栋：</label>
+                    <a-select  style="width: 280px" placeholder="请选择楼栋" v-model="search.single_ids" mode="multiple" >
+                      <a-select-option  v-for="(item1,index1) in singleList" :value="item1.single_id" :key="item1.single_id" >
+                        {{item1.single_name}}
+                      </a-select-option>
+                    </a-select>
+                  </a-col>
+                <a-col :md="5"  style="padding-left: 5px;padding-right: 1px;width:260px;">
                      <label style="margin-top: 5px;">选择年份：</label>
                     <a-select placeholder="请选择年份" style="width: 160px" v-model="search.year_v" >
                         <a-select-option  :value="yearV-yindex" v-for="yindex of yearLen" :key="yearV-yindex">{{ yearV-yindex }}年</a-select-option>
@@ -45,7 +52,7 @@
                     查询
                   </a-button>
                 </a-col>
-                <a-col :md="2"  style="width: 100px;padding-left: 1px; margin-left: 20px;">
+                <a-col :md="2"  style="width: 90px;padding-left: 1px; margin-left: 20px;">
                     <a-button type="primary" @click="$refs.roomRateSummaryRecord.showRateSummaryRecord({rate_type:0,xtype:1})" >历史快照</a-button>
                 </a-col>
             </a-row>
@@ -126,7 +133,7 @@
         list:[],
         id:0,
         columns,
-        search: {year_v:moment().format('YYYY')*1,village_ids:[],w_singles:[]},
+        search: {year_v:moment().format('YYYY')*1,village_ids:[],w_singles:[],wids:[],single_ids:[]},
         tips_year_v:moment().format('YYYY')*1,
         singleheeper_list: [],
         exportFeeVisible:false,
@@ -134,6 +141,7 @@
         villageList:[],
         yearV:moment().format('YYYY')*1+3,
         yearLen:100,
+        singleList:[],
       };
     },
     mounted(){
@@ -160,18 +168,38 @@
       
       handleVillageChange(){
          this.search.w_singles=[];
+         this.singleList=[];
+         this.search.wids=[];
+         this.search.single_ids=[];
         if(this.search.village_ids.length>0){
             let postArr={village_ids:this.search.village_ids}
-            this.request(newChargeApi.getPropertySingleKeepers, postArr)
+            this.request('/community/property_api.PropertyWorker/getVillageKeepersList', postArr)
               .then((res) => {
                 this.singleheeper_list = res.list
               }).catch((error) => {
-     
+           
               })
         }else{
             this.singleheeper_list=[]; 
         }
       },
+      handleSelect3Change(){
+          
+          this.search.single_ids=[];
+          if(this.search.village_ids.length<1){
+              this.search.wids=[];
+              this.singleList=[];
+              return true;
+          }
+          let postArr={village_ids:this.search.village_ids,wids:this.search.wids}
+          this.request('/community/property_api.PropertyWorker/getVillageSingleListByWid', postArr)
+                .then((res) => {
+                  this.singleList= res.list
+          }).catch((error) => {
+                    
+        }); 
+      },
+      
     },
   };
 </script>

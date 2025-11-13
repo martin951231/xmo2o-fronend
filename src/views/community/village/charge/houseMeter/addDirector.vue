@@ -135,8 +135,8 @@
         <a-form-item label="状态" :labelCol="labelCol" :wrapperCol="wrapperCol" :required="true">
           <a-col :span="18">
             <a-radio-group  v-model="status">
-              <a-radio :value=1>正常</a-radio>
-              <a-radio :value=2>禁止</a-radio>
+              <a-radio value="1">正常</a-radio>
+              <a-radio value="2">禁止</a-radio>
             </a-radio-group>
           </a-col>
         </a-form-item>
@@ -180,7 +180,7 @@
                 work_list :[],
                 worker_id:'',
                 phone:'',
-                status:1,
+                status:"1",
                 time:'2021-7-30',
                 name:'',
                 id:0,
@@ -215,7 +215,7 @@
                 this.worker_id = 0;
                 this.dateDay= '09:00';
                 this.day=1;
-                this.status=1;
+                this.status="1";
 
                 this.title = '添加负责人';
                 this.project_id = project_id;

@@ -82,6 +82,16 @@ const path = {
         '/community/village/building/roomCom/ownerCom/chatRecord',
         // 外卖店铺装修导航列表
         '/dialog/merchant.shopNewEdit/SlideList',
+
+        //骑手跑腿佣金设置
+        '/dialog/paotui.platform/RiderCommissionSetting',
+
+
+        //商场中心登录
+        '/dialog/building.platform/login',
+
+        //问卷调查
+        '/common/platform.QuestionnaireSurvey/QuestionnaireSurveyDetail',
     ],
 
     //有左侧菜单但不需要验证权限的菜单
@@ -172,6 +182,9 @@ const path = {
 
     // 店员后台自主购票
     staffautonomously: '/storestaff/storestaff.life_tools/scenic',
+
+    //店员后台优惠券核销
+    staffCouponVerifiy: '/storestaff/storestaff.coupon_verifiy/Index',
 
     // 测试页面
     example: '/example',

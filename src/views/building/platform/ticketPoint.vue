@@ -65,7 +65,7 @@
                     </span>
                 </a-table>
             </a-tab-pane>
-            <a-tab-pane key="2" tab="基础配置" force-render>
+            <a-tab-pane key="2" tab="基础配置" force-render v-if="!hideSetting">
                 <a-form-model :model="form" :label-col="labelCol" :wrapper-col="wrapperCol">
                     <a-form-model-item label="上传小票是否获得积分">
                         <a-switch v-model="form.open_ticket_point" checked-children="开启" un-checked-children="关闭"
@@ -183,13 +183,6 @@ export default {
                         customRender: 'ticket_pic',
                     },
                 },
-                // {
-                //     title: this.L('支付凭证'),
-                //     dataIndex: 'pay_pic',
-                //     scopedSlots: {
-                //         customRender: 'pay_pic',
-                //     },
-                // },
                 {
                     title: this.L('申请时间'),
                     dataIndex: 'apply_time',
@@ -218,12 +211,23 @@ export default {
                 },
             ],
             showDrawerVisible:false,
+            hideSetting : false,
+            mallId:0,
         }
     },
 
     mounted() {
+        //获取当前路由名称
+        console.log(this.$route.path,this.$route.path)
+        if(this.$route.path == '/system/building.platform/mallTicketPoint'){
+            //商场中心查看拍照积分,不要显示积分拍照设置
+            this.hideSetting = true;
+            this.mall_id = sessionStorage.getItem("login_mall_id");
+        }else{
+            //系统后台查看拍照积分
+            this.getConfig();
+        }
         this.getLists();
-        this.getConfig();
     },
     methods: {
         refresh(){
@@ -283,6 +287,9 @@ export default {
         getLists() {
             this.queryParams.page_size = this.pagination.pageSize
             this.queryParams.page = this.pagination.current
+            if(this.hideSetting){
+                this.queryParams.mall_id = this.mall_id
+            }
             this.request(buildingPlatformApi.getTicketPointLists, this.queryParams).then((res) => {
                 this.dataList = res.data
                 this.pagination.total = res.total

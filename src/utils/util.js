@@ -14,6 +14,7 @@ import { old_request, request } from './request'
 import { getUserMenu } from '@/api/user/user'
 import router from '@/router'
 import { message } from 'ant-design-vue'
+import Coordinate from "@/utils/coordinate"
 
 const dateFormat = 'YYYY-MM-DD'
 const timeFormat = 'HH:mm:ss'
@@ -601,6 +602,7 @@ let guid = (len = 32, initial = true, radix = null) => {
     }
     return uuid.join('')
 }
+export { guid }
 
 /**
  *  图片fileList
@@ -732,6 +734,43 @@ export function changeFavicon(iconUrl) {
     }
 }
 
+//经纬度转换
+export function coordinateFun(_lng, _lat, type='') {
+	// wgs84ToBd09,gcj02ToBd09,gcj02ToWgs84,bd09ToGcj02,bd09ToWgs84
+    let newFun = null
+    let flag = type == 'submit'
+    let funName = ''
+    let params = {
+        lat: _lat,
+        lng: _lng,
+    }
+    let obj = {
+        'amap': 'bd09ToGcj02',
+        'tmap': 'bd09ToWgs84',
+    }
+    //提交的时候转成百度的
+    if(type && type != 'submit'){
+        //传了类型根据类型转
+		newFun = Coordinate[type]
+	}else if(Vue.prototype.$mapConfig == 'amap'){
+        //高德地图
+        funName = flag?'gcj02ToBd09':obj['amap']
+        newFun = Coordinate[funName]
+	}else{
+		//天地图
+		if(Vue.prototype.$tiandituMapKey){
+            funName = flag?'wgs84ToBd09':obj['tmap']
+            console.log(funName);
+            newFun = Coordinate[funName]
+		}
+	}
+    if(newFun){
+        const [lng,lat] = newFun(_lng,_lat)
+        params.lat = lat
+        params.lng = lng
+    }
+  return params
+}
 /**
  * 数字转中文大写金额（支持任意小数位数，默认保留2位小数）
  * @param {number|string} num - 待转换的数字/数字字符串（如 0.01、"123.45"）
