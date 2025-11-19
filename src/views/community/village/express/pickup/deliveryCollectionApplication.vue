@@ -262,6 +262,8 @@ export default {
                             return '待取件'
                         } else if (record.status == 2) {
                             return '已取件'
+                        } else if (record.status == 99) {
+                          return '已删除'
                         }
                     }
                 },
