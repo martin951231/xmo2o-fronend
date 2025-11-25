@@ -232,12 +232,6 @@
             let room_id=ref(0)
             let orderServicetimeCheckVisible= ref(false)
             let apply_count= ref(0)
-            const updateLineDate = ()=>{
-              Vue.prototype.request('/community/village_api.Building/updateLineDate', {}).then((
-                res) => {
-
-              }).catch(e => {})
-            }
             const getSearchObj = () => {
                 Vue.prototype.request('/community/village_api.Building/getRoomListConfig', {}).then((
                 res) => {
@@ -676,7 +670,6 @@
 
             onMounted(() => {
                 getSingleListByVillage()
-              updateLineDate()
             })
 
             let uploadType = ref('')
@@ -703,7 +696,6 @@
                 getRoominfo,
                 onRoomClose,
                 onSelectChange,
-              updateLineDate,
 
                 searchList,
                 statusList,

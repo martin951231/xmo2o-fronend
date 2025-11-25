@@ -6,7 +6,7 @@
                <a-input class="input_style_240" v-model="unitForm.floor_name" />
            </a-form-model-item>
            <a-form-model-item :label="$store.getters.config.floor_name+'编号'" prop="floor_number">
-              <a-input class="input_style_240" v-model="unitForm.floor_number" />
+              <a-input class="input_style_240" v-model="unitForm.floor_number" :disabled="floor_number_disabled" />
            </a-form-model-item>
            <a-form-model-item label="IC卡门禁编号" v-if="unitForm.write_iccard*1>0" extra="多个门禁机编号以英文的逗号区分 例如(0,4)，单个门禁机直接填写门禁机编号">
               <a-input class="input_style_240" v-model="unitForm.door_control" />
@@ -61,6 +61,7 @@
             const wrapperCol = ref({
                 span: 16
             })
+            const floor_number_disabled= ref(false)
             const hik_info_vision_i_community= ref(0)
             const show_dwid = ref(0)
             const hik_info_community_floor= ref([])
@@ -118,6 +119,11 @@
                         hik_info_community_floor.value=res.hik_info_community_floor
                     }
                     show_dwid.value = res.show_dwid
+                    
+                    if(res.floor_number_disabled){
+                        floor_number_disabled.value=res.floor_number_disabled
+                    }
+                    
                 })
             }
 
@@ -146,7 +152,8 @@
                 hik_info_vision_i_community,
                 show_dwid,
                 hik_info_community_floor,
-                handleFloorSelectChange
+                handleFloorSelectChange,
+                floor_number_disabled,
             }
         }
     })

@@ -8,7 +8,7 @@
                        <a-input class="input_style_240" v-model="buildForm.single_name" />
                    </a-form-model-item>
                    <a-form-model-item :label="$store.getters.config.single_name+'编号'" prop="single_number">
-                       <a-input-number :max="99" :min="1" class="input_style_240" v-model="buildForm.single_number" />
+                       <a-input-number :max="99" :min="1" class="input_style_240" v-model="buildForm.single_number" :disabled="single_number_disabled" />
                    </a-form-model-item>
                    <a-form-model-item :label="$store.getters.config.single_name+'地址'" prop="long_lat">
                        <a-input :disabled="true" v-model="buildForm.long_lat" style="width: 200px;"></a-input>
@@ -123,6 +123,7 @@
             }
             const statusBool = ref(false)
             const startTime = ref('')
+            const single_number_disabled= ref(false)
             const endTime = ref('')
             const dateFormat = ref('YYYY/MM/DD')
             const searchArea = ref(false)
@@ -293,6 +294,11 @@
                     if(res.hik_info_community_single){
                         hik_info_community_single.value=res.hik_info_community_single
                     }
+                    
+                    if(res.single_number_disabled){
+                        single_number_disabled.value=res.single_number_disabled
+                    }
+                    
                 })
             }
 
@@ -336,7 +342,8 @@
                 disabledDate,
                 hik_info_vision_i_community,
                 hik_info_community_single,
-                handleSingleSelectChange
+                handleSingleSelectChange,
+                single_number_disabled,
             }
         }
     })
