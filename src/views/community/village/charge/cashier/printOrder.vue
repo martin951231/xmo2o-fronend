@@ -6,31 +6,38 @@
                 <span v-if="is_title" style="width: 100%; text-align: center;display: inline-block;font-size: 20px;font-weight: bold;">{{ print_title }}</span>
                 <div class="receipt">
                     <div class="company-info" style="display: flex;justify-content: flex-end;">
-                        <div class="text-nowrap" style="width: 200px;text-align: left;">开票日期：{{current_date}}</div>
+                        <div v-if="1" class="text-nowrap" style="width: 200px;text-align: left;">开票日期：{{current_date}}</div>
                     </div>
-                    <div class="info-item">
+                    <div class="info-item" v-if="printList1.findIndex(v=>['房号', '小区', '住户姓名'].includes(v.title))!=-1">
                         <div class="info-label">今收到</div>
                         <div class="info-content">
-                            {{ (item = list1.find(i => i.title === '小区')) && item.value || '' }}&nbsp;&nbsp;
-                            {{ (item = list1.find(i => i.title === '房号')) && item.value || '' }}&nbsp;&nbsp;
-                            {{ (item = list1.find(i => i.title === '住户姓名')) && item.value || '' }}&nbsp;&nbsp;
+                          <span v-if="printList1.findIndex(v=>v.title=='小区')!=-1" >{{ (item = list1.find(i => i.title === '小区')) && item.value || '' }}&nbsp;&nbsp;</span>
+                          <span v-if="printList1.findIndex(v=>v.title=='房号')!=-1" >{{ (item = list1.find(i => i.title === '房号')) && item.value || '' }}&nbsp;&nbsp;</span>
+                          <span v-if="printList1.findIndex(v=>v.title=='住户姓名')!=-1" >{{ (item = list1.find(i => i.title === '住户姓名')) && item.value || '' }}&nbsp;&nbsp;</span>
                         </div>
                     </div>
-                    <div class="info-item">
+                    <div class="info-item" v-if="printList2.findIndex(v=>['收费项目', '起始日期', '终止日期'].includes(v.title))!=-1">
                         <div class="info-label">交来</div>
-                        <div class="info-content">&nbsp;&nbsp;{{item_list[0]}}（{{item_list[1]}} - {{item_list[2]}}）&nbsp;&nbsp;</div>
+                        <div class="info-content">
+                          <span v-if="printList2.findIndex(v=>v.title=='收费项目')!=-1">&nbsp;&nbsp;{{item_list[0]}}</span>
+                          （
+                          <span v-if="printList2.findIndex(v=>v.title=='起始日期')!=-1">{{item_list[1]}}</span>
+                          -
+                          <span v-if="printList2.findIndex(v=>v.title=='终止日期')!=-1">{{item_list[2]}}</span>
+                           ）&nbsp;&nbsp;
+                        </div>
                     </div>
-                    <div class="info-item" style="display:flex;justify-content: space-between;">
+                    <div class="info-item" style="display:flex;justify-content: space-between;" v-if="printList2.findIndex(v=>v.title=='实收金额')!=-1">
                         <div style="display:flex;">
                             <div class="info-label">人民币(大写)</div>
-                            <div class="text-underline">&nbsp;&nbsp;{{numberToChinese(item_list[3])}}&nbsp;&nbsp;</div>
+                            <div class="text-underline">&nbsp;&nbsp;{{numberToChinese(item_list[3] || item_list[0])}}&nbsp;&nbsp;</div>
                         </div>
                         <div style="display:flex;width: 200px;">
                             <div class="">小写：</div>
-                            <div class="text-underline">&nbsp;&nbsp;¥{{item_list[3]}}&nbsp;&nbsp;</div>
+                            <div class="text-underline">&nbsp;&nbsp;¥{{item_list[3] || item_list[0]}}&nbsp;&nbsp;</div>
                         </div>
                     </div>
-                    <div class="handler" style="display: flex;justify-content: flex-end;">
+                    <div class="handler" style="display: flex;justify-content: flex-end;" v-if="printList3.findIndex(v=>['经手人'].includes(v.title))!=-1">
                         <div class="hand-person text-nowrap" style="width: 200px;text-align: left;">
                             经手人：{{ (name = current_userinfo.name.replace(/^【.*?】|【.*?】$/g, "")) && name || ''}}
                         </div>

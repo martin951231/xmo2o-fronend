@@ -445,15 +445,26 @@
                             <div class="company-info flex justify-end">
                                 <div class="text-nowrap" style="width: 150px;text-align: left;">开票日期：【开票日期】</div>
                             </div>
-                            <div class="info-item">
+                            <div class="info-item" v-if="printList.findIndex(v=>['房号', '小区', '住户姓名'].includes(v.title))!=-1">
                                 <div class="info-label">今收到</div>
-                                <div class="info-content">【房间号】【住户姓名】【小区名称】</div>
+                                <div class="info-content">
+                                  <span v-if="printList.findIndex(v=>v.title=='小区')!=-1" >【小区名称】</span>
+                                  <span v-if="printList.findIndex(v=>v.title=='房号')!=-1" >【房间号】</span>
+                                  <span v-if="printList.findIndex(v=>v.title=='住户姓名')!=-1" >【住户姓名】</span>
+                                </div>
                             </div>
-                            <div class="info-item">
+                            <div class="info-item" v-if="printList.findIndex(v=>['收费项目', '起始日期', '终止日期'].includes(v.title))!=-1">
                                 <div class="info-label">交来</div>
-                                <div class="info-content">【收款项目】（【开始日期】 - 【结束日期】）</div>
+                                <div class="info-content">
+                                  <span v-if="printList.findIndex(v=>v.title=='收费项目')!=-1">【收款项目】</span>
+                                  （
+                                  <span v-if="printList.findIndex(v=>v.title=='起始日期')!=-1">【开始日期】</span>
+                                  <span> - </span>
+                                  <span v-if="printList.findIndex(v=>v.title=='终止日期')!=-1">【结束日期】</span>
+                                  ）
+                                </div>
                             </div>
-                            <div class="amount">
+                            <div class="amount" v-if="printList.findIndex(v=>v.title=='实收金额')!=-1">
                                 <div class="info-item justify-between">
                                     <div class="flex nowrap">
                                         <div class="info-label">人民币(大写)</div>
@@ -465,7 +476,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="handler flex justify-end">
+                            <div class="handler flex justify-end" v-if="printList.findIndex(v=>['经手人'].includes(v.title))!=-1">
                                 <div class="text-nowrap" style="width: 150px;text-align: left;">经手人：【经手人】</div>
                             </div>
                         </div>
