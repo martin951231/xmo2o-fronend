@@ -10,6 +10,11 @@
                         <a-radio :value="0">禁用</a-radio>
                     </a-radio-group>
                 </a-form-model-item>
+
+                <a-form-model-item label="自动关闭工单时间" prop="grab_order_time">
+                  <a-input-number id="inputNumber" v-model="baseForm.close_order_time" :min="0" />
+                  天（已经完结的工单将在此时间后自动关闭）
+                </a-form-model-item>
                 
                 <a-form-model-item label="新版工单自动抢单" prop="is_grab_order" extra="自动抢单功能是指对工单类别,没有绑定负责人处理时间的情况下,业主发布工单时工作人员自行抢接这个任务,例如投诉工单或保修工单">
                     <a-radio-group name="radioGroup" :default-value="1" v-model="baseForm.is_grab_order" @change="changeGrabOrder">
@@ -157,6 +162,7 @@
                 labelCol: { span: 4 },
                 wrapperCol: { span: 18 },
                 baseForm: {
+                    close_order_time:0,
                     is_timely:0,
                     is_grab_order:0,
                     grab_order_time:0,

@@ -115,19 +115,19 @@ const vueConfig = {
   // },
 
     devServer: {
-        host: 'dev.mrsqfw.com',
+        host: 'cloud.mrsqfw.com',
         port: 8086,
         disableHostCheck: true,
         // If you want to turn on the proxy, please remove the mockjs /src/main.jsL11
-        proxy: {
-            '/v20': {
-                // target: baseUrl,
-                target: 'http://dev.mrsqfw.com',
-                // ws: false,
-                changeOrigin: true
-            }
-
-        }
+        // proxy: {
+        //     '/v20': {
+        //         // target: baseUrl,
+        //         target: 'http://dev.mrsqfw.com',
+        //         // ws: false,
+        //         changeOrigin: true
+        //     }
+        //
+        // }
         // proxy: {
         //     '/v20': {
         //         // target: baseUrl,
