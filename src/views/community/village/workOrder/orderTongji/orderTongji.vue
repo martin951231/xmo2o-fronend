@@ -153,7 +153,7 @@
                     <span slot="status_txt" slot-scope="text, record">
                         <span :style="'color:'+record.color ">{{record.status_txt}}</span>
                     </span>
-                    <span slot="order_content" slot-scope="text, record">
+                    <span v-if="record.inspection_auto_add !== 1" slot="order_content" slot-scope="text, record" >
                         <a-tooltip placement="topLeft" v-if="record.order_content.length > 8">
                             <template slot="title">
                                 <span>{{record.order_content}}</span>
@@ -162,6 +162,50 @@
                         </a-tooltip>
                         <span v-else>{{record.order_content}}</span>
                     </span>
+                  <div v-else slot="order_content" slot-scope="text, record">
+                      <div v-if="record.inspection_auto_add === 1">
+                        <a-tooltip placement="topLeft">
+                          <template slot="title">
+                            <table border="1" cellpadding="8" cellspacing="0" style="width: 100%;">
+                              <thead>
+                              <tr style="background: #329eeb;text-align: center;">
+                                <th>巡检记录类别</th> <!-- 新增record_name列 -->
+                                <th>巡检记录项</th>
+                                <th>巡检记录内容</th>
+                              </tr>
+                              </thead>
+                              <tbody>
+                              <!-- 第一层循环：遍历item.content数组的每一项 -->
+                              <template v-for="(contentItem, contentIndex) in record.order_content" >
+                                <!-- 第二层循环：遍历当前contentItem下的record_cate_field_config数组 -->
+                                <tr
+                                  v-for="(field, fieldIndex) in contentItem.record_cate_field_config"
+                                  :key="`${contentIndex}-${fieldIndex}`"
+                                  style="text-align: center;"
+                                >
+                                  <!-- 合并单元格：仅在当前contentItem的第一个field显示record_name并合并行 -->
+                                  <td
+                                    v-if="fieldIndex === 0"
+                                    :rowspan="contentItem.record_cate_field_config.length"
+                                    style="vertical-align: middle;"
+                                  >
+                                    {{ contentItem.record_name }}
+                                  </td>
+                                  <!-- 非第一个field隐藏该列（通过rowspan合并后无需重复显示） -->
+                                  <td v-else style="display: none;"></td>
+
+                                  <td>{{ field.title }}</td>
+                                  <!-- 清理value中的\r换行符，空值显示"无" -->
+                                  <td>{{ field.value ? field.value.replace(/\r/g, '') : '无' }}</td>
+                                </tr>
+                              </template>
+                              </tbody>
+                            </table>
+                          </template>
+                          <span>{{record.order_content[0]['record_name']}}</span>
+                        </a-tooltip>
+                      </div>
+                  </div>
                 </a-table>
             </div>
         </div>
@@ -200,10 +244,48 @@
                         </div>
                         <div class="title">处理记录</div>
                         <div class="list_4">
-                            <div class="list_box">
+                            <div class="list_box" style="width: 100%;">
                                 <div class="list" v-for="(item,index) in detail.order_detail.log_info.children">
                                     <div class="text_1">{{item.title}}：</div>
-                                    <div class="text_2">{{item.content?item.content:'无'}}</div>
+                                    <div v-if="detail.order_detail.inspection_auto_add === 1 && item.title == '内容'">
+<!--                                      {{item.content || '无'}}-->
+                                      <table border="1" cellpadding="8" cellspacing="0" style="width: 100%;">
+                                        <thead>
+                                        <tr style="background: #f5f5f5;text-align: center;">
+                                          <th>巡检记录类别</th> <!-- 新增record_name列 -->
+                                          <th>巡检记录项</th>
+                                          <th>巡检记录内容</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <!-- 第一层循环：遍历item.content数组的每一项 -->
+                                        <template v-for="(contentItem, contentIndex) in item.content" >
+                                          <!-- 第二层循环：遍历当前contentItem下的record_cate_field_config数组 -->
+                                          <tr
+                                            v-for="(field, fieldIndex) in contentItem.record_cate_field_config"
+                                            :key="`${contentIndex}-${fieldIndex}`"
+                                            style="text-align: center;"
+                                          >
+                                            <!-- 合并单元格：仅在当前contentItem的第一个field显示record_name并合并行 -->
+                                            <td
+                                              v-if="fieldIndex === 0"
+                                              :rowspan="contentItem.record_cate_field_config.length"
+                                              style="vertical-align: middle;"
+                                            >
+                                              {{ contentItem.record_name }}
+                                            </td>
+                                            <!-- 非第一个field隐藏该列（通过rowspan合并后无需重复显示） -->
+                                            <td v-else style="display: none;"></td>
+
+                                            <td>{{ field.title }}</td>
+                                            <!-- 清理value中的\r换行符，空值显示"无" -->
+                                            <td>{{ field.value ? field.value.replace(/\r/g, '') : '无' }}</td>
+                                          </tr>
+                                        </template>
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                    <div v-else class="text_2">{{item.content?item.content:'无'}}</div>
                                 </div>
                                 <div class="list_2">
                                     <div class="text_1">图例：</div>
@@ -270,7 +352,47 @@
                                         </div>
                                         <div class="text_1" v-else>图例：</div>
                                         <div class="text_2" v-if="item1.title != '' ">
+                                          <div v-if="item2.inspection_auto_add === 1 && item1.title == '内容'">
+                                            <table border="1" cellpadding="8" cellspacing="0" style="width: 100%;">
+                                              <thead>
+                                              <tr style="background: #f5f5f5;text-align: center;">
+                                                <th>巡检记录类别</th> <!-- 新增record_name列 -->
+                                                <th>巡检记录项</th>
+                                                <th>巡检记录内容</th>
+                                              </tr>
+                                              </thead>
+                                              <tbody>
+                                              <!-- 第一层循环：遍历item.content数组的每一项 -->
+                                              <template v-for="(contentItem, contentIndex) in item1.content" >
+                                                <!-- 第二层循环：遍历当前contentItem下的record_cate_field_config数组 -->
+                                                <tr
+                                                  v-for="(field, fieldIndex) in contentItem.record_cate_field_config"
+                                                  :key="`${contentIndex}-${fieldIndex}`"
+                                                  style="text-align: center;"
+                                                >
+                                                  <!-- 合并单元格：仅在当前contentItem的第一个field显示record_name并合并行 -->
+                                                  <td
+                                                    v-if="fieldIndex === 0"
+                                                    :rowspan="contentItem.record_cate_field_config.length"
+                                                    style="vertical-align: middle;"
+                                                  >
+                                                    {{ contentItem.record_name }}
+                                                  </td>
+                                                  <!-- 非第一个field隐藏该列（通过rowspan合并后无需重复显示） -->
+                                                  <td v-else style="display: none;"></td>
+
+                                                  <td>{{ field.title }}</td>
+                                                  <!-- 清理value中的\r换行符，空值显示"无" -->
+                                                  <td>{{ field.value ? field.value.replace(/\r/g, '') : '无' }}</td>
+                                                </tr>
+                                              </template>
+                                              </tbody>
+                                            </table>
+
+                                          </div>
+                                          <span v-else>
                                             {{item1.content?item1.content:'无'}}
+                                          </span>
                                         </div>
                                         <div class="text_2" v-else>
                                             <viewer v-if="item1.imgs.length > 0" :images="item1.imgs">
@@ -788,6 +910,7 @@
                     order_id: order_id
                 }).then((res) => {
                     console.log('wsedre', res);
+                    console.log( res.order_content )
                     this.detail = res;
                     if (res.order_detail.event_status >= 30) {
                         this.show = 0;
@@ -2072,6 +2195,7 @@
                     display: flex;
                     flex-direction: row;
                     align-items: center;
+                    margin: 10px 0px;
 
                     .text_1 {
                         font-size: 16px;
