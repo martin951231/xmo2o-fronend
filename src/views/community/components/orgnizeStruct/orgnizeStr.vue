@@ -90,6 +90,9 @@
                                 @click="$refs.addSelectOrgnizeWorker.selectPropertyWorker(queryParam.group_id,selectTitle)">添加人员</a-button>
                                 
                         <a-button type="danger" class="add-goods" @click="delete_all()" v-if="is_del">批量删除</a-button>
+                      <a-button type="primary" class="add-goods">
+                        <a href="https://community.leelen.com/sc/627802a935b14c6e25e64616dabffc75/security/entranceGuard/authorization" target="_blank">立林添加人员</a>
+                      </a-button>
                     </div>
                     <a-table v-if="workerList" :row-selection="is_del?rowSelection:null" :columns="columns"
                         :rowKey="record=>record.wid" :data-source="workerList" @change="tableChange"
@@ -616,7 +619,11 @@
                     },
                     onCancel() {},
                 });
-            }
+            },
+          // toLilinAddPerson(){
+          //
+          //     console.log(123)
+          // }
         },
     }
 </script>

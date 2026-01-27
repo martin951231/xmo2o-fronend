@@ -246,6 +246,50 @@
           }
           if (res.lilin_pf_village_room) {
              lilin_pf_village_room.value = res.lilin_pf_village_room
+             columns.value=[{
+                    title: store.getters.config.single_name + '名称',
+                    dataIndex: 'single_name',
+                  }, {
+                    title: store.getters.config.single_name + '编号',
+                    dataIndex: 'single_number',
+                  }
+                  , {
+                    title: store.getters.config.single_name + '面积(m²)',
+                    dataIndex: 'measure_area',
+                  }, {
+                    title: store.getters.config.floor_name + '列表',
+                    dataIndex: 'floorPath',
+                    scopedSlots: {
+                      customRender: 'floorPath'
+                    }
+                  }, {
+                    title: '合同开始时间',
+                    dataIndex: 'contract_time_start',
+                  }, {
+                    title: '合同结束时间',
+                    dataIndex: 'contract_time_end',
+                  }, {
+                    title: '排序',
+                    dataIndex: 'sort',
+                    sorter: (a, b) => a.sort - b.sort,
+                  },  {
+                    title: '已关联立林平台',
+                    dataIndex: 'is_lilin_pf',
+                  },
+                  {
+                    title: '状态',
+                    dataIndex: 'status',
+                    scopedSlots: {
+                      customRender: 'status'
+                    }
+                  }, {
+                    title: '操作',
+                    key: 'action',
+                    scopedSlots: {
+                      customRender: 'action'
+                    },
+                  },
+                ]
           }
 
           role_del.value = res.role_del

@@ -144,7 +144,7 @@
                 <div class="btn" @click="addWorkerOrder()">添加工单</div>
                 <div class="btn" @click="excelExport()">Excel导出</div>
             </div>
-            <div class="bottom_box">
+            <div class="bottom_box" >
                 <a-table class="table_1" :columns="columns" :data-source="data" :pagination="pagination"
                     :loading="loading" @change="handleTableChange" :rowKey="record=>record.order_id">
                     <span slot="operation" slot-scope="text, record">
@@ -153,7 +153,7 @@
                     <span slot="status_txt" slot-scope="text, record">
                         <span :style="'color:'+record.color ">{{record.status_txt}}</span>
                     </span>
-                    <span v-if="record.inspection_auto_add !== 1" slot="order_content" slot-scope="text, record" >
+                    <span v-if="record.inspection_auto_add != 1" slot="order_content" slot-scope="text, record" >
                         <a-tooltip placement="topLeft" v-if="record.order_content.length > 8">
                             <template slot="title">
                                 <span>{{record.order_content}}</span>
@@ -162,9 +162,9 @@
                         </a-tooltip>
                         <span v-else>{{record.order_content}}</span>
                     </span>
-                  <div v-else slot="order_content" slot-scope="text, record">
-                      <div v-if="record.inspection_auto_add === 1">
-                        <a-tooltip placement="topLeft">
+                  <div v-else  slot="order_content" slot-scope="text, record">
+                      <div v-if="record.inspection_auto_add == 1">
+                        <a-tooltip  placement="topLeft">
                           <template slot="title">
                             <table border="1" cellpadding="8" cellspacing="0" style="width: 100%;">
                               <thead>
@@ -196,7 +196,70 @@
 
                                   <td>{{ field.title }}</td>
                                   <!-- 清理value中的\r换行符，空值显示"无" -->
-                                  <td>{{ field.value ? field.value.replace(/\r/g, '') : '无' }}</td>
+                                  <td class="value-cell">
+                                    <!-- 无值时显示「无」 -->
+                                    <template v-if="!field.value">无</template>
+
+                                    <!-- 非数组：直接显示值 -->
+                                    <template v-else-if="!Array.isArray(field.value)">
+                                      {{ field.value }}
+                                    </template>
+
+                                    <!-- 是数组：循环处理每个元素 -->
+                                    <template v-else>
+                                      <div
+                                        v-for="(item, index) in field.value"
+                                        :key="index"
+                                        class="array-item"
+                                      >
+                                        <!-- 判断是否为图片URL，是则显示图片，否则显示文本 -->
+                                        <template v-if="isImageUrl(item)">
+                                          <!-- 图片容器：点击放大预览 -->
+                                          <div
+                                            class="img-wrapper"
+                                            @click="previewImage(item)"
+                                          >
+                                            <img
+                                              :src="item"
+                                              alt="图片预览"
+                                              class="preview-img"
+                                            >
+                                          </div>
+                                        </template>
+                                        <template v-else>
+                                          <!-- 普通文本/非图片URL：显示为span -->
+                                          <span class="text-item">{{ item }}</span>
+                                        </template>
+                                      </div>
+                                    </template>
+
+                                    <!-- 图片放大预览遮罩层（支持滚轮缩放+拖拽） -->
+                                    <div
+                                      v-if="previewVisible"
+                                      class="preview-mask"
+                                      @click="closePreview"
+                                      @wheel.prevent="handleImageZoom"
+                                    >
+                                      <div
+                                        class="preview-img-container"
+                                        ref="imgContainer"
+                                        @mousedown="handleImgDragStart"
+                                        @mousemove="handleImgDragMove"
+                                        @mouseup="handleImgDragEnd"
+                                        @mouseleave="handleImgDragEnd"
+                                      >
+                                        <img
+                                          :src="previewUrl"
+                                          alt="大图预览"
+                                          class="preview-big-img"
+                                          :style="{
+            transform: `scale(${scale}) translate(${translateX}px, ${translateY}px)`,
+            transition: isDragging ? 'none' : 'transform 0.2s ease'
+          }"
+                                        >
+                                      </div>
+                                    </div>
+                                  </td>
                                 </tr>
                               </template>
                               </tbody>
@@ -279,7 +342,70 @@
 
                                             <td>{{ field.title }}</td>
                                             <!-- 清理value中的\r换行符，空值显示"无" -->
-                                            <td>{{ field.value ? field.value.replace(/\r/g, '') : '无' }}</td>
+                                            <td class="value-cell">
+                                              <!-- 无值时显示「无」 -->
+                                              <template v-if="!field.value">无</template>
+
+                                              <!-- 非数组：直接显示值 -->
+                                              <template v-else-if="!Array.isArray(field.value)">
+                                                {{ field.value }}
+                                              </template>
+
+                                              <!-- 是数组：循环处理每个元素 -->
+                                              <template v-else>
+                                                <div
+                                                  v-for="(item, index) in field.value"
+                                                  :key="index"
+                                                  class="array-item"
+                                                >
+                                                  <!-- 判断是否为图片URL，是则显示图片，否则显示文本 -->
+                                                  <template v-if="isImageUrl(item)">
+                                                    <!-- 图片容器：点击放大预览 -->
+                                                    <div
+                                                      class="img-wrapper"
+                                                      @click="previewImage(item)"
+                                                    >
+                                                      <img
+                                                        :src="item"
+                                                        alt="图片预览"
+                                                        class="preview-img"
+                                                      >
+                                                    </div>
+                                                  </template>
+                                                  <template v-else>
+                                                    <!-- 普通文本/非图片URL：显示为span -->
+                                                    <span class="text-item">{{ item }}</span>
+                                                  </template>
+                                                </div>
+                                              </template>
+
+                                              <!-- 图片放大预览遮罩层（支持滚轮缩放+拖拽） -->
+                                              <div
+                                                v-if="previewVisible"
+                                                class="preview-mask"
+                                                @click="closePreview"
+                                                @wheel.prevent="handleImageZoom"
+                                              >
+                                                <div
+                                                  class="preview-img-container"
+                                                  ref="imgContainer"
+                                                  @mousedown="handleImgDragStart"
+                                                  @mousemove="handleImgDragMove"
+                                                  @mouseup="handleImgDragEnd"
+                                                  @mouseleave="handleImgDragEnd"
+                                                >
+                                                  <img
+                                                    :src="previewUrl"
+                                                    alt="大图预览"
+                                                    class="preview-big-img"
+                                                    :style="{
+            transform: `scale(${scale}) translate(${translateX}px, ${translateY}px)`,
+            transition: isDragging ? 'none' : 'transform 0.2s ease'
+          }"
+                                                  >
+                                                </div>
+                                              </div>
+                                            </td>
                                           </tr>
                                         </template>
                                         </tbody>
@@ -383,7 +509,70 @@
 
                                                   <td>{{ field.title }}</td>
                                                   <!-- 清理value中的\r换行符，空值显示"无" -->
-                                                  <td>{{ field.value ? field.value.replace(/\r/g, '') : '无' }}</td>
+                                                  <td class="value-cell">
+                                                    <!-- 无值时显示「无」 -->
+                                                    <template v-if="!field.value">无</template>
+
+                                                    <!-- 非数组：直接显示值 -->
+                                                    <template v-else-if="!Array.isArray(field.value)">
+                                                      {{ field.value }}
+                                                    </template>
+
+                                                    <!-- 是数组：循环处理每个元素 -->
+                                                    <template v-else>
+                                                      <div
+                                                        v-for="(item, index) in field.value"
+                                                        :key="index"
+                                                        class="array-item"
+                                                      >
+                                                        <!-- 判断是否为图片URL，是则显示图片，否则显示文本 -->
+                                                        <template v-if="isImageUrl(item)">
+                                                          <!-- 图片容器：点击放大预览 -->
+                                                          <div
+                                                            class="img-wrapper"
+                                                            @click="previewImage(item)"
+                                                          >
+                                                            <img
+                                                              :src="item"
+                                                              alt="图片预览"
+                                                              class="preview-img"
+                                                            >
+                                                          </div>
+                                                        </template>
+                                                        <template v-else>
+                                                          <!-- 普通文本/非图片URL：显示为span -->
+                                                          <span class="text-item">{{ item }}</span>
+                                                        </template>
+                                                      </div>
+                                                    </template>
+
+                                                    <!-- 图片放大预览遮罩层（支持滚轮缩放+拖拽） -->
+                                                    <div
+                                                      v-if="previewVisible"
+                                                      class="preview-mask"
+                                                      @click="closePreview"
+                                                      @wheel.prevent="handleImageZoom"
+                                                    >
+                                                      <div
+                                                        class="preview-img-container"
+                                                        ref="imgContainer"
+                                                        @mousedown="handleImgDragStart"
+                                                        @mousemove="handleImgDragMove"
+                                                        @mouseup="handleImgDragEnd"
+                                                        @mouseleave="handleImgDragEnd"
+                                                      >
+                                                        <img
+                                                          :src="previewUrl"
+                                                          alt="大图预览"
+                                                          class="preview-big-img"
+                                                          :style="{
+            transform: `scale(${scale}) translate(${translateX}px, ${translateY}px)`,
+            transition: isDragging ? 'none' : 'transform 0.2s ease'
+          }"
+                                                        >
+                                                      </div>
+                                                    </div>
+                                                  </td>
                                                 </tr>
                                               </template>
                                               </tbody>
@@ -600,7 +789,19 @@
                 jz_open: 0,
                 videoUrl: '',
                 showVideo: false,
-                is_lantiancom:0,               
+                is_lantiancom:0,
+                previewVisible: false, // 图片预览遮罩层显示状态
+                previewUrl: '', // 预览图片的URL
+                scale: 1, // 图片缩放比例（默认1倍）
+                minScale: 0.5, // 最小缩放比例
+                maxScale: 3, // 最大缩放比例
+                translateX: 0, // 图片拖拽X轴偏移
+                translateY: 0, // 图片拖拽Y轴偏移
+                isDragging: false, // 是否正在拖拽图片
+                startX: 0, // 拖拽起始X坐标
+                startY: 0, // 拖拽起始Y坐标
+                startTranslateX: 0, // 拖拽起始X偏移
+                startTranslateY: 0 // 拖拽起始Y偏移
             }
         },
         mounted() {
@@ -1323,12 +1524,145 @@
             playVideo(url) {
                 this.videoUrl = url
                 this.showVideo = true
+            },
+
+          // 判断是否为图片URL（支持常见图片格式）
+          isImageUrl(url) {
+            if (typeof url !== 'string') return false;
+            // 匹配常见图片后缀：jpg/png/jpeg/gif/webp/svg等
+            const imgReg = /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff)$/i;
+            // 先判断是否为合法URL，再判断是否为图片后缀
+            try {
+              new URL(url); // 验证URL格式合法性
+              return imgReg.test(url);
+            } catch (e) {
+              return false;
             }
+          },
+
+          // 点击图片放大预览
+          previewImage(url) {
+            // 每次预览重置缩放和拖拽参数
+            this.previewUrl = url;
+            this.previewVisible = true;
+            this.scale = 1;
+            this.translateX = 0;
+            this.translateY = 0;
+            this.isDragging = false;
+          },
+
+          // 关闭预览（点击遮罩层空白处）
+          closePreview(e) {
+            // 只在点击遮罩层（非图片容器）时关闭
+            if (e.target.classList.contains('preview-mask')) {
+              this.previewVisible = false;
+            }
+          },
+          // 滚轮缩放图片
+          handleImageZoom(e) {
+            // 滚轮向上（放大）/向下（缩小）
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            const newScale = this.scale + delta;
+            // 限制缩放范围
+            if (newScale >= this.minScale && newScale <= this.maxScale) {
+              this.scale = newScale;
+            }
+          },
+
+          // 开始拖拽图片
+          handleImgDragStart(e) {
+            this.isDragging = true;
+            this.startX = e.clientX;
+            this.startY = e.clientY;
+            this.startTranslateX = this.translateX;
+            this.startTranslateY = this.translateY;
+            // 阻止默认行为避免选中图片
+            e.preventDefault();
+          },
+
+          // 拖拽图片中
+          handleImgDragMove(e) {
+            if (!this.isDragging) return;
+            const dx = e.clientX - this.startX;
+            const dy = e.clientY - this.startY;
+            this.translateX = this.startTranslateX + dx;
+            this.translateY = this.startTranslateY + dy;
+          },
+
+          // 结束拖拽图片
+          handleImgDragEnd() {
+            this.isDragging = false;
+          }
         },
     }
 </script>
 
 <style lang="less" scoped>
+/* 单元格基础样式 */
+.value-cell {
+  padding: 8px;
+  line-height: 1.5;
+}
+
+/* 数组项样式：每项换行 */
+.array-item {
+  display: block;
+  margin-bottom: 4px;
+}
+.array-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 文本项样式 */
+.text-item {
+  font-size: 14px;
+  color: #333;
+}
+
+/* 图片容器样式 */
+.img-wrapper {
+  display: inline-block;
+  cursor: zoom-in; /* 鼠标悬浮显示放大图标 */
+}
+
+/* 预览小图样式 */
+.preview-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border: 1px solid #eee;
+  border-radius: 4px;
+}
+
+/* 图片预览遮罩层：全屏覆盖 */
+.preview-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  cursor: default;
+  overflow: hidden;
+}
+
+/* 预览图片容器（用于拖拽） */
+.preview-img-container {
+  cursor: move; /* 拖拽光标 */
+  user-select: none; /* 禁止选中 */
+}
+
+/* 预览大图样式 */
+.preview-big-img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  transform-origin: center center; /* 缩放以图片中心为原点 */
+}
     .bg-box {
         background-image: url(../../../../../assets/images/grid_bg.png);
         width: 100%;
