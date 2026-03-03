@@ -406,6 +406,16 @@ export const constantRouterMap = [
         },
     },
 
+    //  社区-小区统计报表
+    {
+      path: path.statisticalIndex,
+      name: 'statisticalIndex',
+      component: () => import('@/views/community/village/statistical'),
+      meta: {
+        title: '社区-小区统计报表',
+      },
+    },
+
     //小区摄像头
     {
         path: path.cameraPreview,

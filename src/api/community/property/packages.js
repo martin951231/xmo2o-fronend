@@ -117,7 +117,17 @@ const common = {
     getRoomFeeRateList:'/community/property_api.Charge/getRoomFeeRateList', //收费率分析
     getRoomUnPayRateList:'/community/property_api.Charge/getRoomUnPayRateList', //收费率分析
     getPropertyRateSummaryRecordList:'/community/property_api.Charge/getRoomRateSummaryRecordList', //收费率分析
-    
+
+    //预算管理
+    getBudgetCategoryList : '/community/property_api.budgetManagement/getBudgetCategoryList', //获取预算分类
+    saveBudgetCategoryList : '/community/property_api.budgetManagement/saveBudgetCategoryList', //修改预算分类
+    deleteBudgetCategory : '/community/property_api.budgetManagement/deleteBudgetCategory', //删除预算分类
+    getBudgetList : '/community/property_api.budgetManagement/getBudgetList', //获取预算
+    exportBudget : '/community/property_api.budgetManagement/exportBudget', //导出预算模板
+    importBudget : '/community/property_api.budgetManagement/importBudget', //导入预算
+    saveVillageBudget : '/community/property_api.budgetManagement/saveVillageBudget', //保存预算
+    deleteVillageBudget : '/community/property_api.budgetManagement/deleteVillageBudget', //删除预算
+
   }
   
   export default common

@@ -184,11 +184,19 @@
             >
               移动管理端
             </a-button>
+<!--            <a-button-->
+<!--              v-if="!cockpit"-->
+<!--              type="primary"-->
+<!--              style="float: right; margin-top: 15px;margin-right: 15px;"-->
+<!--              onclick="window.open(location.protocol + '//' + location.host + '/v20/public/platform/#/user/village/datastatistics','_blank')"-->
+<!--            >-->
+<!--              可视化大数据-->
+<!--            </a-button>-->
             <a-button
               v-if="!cockpit"
               type="primary"
               style="float: right; margin-top: 15px;margin-right: 15px;"
-              onclick="window.open(location.protocol + '//' + location.host + '/v20/public/platform/#/user/village/datastatistics','_blank')"
+              onclick="window.open(location.protocol + '//' + location.host + '/v20/public/platform/#/community/village/statistical','_blank')"
             >
               可视化大数据
             </a-button>

@@ -42,6 +42,8 @@ const pagePropertyComunityComponents = {
     //新版收费管理生效时间设置
     'chargeTimeSet':()=>import('@/views/community/property/charge/enableTimeSet/chargeTimeSet'),//新版收费管理生效时间设置
     'chargeNumberList':()=>import('@/views/community/property/charge/chargeNumber/chargeNumberList'),//科目列表
+    'budgetList':()=>import('@/views/community/property/charge/budgetManage/budgetList'),//预算管理
+    'budgetCategoryList':()=>import('@/views/community/property/charge/budgetManage/budgetCategoryList'),//预算分类管理
     'editChargeNumber':()=>import('@/views/community/property/charge/chargeNumber/editChargeNumber'), //编辑收费科目
     'offlinePayList':()=>import('@/views/community/property/charge/offlinePay/offlinePayList'),//线下支付方式列表
     'editOfflinePay':()=>import('@/views/community/property/charge/offlinePay/editOfflinePay'), //编辑线下支付方式

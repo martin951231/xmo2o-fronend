@@ -41,7 +41,12 @@ const vueConfig = {
       new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/)
     ],
     // if prod, add externals
-    externals: isProd ? assetsCDN.externals : {}
+    externals: isProd ? assetsCDN.externals : {},
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, 'src') // @ 映射到 src 目录
+      }
+    }
   },
 
   chainWebpack: (config) => {
@@ -92,16 +97,21 @@ const vueConfig = {
 
   css: {
     loaderOptions: {
+      // 新增：配置 css-loader 识别 @ 别名
+      css: {
+        importLoaders: 1,
+        modules: false // 关闭 css modules，避免影响全局样式（关键）
+      },
+      // 保留你原有的 less 配置，只做补充
       less: {
         modifyVars: {
-          // less vars，customize ant design theme
-
-          // 'primary-color': '#F5222D',
-          // 'link-color': '#F5222D',
+          // 你的 ant design 主题变量
           'border-radius-base': '2px'
+          // 其他变量如 'primary-color': '#F5222D' 可按需加
         },
-        // DO NOT REMOVE THIS LINE
-        javascriptEnabled: true
+        javascriptEnabled: true,
+        // 新增：告诉 less-loader 解析 @ 别名
+        additionalData: `@import "~@/styles/variables.less";` // 可选，若有全局 less 变量可加
       }
     }
   },
@@ -115,28 +125,29 @@ const vueConfig = {
   // },
 
     devServer: {
-        host: 'dev.mrsqfw.com',
+        // host: 'dev.mrsqfw.com',
+        host: 'https://cloud.mrsqfw.com',
         port: 8086,
         disableHostCheck: true,
         // If you want to turn on the proxy, please remove the mockjs /src/main.jsL11
-        proxy: {
-            '/v20': {
-                // target: baseUrl,
-                target: 'http://dev.mrsqfw.com',
-                // ws: false,
-                changeOrigin: true
-            }
-
-        }
         // proxy: {
         //     '/v20': {
         //         // target: baseUrl,
-        //         target: 'https://cloud.mrsqfw.com',
+        //         target: 'http://dev.mrsqfw.com',
         //         // ws: false,
-        //         changeOrigin: true,
+        //         changeOrigin: true
         //     }
         //
         // }
+        proxy: {
+            '/v20': {
+                // target: baseUrl,
+                target: 'https://cloud.mrsqfw.com',
+                // ws: false,
+                changeOrigin: true,
+            }
+
+        }
     },
 
   // disable source map in production

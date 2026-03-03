@@ -1,0 +1,153 @@
+
+.header-bar{
+  width: 100%;
+}
+
+.project-item{
+  margin-top: 5px;
+}
+.header-title{
+  text-align: center;
+  font-size: 2.4rem;
+  font-weight: 600;
+  color: #fff;
+  width: 100%;
+  height: 90px;
+  background: url('~@/assets/images/statistical/title_bg.png') no-repeat center center / cover;
+}
+.header-label{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8vw;
+  font-weight: 600;
+  color: #fff;
+  margin: 0rem 2rem;
+  width: 12vw;
+  height: auto; /* 高度自动跟随比例，关键！ */
+  aspect-ratio: 20/7; /* 替换为图片实际宽高比，例：图片800*400则写 2/1，300*200则写 3/2 */
+  background: url('~@/assets/images/statistical/title-label2.png') no-repeat center center / cover;
+}
+.label-content{
+  font-size: 1.2vw;
+  font-weight: 600;
+  text-align: center;
+}
+.label-color_0{
+  color: #4DE8FF;
+}
+.label-color_1{
+  color: #59FF59;
+}
+.label-color_2{
+  color: #FFD747;
+}
+.label-color_3{
+  color: #FF6BFF;
+}
+.label-color_4{
+  color: #FF7547;
+}
+.label-color_5{
+  color: #A275FF;
+}
+.glow-line-container {
+  width: 100%;
+  min-height: 20px;
+  background: #000b1e; // 还原原图深邃的暗蓝色背景
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+
+  // 背景星空点缀（贴近原图的细碎光点效果）
+  &::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background:
+      radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+      radial-gradient(2px 2px at 60px 70px, #fff, transparent),
+      radial-gradient(1px 1px at 50px 50px, #fff, transparent),
+      radial-gradient(1px 1px at 100px 120px, #fff, transparent);
+    background-size: 200px 200px;
+    opacity: 0.3;
+    z-index: 0;
+  }
+}
+
+// 新增容器包裹左右两条线，保证居中拼接
+.glow-line-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 90%; // 保持原线条总长度
+}
+
+// 左侧线条：从右（拼接端）到左渐细消失
+.left-glow-line {
+  height: 2px; // 保留原线条基础粗细
+  width: 50%; // 占总长度的一半
+  background: #ffffff; // 保留原白色主体
+  position: relative;
+  z-index: 1;
+  // 核心：clip-path实现从右到左渐细消失
+  clip-path: polygon(
+    100% 0,        // 右侧顶端（拼接端）
+    100% 100%,     // 右侧底端（拼接端）
+    0 50%          // 左侧中点（收尖消失）
+  );
+  // 保留原发光效果，适配渐细形状
+  box-shadow:
+    0 0 10px 2px #ffffff,
+    0 0 25px 8px #00a0fe,
+    0 0 50px 15px rgba(0, 160, 254, 0.6),
+    0 0 80px 20px rgba(0, 160, 254, 0.3);
+  // 保留原呼吸动画
+  animation: glow-breath 4s infinite ease-in-out;
+}
+
+// 右侧线条：从左（拼接端）到右渐细消失
+.right-glow-line {
+  height: 2px; // 保留原线条基础粗细
+  width: 50%; // 占总长度的一半
+  background: #ffffff; // 保留原白色主体
+  position: relative;
+  z-index: 1;
+  // 核心：clip-path实现从左到右渐细消失
+  clip-path: polygon(
+    0 0,           // 左侧顶端（拼接端）
+    0 100%,        // 左侧底端（拼接端）
+    100% 50%       // 右侧中点（收尖消失）
+  );
+  // 保留原发光效果，适配渐细形状
+  box-shadow:
+    0 0 10px 2px #ffffff,
+    0 0 25px 8px #00a0fe,
+    0 0 50px 15px rgba(0, 160, 254, 0.6),
+    0 0 80px 20px rgba(0, 160, 254, 0.3);
+  // 保留原呼吸动画
+  animation: glow-breath 4s infinite ease-in-out;
+}
+
+// 保留原呼吸动画关键帧，无任何修改
+@keyframes glow-breath {
+  0%, 100% {
+    opacity: 0.7;
+    box-shadow:
+      0 0 8px 2px #ffffff,
+      0 0 20px 6px #00a0fe,
+      0 0 40px 12px rgba(0, 160, 254, 0.5),
+      0 0 60px 15px rgba(0, 160, 254, 0.2);
+  }
+  50% {
+    opacity: 1;
+    box-shadow:
+      0 0 12px 3px #ffffff,
+      0 0 30px 10px #00a0fe,
+      0 0 60px 18px rgba(0, 160, 254, 0.7),
+      0 0 90px 22px rgba(0, 160, 254, 0.4);
+  }
+}

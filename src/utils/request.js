@@ -105,6 +105,112 @@ function request(url, data = {}, method = 'post', msgFunc) {
  *******************
  *   @author 郑亚莉
  *   @date 2020-05-13
+ *   @description  请求公共方法 异步
+ *   @params url 请求路径
+ *   @params data 请求参数
+ *   @params method 请求方式 默认为post 不传默认为post
+ *******************
+ */
+function requestNew(
+  url,
+  data = {},
+  method = 'post',
+  msgFunc,
+  extraOptions = {}   // ⭐ 新增：额外 axios 配置
+) {
+  data = data || {}
+
+  var tokenName = getTokenName(url)
+  if (data && data.tokenName) {
+    tokenName = data.tokenName
+    delete data.tokenName
+  }
+
+  var hash_arr = location.hash.split('requestType=')
+  if (hash_arr && hash_arr[1]) {
+    data.requestType = hash_arr[1]
+  }
+
+  data.system_type = getSystemName(tokenName)
+
+  let token = Vue.ls.get(tokenName)
+  const cookieToken = getCookie(tokenName)
+
+  if (!cookieToken) {
+    token = null
+    Vue.ls.remove(tokenName)
+  } else if (cookieToken && token != cookieToken) {
+    token = cookieToken
+    Vue.ls.set(tokenName, token, null)
+  }
+
+  return new Promise((resolve, reject) => {
+
+    const options = {
+      url,
+      method,
+      ...extraOptions   // ⭐ 合并额外配置（关键）
+    }
+
+    if (method.toLowerCase() === 'get') {
+      options.params = data
+    } else {
+      options.data = data
+    }
+
+    if (token) {
+      options.headers = {
+        ticket: token,
+        ...(options.headers || {})
+      }
+    }
+
+    service(options)
+      .then((res) => {
+
+        // ⭐ 如果是文件下载（blob），直接返回
+        if (extraOptions.responseType === 'blob') {
+          resolve(res.data)
+          return
+        }
+
+        // token 刷新逻辑
+        if (typeof res.refresh_ticket != 'undefined' && res.refresh_ticket) {
+          console.log('刷新token', res.refresh_ticket)
+          Vue.ls.set(tokenName, res.refresh_ticket, null)
+          setCookie(tokenName, res.refresh_ticket, null)
+        }
+
+        // 正常 JSON 逻辑
+        if (res.data) {
+
+          if (res.data.err_code == '2') {
+            notification.error({
+              message: '登录超时',
+              description: res.data.msg,
+            })
+            localStorage.removeItem('watch_login_role')
+            localStorage.removeItem('watch_current_village_id')
+          }
+
+          resolve(res.data)
+        } else {
+          resolve(res)
+        }
+
+        typeof msgFunc === 'function' && msgFunc(res.msg)
+      })
+      .catch((error) => {
+        console.log( 123 )
+        reject(error)
+      })
+  })
+}
+
+/**
+ *******************
+ *   @author 郑亚莉
+ *   @date 2020-05-13
  *   @description 错误拦截
  *  * @param  integer $status    状态码
  *                            1000 		= 正常
@@ -216,7 +322,7 @@ service.interceptors.response.use((response) => {
     // const resConsole = new resData(response)
     // console.table(resConsole)
     // 状态码判断 除1000以外都为异常
-    if (response.data.status === 1000) {
+    if (response.data.status === 1000 || response.data.code === 200) {
         // 请求成功返回数据
         return response.data
     } else {
@@ -260,7 +366,7 @@ function old_request(url, data = {}, method = 'post') {
     })
 }
 
-export { installer as VueAxios, service as axios, request, old_request }
+export { installer as VueAxios, service as axios, request, old_request, requestNew }
 
 // 导出请求方法
 // export default request

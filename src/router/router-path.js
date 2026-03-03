@@ -45,6 +45,7 @@ const path = {
     // 没有左侧菜单的路由
     noNavList: [
         '/user/village/datastatistics',
+        '/community/village/statistical',
         '/user/village/videoPreview',
         '/community/village/cockpit/datastatistics',
         '/community/village/cockpit/hotZone',
@@ -131,6 +132,7 @@ const path = {
     villageIndex: '/village/village.iframe/house_index_index', // 小区首页
     villageLogin: '/user/community/login', // 登录
     dataStatisticsIndex: '/user/village/datastatistics', // 大数据
+    statisticalIndex: '/community/village/statistical', // 统计报表
     villageDataStatisticsIndex: '/community/village/cockpit/datastatistics', // 驾驶舱
     villageHotZoneindex: '/community/village/cockpit/hotZone', // 画热点区域
     villageEquipPointindex: '/community/village/cockpit/equipPoint', // 画热点区域

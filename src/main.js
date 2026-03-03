@@ -10,7 +10,8 @@ import VueBus from 'vue-bus'
 
 import {
   VueAxios,
-  request
+  request,
+  requestNew
 } from './utils/request'
 import {
   getRouterPath,
@@ -75,6 +76,7 @@ Vue.use(VueBus)
 
 // 请求方法挂载
 Vue.prototype.request = request
+Vue.prototype.requestNew = requestNew
 // 获取路由地址方法挂载
 Vue.prototype.getRouterPath = getRouterPath
 // 多语言转换方法
