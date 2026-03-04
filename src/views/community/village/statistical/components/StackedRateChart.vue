@@ -260,19 +260,20 @@ export default {
                 { offset: 0, color: finalColor },
                 { offset: 1, color: gradientEndColor }
               ]),
-              borderWidth: 1.5,
+              borderWidth: 1,
               borderColor: finalColor,
               shadowColor: finalColor,
               shadowBlur: 10,
-              shadowOffsetY: 5
+              shadowOffsetY: 1
             },
             label: showLabel ? {
               show: true,
               position: 'insideCenter',
               formatter: `{c}${this.getYUnitByKey(yAxisKey)}`,
               color: '#ffffff',
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: 600,
+              offset:[5,10],
               textBorderColor: gradientEndColor,
               textBorderWidth: 1
             } : { show: false },
@@ -395,18 +396,20 @@ export default {
 
     getGradientEndColor(mainColor) {
       const neonColorMap = {
-        '#ff00ff': '#660066',
-        '#00ffff': '#006666',
-        '#ffff00': '#666600',
-        '#ff6600': '#663300',
-        '#8b00ff': '#440066'
+        '#00ff99': 'rgba(69,170,122,0.66)',
+        '#ff6699': 'rgba(175,72,106,0.66)',
+        '#6699ff': 'rgba(77,114,189,0.66)',
+        '#00ffd9': 'rgba(1,181,154,0.66)',
+        '#00e5ff': 'rgba(2,163,182,0.66)',
+        '#00FF9D': 'rgba(2,177,110,0.66)'
       };
       const deepColorMap = {
-        '#4cc9f0': '#1a5c70',
-        '#4361ee': '#1e2b7a',
-        '#3a0ca3': '#1a0650',
-        '#7209b7': '#33055c',
-        '#f72585': '#7a1045'
+        '#00ff99': 'rgb(66,161,116)',
+        '#ff6699': 'rgb(92,37,55)',
+        '#6699ff': 'rgb(39,58,97)',
+        '#00ffd9': 'rgb(1,97,83)',
+        '#00e5ff': 'rgb(1,92,103)',
+        '#00FF9D': 'rgb(0,92,57)'
       };
       return neonColorMap[mainColor] || deepColorMap[mainColor] || '#0a1929';
     },

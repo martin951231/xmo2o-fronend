@@ -11,15 +11,24 @@
         </div>
         <div class="flex-1 chart-item">
           <charTitle :title-name="`项目基础数据`" />
-          <BarChart
+          <StackedRateChart
             ref="baseChartRef"
-            :xData="baseChartData.xAxis"
-            :seriesData="baseChartData.series"
-            :colorList="[
-              '#00F0FF', '#00C3FF', '#0096FF', '#0069FF', '#00B8FF'
-            ]"
-            :barConfig="{ barWidth: 25, isStack: true }"
+            chart-title=""
+            :containerHeight="`100%`"
+            :chart-data="baseChartData"
+            :field-map="{ xAxis: 'name' }"
+            :y-axis-list="baseyAxisList"
+            :series-list="baseSeriesList"
           />
+<!--          <BarChart-->
+<!--            ref="baseChartRef"-->
+<!--            :xData="baseChartData.xAxis"-->
+<!--            :seriesData="baseChartData.series"-->
+<!--            :colorList="[-->
+<!--              '#00ff99', '#ff6699', '#6699ff', '#00ffd9', '#00B8FF'-->
+<!--            ]"-->
+<!--            :barConfig="{ barWidth: 25, isStack: true }"-->
+<!--          />-->
         </div>
         <div class="flex-1 chart-item">
           <charTitle :title-name="`项目巡检情况`" />
@@ -39,6 +48,7 @@
           <charTitle :title-name="`项目周期性费用情况`" />
           <!-- 1. 收缴率占比堆叠图 -->
           <StackedRateChart
+            ref="chartRateRef"
             chart-title=""
             :containerHeight="`100%`"
             :chart-data="rateChartData"
@@ -169,51 +179,74 @@ export default {
       //组织架构数据
       myOrgData: {},
       //项目基础数据
-      baseChartData: {},
-      rateChartData:[
-        { name: '小区A', collection_num: 80, remain_num: 20, collection_amount: 8000, remain_amount: 2000, rate_num: 80, rate_amount: 80 },
-        { name: '小区B', collection_num: 70, remain_num: 30, collection_amount: 7500, remain_amount: 2500, rate_num: 70, rate_amount: 75 },
-        { name: '小区C', collection_num: 90, remain_num: 10, collection_amount: 9500, remain_amount: 500, rate_num: 90, rate_amount: 95 }
+      baseChartData: [],
+      rateChartData:[],
+      baseyAxisList:[
+        { key: 'y1', name: '', unit: '户', color: '#7cb3ff' },
+        // { key: 'y2', name: '车位', unit: '户', color: '#00ffea' },
+      ],
+      baseSeriesList:[
+        // 第一组堆叠柱 - 关联y1
+        {
+          key: 's1', name: '已售', type: 'bar',
+          yAxisKey: 'y1', field: 'yishou',
+          stack: 'stack1', color: '#00ff99'
+        },
+        {
+          key: 's2', name: '未售', type: 'bar',
+          yAxisKey: 'y1', field: 'weishou',
+          stack: 'stack1', color: '#ff6699'
+        },
+        // 第二组堆叠柱 - 关联y2
+        {
+          key: 's3', name: '已缴', type: 'bar',
+          yAxisKey: 'y1', field: 'yijiao',
+          stack: 'stack2', color: '#6699ff'
+        },
+        {
+          key: 's4', name: '未缴', type: 'bar',
+          yAxisKey: 'y1', field: 'weijiao',
+          stack: 'stack2', color: '#00ffd9'
+        }
       ],
       yAxisList:[
         { key: 'y1', name: '户数', unit: '户', color: '#7cb3ff' },
-        { key: 'y2', name: '收缴率', unit: '%', color: '#00ffea', max: 100 },
-        { key: 'y3', name: '金额', unit: '元', color: '#40f0ff' }
+        { key: 'y2', name: '金额', unit: '万元', color: '#00ffea' },
+        { key: 'y3', name: '收缴率', unit: '%', color: '#40f0ff' }
       ],
       seriesList:[
         // 第一组堆叠柱 - 关联y1（户数）
         {
           key: 's1', name: '收缴户数', type: 'bar',
-          yAxisKey: 'y1', field: 'collection_num',
-          stack: 'stack1', color: '#7cb3ff'
+          yAxisKey: 'y1', field: 'paid_account_num',
+          stack: 'stack1', color: '#00ff99'
         },
         {
           key: 's2', name: '剩余户数', type: 'bar',
-          yAxisKey: 'y1', field: 'remain_num',
-          stack: 'stack1', color: '#87ceeb'
+          yAxisKey: 'y1', field: 'remaining_paid_account_num',
+          stack: 'stack1', color: '#ff6699'
         },
         // 第二组堆叠柱 - 关联y2（金额）
         {
           key: 's3', name: '收缴金额', type: 'bar',
-          yAxisKey: 'y2', field: 'collection_amount',
-          stack: 'stack2', color: '#40f0ff'
+          yAxisKey: 'y2', field: 'paid_amound_str',
+          stack: 'stack2', color: '#6699ff'
         },
         {
           key: 's4', name: '剩余金额', type: 'bar',
-          yAxisKey: 'y2', field: 'remain_amount',
-          stack: 'stack2', color: '#00b4d8'
+          yAxisKey: 'y2', field: 'remaining_paid_amound_num_str',
+          stack: 'stack2', color: '#00ffd9'
         },
         // 两条折线 - 关联y3（收缴率）
         {
-          key: 's5', name: '户数收缴率', type: 'line',
-          yAxisKey: 'y3', field: 'rate_num',
-          color: '#7cb3ff', labelPos: 'top'
+          key: 's5', name: '户数收缴率', type: 'bar',
+          yAxisKey: 'y3', field: 'paid_account_rate',
+          stack: 'stack3',color: '#00e5ff', labelPos: 'top'
         },
         {
-          key: 's6', name: '金额收缴率', type: 'line',
-          yAxisKey: 'y3', field: 'rate_amount',
-          color: '#40f0ff', lineType: 'dashed',
-          symbol: 'diamond', labelPos: 'bottom'
+          key: 's6', name: '金额收缴率', type: 'bar',
+          yAxisKey: 'y3', field: 'paid_amound_rate',
+          stack: 'stack3',color: '#00FF9D', lineType: 'dashed',
         }
       ],
       customColor: {
@@ -223,12 +256,7 @@ export default {
         remainAmount: '#C73E1D',
         collectionRate: '#6A994E'
       },
-      expendData: [
-        { name: '工程维修', value: '4500' },
-        { name: '人工成本', value: '3200' },
-        { name: '能源费用', value: '1800' },
-        { name: '其他', value: '1000' }
-      ],
+      expendData: [],
       customColorConfig: {
         colors: ['#4CAF50', '#2196F3', '#FFC107', '#9C27B0', '#F44336'],
         bgColor: '#1E1E1E',
@@ -434,7 +462,7 @@ export default {
       this.getComplaintTableData()
       this.getUtilitiesData()
       this.getExpendData()
-      // this.getChargeStatus()
+      this.getChargeStatus()
     },
     //获取组织架构
     getMyOrgList(){
@@ -530,10 +558,10 @@ export default {
     getChargeStatus(){
       let this_ = this
       this.request(statisticalApi.getChargeStatusData).then((res) => {
-        // this_.expendData = res.data
-        // setTimeout(()=>{
-        //   this_.$refs.expendRef.renderChart();
-        // },100)
+        this_.rateChartData = res
+        setTimeout(()=>{
+          this_.$refs.chartRateRef.renderChart();
+        },100)
       });
     }
   },

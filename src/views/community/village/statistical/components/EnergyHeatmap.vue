@@ -3,16 +3,14 @@
     class="heatmap-container"
     :style="{ width: width, height: height }"
   >
-
-    <!-- ============ 筛选区 ============ -->
+    <!-- 筛选区 -->
     <div class="filter-bar">
-
       <!-- 分类筛选（Y轴） -->
       <div class="filter-group">
         <span class="label">分类：</span>
         <span
           v-for="(item,index) in yAxisData"
-          :key="index"
+          :key="`y-${index}`"
           class="filter-item"
           :class="{ active: selectedY.includes(index) }"
           @click="toggleY(index)"
@@ -21,12 +19,12 @@
         </span>
       </div>
 
-      <!-- 月份筛选（X轴） -->
+      <!-- 月份筛选（X轴）- 适配2026-02格式 -->
       <div class="filter-group">
         <span class="label">月份：</span>
         <span
           v-for="(item,index) in xAxisData"
-          :key="index"
+          :key="`x-${index}`"
           class="filter-item"
           :class="{ active: selectedX.includes(index) }"
           @click="toggleX(index)"
@@ -34,12 +32,10 @@
           {{ item }}
         </span>
       </div>
-
     </div>
 
     <!-- 图表 -->
     <div ref="chartDom" class="chart"></div>
-
   </div>
 </template>
 
@@ -48,161 +44,155 @@ import * as echarts from 'echarts'
 
 export default {
   name: 'HeatMapChart',
-
   props: {
-    heatData: {
-      type: Array,
-      required: true
-    },
+    heatData: { type: Array, required: true },
     xAxisData: {
       type: Array,
-      default: () => [
-        '1月','2月','3月','4月','5月','6月',
-        '7月','8月','9月','10月','11月','12月'
-      ]
+      required: true, // 适配2026-02格式的月份数组（必填）
+      default: () => []
     },
-    yAxisData: {
-      type: Array,
-      required: true
-    },
-    unit: {
-      type: String,
-      default: '元'
-    },
-    width: {
-      type: String,
-      default: '100%'
-    },
-    height: {
-      type: String,
-      default: '400px'
-    },
-    // 最大行列数（同时限制筛选选中数量）
+    yAxisData: { type: Array, required: true },
+    unit: { type: String, default: '元' },
+    width: { type: String, default: '100%' },
+    height: { type: String, default: '400px' },
     maxSize: {
       type: Number,
       default: undefined,
       validator: val => val === undefined || (Number.isInteger(val) && val >= 1)
     }
   },
-
   data() {
     return {
       chart: null,
       resizeHandler: null,
-      selectedX: [],
-      selectedY: []
+      selectedX: [], // 月份选中索引
+      selectedY: []  // 分类选中索引
     }
   },
-
+  // 关键：先初始化选中状态，再监听数据变化
+  created() {
+    // 提前初始化选中逻辑（兜底）
+    this.initSelectedStatus()
+  },
   mounted() {
-    // 默认全选 + 自动截断选中数量
-    this.selectedX = this.limitSelectedCount(this.xAxisData.map((_, i) => i))
-    this.selectedY = this.limitSelectedCount(this.yAxisData.map((_, i) => i))
-    this.initChart()
-    this.resizeHandler = () => {
-      this.chart && this.chart.resize()
-    }
-    window.addEventListener('resize', this.resizeHandler)
+    // 核心：$nextTick确保DOM完全渲染后再执行，解决刷新不生效问题
+    this.$nextTick(() => {
+      // 重新确认选中状态（防止created阶段数据未加载）
+      this.initSelectedStatus()
+      // 初始化图表
+      this.initChart()
+      // 监听窗口resize
+      this.resizeHandler = () => {
+        this.chart && this.chart.resize()
+      }
+      window.addEventListener('resize', this.resizeHandler)
+    })
   },
-
-  beforeDestroy() {
+  // 监听props变化，重新初始化选中状态（防止父组件异步传值）
+  watch: {
+    xAxisData: { handler() { this.initSelectedStatus(); this.initChart() }, immediate: true },
+    yAxisData: { handler() { this.initSelectedStatus(); this.initChart() }, immediate: true },
+    heatData: { handler() { this.initChart() }, deep: true },
+    selectedX: { handler() { this.initChart() }, immediate: true },
+    selectedY: { handler() { this.initChart() }, immediate: true },
+    maxSize() {
+      this.selectedX = this.limitSelectedCount(this.selectedX, 'month')
+      this.selectedY = this.limitSelectedCount(this.selectedY, 'category')
+      this.initChart()
+    }
+  },
+  beforeUnmount() {
     if (this.chart) {
       this.chart.dispose()
     }
     window.removeEventListener('resize', this.resizeHandler)
   },
-
-  watch: {
-    heatData: { handler() { this.initChart() }, deep: true },
-    selectedX() { this.initChart() },
-    selectedY() { this.initChart() },
-    maxSize() {
-      // maxSize变化时，重新截断选中数量
-      this.selectedX = this.limitSelectedCount(this.selectedX)
-      this.selectedY = this.limitSelectedCount(this.selectedY)
-      this.initChart()
-    }
-  },
-
   methods: {
-    renderChart() {
-      // 调用已有的初始化逻辑，实现图表重绘
-      this.initChart()
-    },
-    /* ================== 核心：限制筛选选中数量（最多maxSize个） ================== */
-    limitSelectedCount(selectedArr) {
-      if (this.maxSize === undefined || this.maxSize < 1) {
-        return selectedArr // 不传则不限制
-      }
-      // 选中数量超过maxSize时，保留前maxSize个
-      return selectedArr.slice(0, this.maxSize)
+    // 核心：统一初始化选中状态（解决刷新不生效）
+    initSelectedStatus() {
+      // 防呆：数据未加载时不执行
+      if (!this.xAxisData.length || !this.yAxisData.length) return
+
+      // 1. 月份（X轴）：默认选中最后6个月（适配2026-02格式）
+      const xSelectCount = Math.min(6, this.xAxisData.length)
+      this.selectedX = Array.from({ length: xSelectCount }, (_, i) => {
+        return this.xAxisData.length - xSelectCount + i
+      })
+
+      // 2. 分类（Y轴）：默认选中前6个
+      const ySelectCount = Math.min(6, this.yAxisData.length)
+      this.selectedY = Array.from({ length: ySelectCount }, (_, i) => i)
+
+      // 应用maxSize限制
+      this.selectedX = this.limitSelectedCount(this.selectedX, 'month')
+      this.selectedY = this.limitSelectedCount(this.selectedY, 'category')
+
+      // 调试日志（可选，验证选中状态）
+      console.log('最终选中月份索引：', this.selectedX)
+      console.log('最终选中分类索引：', this.selectedY)
     },
 
-    /* ================== 切换筛选（自动截断选中数量） ================== */
+    // 限制选中数量（区分月份/分类）
+    limitSelectedCount(selectedArr, type) {
+      if (this.maxSize === undefined || this.maxSize < 1) {
+        return selectedArr
+      }
+      // 月份：保留最后maxSize个；分类：保留前maxSize个
+      return type === 'month' ? selectedArr.slice(-this.maxSize) : selectedArr.slice(0, this.maxSize)
+    },
+
+    // 切换分类选中
     toggleY(index) {
       const i = this.selectedY.indexOf(index)
       if (i > -1) {
         this.selectedY.splice(i, 1)
       } else {
         this.selectedY.push(index)
-        // 新增：添加后自动截断
-        this.selectedY = this.limitSelectedCount(this.selectedY)
+        this.selectedY = this.limitSelectedCount(this.selectedY, 'category')
       }
     },
 
+    // 切换月份选中
     toggleX(index) {
       const i = this.selectedX.indexOf(index)
       if (i > -1) {
         this.selectedX.splice(i, 1)
       } else {
         this.selectedX.push(index)
-        // 新增：添加后自动截断
-        this.selectedX = this.limitSelectedCount(this.selectedX)
+        this.selectedX = this.limitSelectedCount(this.selectedX, 'month')
       }
     },
 
-    /* ================== 限制行列数（基于筛选+maxSize） ================== */
-    limitDataSize(originX, originY) {
-      if (this.maxSize === undefined || this.maxSize < 1) {
-        return { limitX: originX, limitY: originY }
-      }
-      // 最多显示 maxSize行 * maxSize列
-      const limitX = originX.slice(0, this.maxSize)
-      const limitY = originY.slice(0, this.maxSize)
-      return { limitX, limitY }
-    },
-
-    /* ================== 初始化图表 ================== */
+    // 初始化图表（核心渲染逻辑）
     initChart() {
-      if (!this.$refs.chartDom) return
+      // 防呆：DOM/数据未就绪时不执行
+      if (!this.$refs.chartDom || !this.xAxisData.length || !this.yAxisData.length) return
+
+      // 销毁旧实例，避免重复渲染
       if (this.chart) {
         this.chart.dispose()
       }
       this.chart = echarts.init(this.$refs.chartDom)
 
-      /* ============ 数据过滤：筛选+数量限制+行列限制 ============ */
-      const showX = this.selectedX
-      const showY = this.selectedY
+      // 基于选中的索引获取渲染数据
+      const newXAxis = this.selectedX.map(i => this.xAxisData[i])
+      const newYAxis = this.selectedY.map(i => this.yAxisData[i])
 
-      // 应用行列限制
-      const { limitX, limitY } = this.limitDataSize(showX, showY)
-
-      const newXAxis = limitX.map(i => this.xAxisData[i])
-      const newYAxis = limitY.map(i => this.yAxisData[i])
-
+      // 格式化热力图数据
       const formatData = []
-      limitY.forEach((yIdx, y) => {
-        limitX.forEach((xIdx, x) => {
+      this.selectedY.forEach((yIdx, y) => {
+        this.selectedX.forEach((xIdx, x) => {
           const value = Number(this.heatData[yIdx]?.[xIdx]) || 0
           formatData.push([x, y, value])
         })
       })
 
+      // 计算视觉映射的极值
       const values = formatData.map(v => v[2])
       const min = values.length ? Math.min(...values) : 0
       const max = values.length ? Math.max(...values) : 100
 
-      /* ============ 图表配置 ============ */
+      // 图表配置项
       const option = {
         backgroundColor: 'transparent',
         tooltip: {
@@ -269,9 +259,15 @@ export default {
         ]
       }
 
-      this.chart.setOption(option)
-    }
+      // 强制设置配置项，确保渲染
+      this.chart.setOption(option, true)
+    },
 
+    // 外部调用的刷新方法（可选）
+    renderChart() {
+      this.initSelectedStatus()
+      this.initChart()
+    }
   }
 }
 </script>
@@ -283,7 +279,7 @@ export default {
   box-sizing: border-box;
 }
 
-/* ============ 筛选栏 ============ */
+/* 筛选栏样式 */
 .filter-bar {
   padding: 6px 10px;
   font-size: 12px;
@@ -315,7 +311,7 @@ export default {
   border-color: #00CFFA;
 }
 
-/* ============ 图表 ============ */
+/* 图表样式 */
 .chart {
   width: 100%;
   height: calc(100% - 110px);
