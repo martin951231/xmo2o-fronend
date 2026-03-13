@@ -128,6 +128,7 @@ const path = {
     HardwareIndex: '/community/platform.hardware/hardware', // 硬件大数据
     WatchBox: '/community/platform.WatchBox/WatchBox', // 岗亭
     DeviceInfoIndex: '/community/platform.hardware/deviceInfo', // 硬件大数据 子页面数据1
+    propertyStatisticalIndex: '/community/property/propertyStatistical', // 统计报表
     // 2.3社区-小区后台
     villageIndex: '/village/village.iframe/house_index_index', // 小区首页
     villageLogin: '/user/community/login', // 登录

@@ -1,16 +1,18 @@
 <template>
   <div class="flex flex-column container">
     <Header :title="title" :projectItem="projectItem"></Header>
+
     <div class="flex flex-1 chart-box">
-      <div class="flex flex-column chart-item-left" >
-        <div class="flex-1 chart-item">
-          <charTitle :title-name="`项目组织架构`" />
+      <div class="flex flex-column chart-item-left">
+        <ChartPanel class="flex-1" title="项目组织架构">
           <OrgChart
-            ref="orgChartRef" :orgData="myOrgData" :theme="myOrgTheme"
+            ref="orgChartRef"
+            :orgData="myOrgData"
+            :theme="myOrgTheme"
           />
-        </div>
-        <div class="flex-1 chart-item">
-          <charTitle :title-name="`项目基础数据`" />
+        </ChartPanel>
+
+        <ChartPanel class="flex-1" title="项目基础数据">
           <StackedRateChart
             ref="baseChartRef"
             chart-title=""
@@ -20,18 +22,20 @@
             :y-axis-list="baseyAxisList"
             :series-list="baseSeriesList"
           />
-<!--          <BarChart-->
-<!--            ref="baseChartRef"-->
-<!--            :xData="baseChartData.xAxis"-->
-<!--            :seriesData="baseChartData.series"-->
-<!--            :colorList="[-->
-<!--              '#00ff99', '#ff6699', '#6699ff', '#00ffd9', '#00B8FF'-->
-<!--            ]"-->
-<!--            :barConfig="{ barWidth: 25, isStack: true }"-->
-<!--          />-->
-        </div>
-        <div class="flex-1 chart-item">
-          <charTitle :title-name="`项目巡检情况`" />
+          <!--
+          <BarChart
+            ref="baseChartRef"
+            :xData="baseChartData.xAxis"
+            :seriesData="baseChartData.series"
+            :colorList="[
+              '#00ff99', '#ff6699', '#6699ff', '#00ffd9', '#00B8FF'
+            ]"
+            :barConfig="{ barWidth: 25, isStack: true }"
+          />
+          -->
+        </ChartPanel>
+
+        <ChartPanel class="flex-1" title="项目巡检情况">
           <StackedRateChart
             ref="inspectionChartRef"
             chart-title=""
@@ -41,12 +45,11 @@
             :y-axis-list="inspectionyAxisList"
             :series-list="inspectionList"
           />
-        </div>
+        </ChartPanel>
       </div>
-      <div class="flex flex-column chart-item-center" >
-        <div class="flex-1 chart-item" >
-          <charTitle :title-name="`项目周期性费用情况`" />
-          <!-- 1. 收缴率占比堆叠图 -->
+
+      <div class="flex flex-column chart-item-center">
+        <ChartPanel class="flex-1" title="项目周期性费用情况">
           <StackedRateChart
             ref="chartRateRef"
             chart-title=""
@@ -56,19 +59,29 @@
             :y-axis-list="yAxisList"
             :series-list="seriesList"
           />
-        </div>
-        <div class="flex-1 chart-item">
-          <charTitle :title-name="`项目支出情况`" />
+        </ChartPanel>
+
+        <ChartPanel class="flex-1" title="项目支出情况">
           <PieChart
             ref="expendRef"
             :chart-data="expendData"
             :center-text="centerText"
             :pie-config="{ isRing: true, radius: ['68%', '70%'] }"
           />
+        </ChartPanel>
 
-        </div>
-        <div class="flex-1 chart-item">
-          <charTitle :show-more="false" :title-name="`项目能耗趋势`" :changeType="['水','电']" :currentType="currentCharTitleType" @changeTypeHandle="changeCharTitleTypeHandle" />
+        <ChartPanel class="flex-1 chart-panel-has-actions">
+          <template #title>
+            <charTitle
+              :show-more="true"
+              :title-name="`项目能耗趋势`"
+              :changeType="['水','电']"
+              :currentType="currentCharTitleType"
+              @changeTypeHandle="changeCharTitleTypeHandle"
+              @viewMore="openHeatmapModal('utilities')"
+            />
+          </template>
+
           <EnergyHeatmap
             ref="utilitiesRef"
             :heat-data="heatData"
@@ -76,16 +89,15 @@
             :y-axis-data="categoryList"
             unit="元"
             :scale="0.8"
-            :max-size="6"
+            :max-size="heatMapMaxSize"
           />
-        </div>
+        </ChartPanel>
       </div>
-      <div class="flex flex-column chart-item-right" >
-        <div class="flex-1 chart-item">
-          <charTitle :title-name="`用户使用情况`" />
+
+      <div class="flex flex-column chart-item-right">
+        <ChartPanel class="flex-1" title="用户使用情况">
           <LineChart
             ref="customChartRef"
-            style=""
             chart-width="100%"
             chart-height="100%"
             :chart-data="customChartData"
@@ -93,12 +105,11 @@
             :color-list="customColorList"
             :show-data-zoom="false"
           />
-        </div>
-        <div class="flex-1 chart-item">
-          <charTitle :title-name="`工单响应时间`" />
+        </ChartPanel>
+
+        <ChartPanel class="flex-1" title="工单响应时间">
           <LineChart
             ref="workOrderResponseRef"
-            style=""
             chart-width="100%"
             chart-height="100%"
             :chart-data="workOrderData"
@@ -106,9 +117,9 @@
             :color-list="workOrderColorList"
             :show-data-zoom="false"
           />
-        </div>
-        <div class="flex-1 chart-item">
-          <charTitle :title-name="`投诉建议情况`" />
+        </ChartPanel>
+
+        <ChartPanel class="flex-1" title="投诉建议情况">
           <CyberTable
             :columns="complaintTableColumns"
             :data="complaintTableData"
@@ -117,24 +128,40 @@
             @sort-change="handleSortChange"
             @viewMore="handleViewMore"
           />
-        </div>
+        </ChartPanel>
       </div>
     </div>
+
+    <template>
+      <div class="demo-page">
+        <DynamicChartModal
+          :visible="modalVisible"
+          :type="modalType"
+          :title="modalTitle"
+          :heatmap-props="currentHeatmapProps"
+          :table-props="currentTableProps"
+          @close="closeModal"
+          @confirm="handleConfirm"
+          @table-event="handleTableEvent"
+        />
+      </div>
+    </template>
   </div>
 </template>
 <script>
-import Header from './components/Header';
 import statisticalApi from '@/api/community/statistical'
-import StackedRateChart from '@/views/community/village/statistical/components/StackedRateChart.vue'
-import PieChart from '@/views/community/village/statistical/components/PieChart.vue'
-import OrgChart from '@/views/community/village/statistical/components/OrgChart.vue'
-import LineChart from '@/views/community/village/statistical/components/LineChart.vue'
-import BarChart from '@/views/community/village/statistical/components/BarChart.vue'
-import CyberTable from '@/views/community/village/statistical/components/CyberTable.vue'
-import CharTitle from '@/views/community/village/statistical/components/charTitle.vue'
-import EnergyHeatmap from '@/views/community/village/statistical/components/EnergyHeatmap.vue'
-import SunburstChart from '@/views/community/village/statistical/components/SunburstChart.vue'
-import villageApi from '@/api/community/village'
+import Header from '@/views/community/components/chart/Header';
+import DynamicChartModal from '@/views/community/components/chart/DynamicChartModal.vue';
+import StackedRateChart from '@/views/community/components/chart/StackedRateChart.vue'
+import PieChart from '@/views/community/components/chart/PieChart.vue'
+import OrgChart from '@/views/community/components/chart/OrgChart.vue'
+import LineChart from '@/views/community/components/chart/LineChart.vue'
+import BarChart from '@/views/community/components/chart/BarChart.vue'
+import CyberTable from '@/views/community/components/chart/CyberTable.vue'
+import CharTitle from '@/views/community/components/chart/charTitle.vue'
+import EnergyHeatmap from '@/views/community/components/chart/EnergyHeatmap.vue'
+import SunburstChart from '@/views/community/components/chart/SunburstChart.vue'
+import ChartPanel from '@/views/community/components/chart/ChartPanel.vue'
 
 export default {
   name: 'index',
@@ -150,6 +177,8 @@ export default {
     PieChart,
     SunburstChart,
     Header,
+    DynamicChartModal,
+    ChartPanel
   },
   data: function () {
     return {
@@ -345,8 +374,16 @@ export default {
       // Y轴：12个用电分类（按你的业务补充完整）
       monthList: [],
       // 核心数据：12行（分类）×12列（月份）的二维数组，值为对应消费金额（可从接口获取）
+      heatMapMaxSize: 6,
       heatData: [],
       currentCharTitleType: '电',//项目能耗趋势图默认选中类型
+      modalVisible: false,
+      modalType: '', // heatmap/table
+      modalTitle: '',
+      // 热力图参数（不同场景切换）
+      currentHeatmapProps: {},
+      // 表格参数
+      currentTableProps: {},
     }
   },
   watch: {},
@@ -447,7 +484,7 @@ export default {
       this.complaintTableData = sortData
     },
     handleViewMore(){
-      console.log( 123 )
+      this.openTableModal('complaint')
     },
     changeCharTitleTypeHandle(event){
       this.currentCharTitleType = event.checkedType;
@@ -563,6 +600,65 @@ export default {
           this_.$refs.chartRateRef.renderChart();
         },100)
       });
+    },
+    // 打开热力图弹窗（区分不同场景）
+    openHeatmapModal(scene) {
+      this.modalType = 'heatmap'
+      this.modalVisible = true
+
+      if (scene === 'utilities') {
+        this.modalTitle = '水电费数据热力图'
+        this.currentHeatmapProps = {
+          heatData: this.heatData,
+          'x-axis-data': this.monthList,
+          'y-axis-data': this.categoryList,
+          unit: '元',
+          scale: 0.8,
+          'max-size': 99
+        }
+      }
+    },
+
+    // 打开表格弹窗
+    openTableModal(type) {
+      this.modalType = 'table'
+      this.modalVisible = true
+      if( type == 'complaint' ){
+        this.modalTitle = '投诉数据详情'
+        this.currentTableProps = {
+          columns: this.complaintTableColumns,
+          data: this.complaintTableData,
+          'current-sort': this.currentSort,
+          'scrollSpeed': 20
+        }
+      }
+    },
+
+    // 关闭弹窗
+    closeModal() {
+      this.modalVisible = false
+      this.modalType = ''
+      this.currentHeatmapProps = {}
+      this.currentTableProps = {}
+    },
+
+    // 弹窗确认
+    handleConfirm() {
+      console.log('弹窗确认')
+      this.closeModal()
+    },
+
+    // 表格事件处理
+    handleTableEvent({ eventName, eventData }) {
+      switch (eventName) {
+        case 'sort-change':
+          console.log('表格排序变化：', eventData)
+          break
+        case 'viewMore':
+          console.log('表格查看更多：', eventData)
+          break
+        // 可扩展其他表格事件
+      }
     }
   },
 }

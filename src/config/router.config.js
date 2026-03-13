@@ -528,6 +528,15 @@ export const constantRouterMap = [
         name: 'communityDataIndex',
         component: () => import('@/views/community/property/communityData/CommunityData'),
     },
+    //  物业-统计报表
+    {
+      path: path.propertyStatisticalIndex,
+      name: 'propertyStatisticalIndex',
+      component: () => import('@/views/community/property/propertyStatistical'),
+      meta: {
+        title: '社区-小区统计报表',
+      },
+    },
     //  街道-网络事件中心
     {
         path: path.GridEventCenter,

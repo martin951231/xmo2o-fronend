@@ -128,8 +128,8 @@ export default {
       this.selectedY = this.limitSelectedCount(this.selectedY, 'category')
 
       // 调试日志（可选，验证选中状态）
-      console.log('最终选中月份索引：', this.selectedX)
-      console.log('最终选中分类索引：', this.selectedY)
+      // console.log('最终选中月份索引：', this.selectedX)
+      // console.log('最终选中分类索引：', this.selectedY)
     },
 
     // 限制选中数量（区分月份/分类）

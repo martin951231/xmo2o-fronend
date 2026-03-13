@@ -1153,7 +1153,6 @@
                 this.request(villageApi.repairGetOrderLog, {
                     order_id: order_id
                 }).then((res) => {
-                    console.log('log_list', res);
                     this.event_log_arr = res.log.info;
                     console.log('this.detail.event_log_arr', this.detail.event_log_arr);
                 });

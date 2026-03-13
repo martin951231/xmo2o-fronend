@@ -1,0 +1,124 @@
+.container{
+  width: 100%;
+  //height: 100%;
+  min-height: 100%;
+  //background: url('~@/assets/images/statistical/bg.png') no-repeat center center / cover;
+  background: radial-gradient(
+    circle at 50% 30%,
+    rgba(76, 175, 255, 0.2) 0%,   /* 中心浅蓝（低透） */
+    rgba(61, 65, 119, 0.15) 50%, /* 中间粉紫过渡（低透） */
+    rgba(0, 0, 0, 0.95) 100%       /* 四周纯黑（高透） */
+  );
+  /* 可选：如果需要背景底色兜底 */
+  background-color: #0a0a1a;
+}
+
+.chart-box{
+  margin: 0 1rem 1rem;
+  // 基础布局（可根据需求调整）
+  .chart-item div{
+    height: calc(100% - 3rem) !important;
+  }
+  .chart-item{
+    margin: 0 10px 10px;
+    min-height: 300px !important;
+    //background: #0BB20C;
+    border-radius: 5px; // 圆角更贴近玻璃质感
+
+    // 核心毛玻璃属性
+    background: rgba(255, 255, 255, 0); // 半透明白色底
+    backdrop-filter: blur(3px); // 模糊核心（数值越大越模糊）
+    //-webkit-backdrop-filter: blur(10px); // 兼容webkit内核浏览器
+
+
+    // 增强质感：边框+阴影
+    //border: 1px solid rgba(55, 55, 55, 0.1); // 半透明细边框
+
+    position: relative; // 定位基准，必须保留
+    box-sizing: border-box;
+    transition: all 0.3s ease; // 盒子轻微微动效（可选）
+    z-index: 1; // 确保角标在盒子上层
+    // 鼠标悬浮时的基础高亮（可选，增强交互）
+    // 可选：盒子悬浮轻微上浮+淡光，增强交互（可删）
+    &:hover {
+      //transform: translateY(-2px);
+      //box-shadow: 0 0 20px rgba(0, 195, 254, 0.15);
+      box-shadow: 0 0 30px rgba(0, 102, 255, 0.3);
+    }
+
+    // 1. 左上外侧尖角+渐隐线条：伪元素before
+    &::before {
+      content: '';
+      position: absolute;
+      top: -6px; // 向上偏移，脱离盒子（外侧）
+      left: -6px; // 向左偏移，脱离盒子（外侧）
+      width: 50%; // 线条长度（可调整）
+      height: 50%; // 和宽度一致，保证尖角垂直/水平
+      border-top: 2px solid transparent; // 透明边框基础
+      border-left: 2px solid transparent; // 透明边框基础
+      // 核心：左上尖角实色，线条向右侧、下侧渐变消失
+      border-bottom-color: #00c3fe;
+      border-right-color: #00c3fe;
+      // 渐变线条：从尖角(0,0)向右侧、下侧渐隐，和边框完美融合
+      background:
+        linear-gradient(to right, #00c3fe 0%, transparent 85%) top / 100% 2px no-repeat,
+        linear-gradient(to bottom, #00c3fe 0%, transparent 85%) left / 2px 100% no-repeat;
+      // 科技感发光：多层叠加，贴合线条，通透不刺眼
+      //box-shadow:
+      //    -2px -2px 6px #00c3fe,        // 左+上基础发光（贴线，原6px参数）
+      //    -4px -4px 12px rgba(0, 195, 254, 0.6), // 左+上中层发光（原12px/0.6参数）
+      //    -6px -6px 18px rgba(0, 195, 254, 0.3); // 左+上外层发光（原18px/0.3参数）
+      // 初始状态：透明+缩小，隐藏角标
+      opacity: 0;
+      transform: scale(0.9);
+      // 丝滑动画：淡入+放大，和右下角标同步
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      pointer-events: none; // 不遮挡鼠标事件
+      z-index: 2; // 角标在盒子上层
+    }
+
+    // 2. 右下外侧尖角+渐隐线条：伪元素after
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -6px; // 向下偏移，脱离盒子（外侧）
+      right: -6px; // 向右偏移，脱离盒子（外侧）
+      width: 50%; // 和左上尖角一致，视觉统一
+      height: 50%;
+      border-top: 2px solid transparent;
+      border-left: 2px solid transparent;
+      // 核心：右下尖角实色，线条向左侧、上侧渐变消失
+      border-bottom-color: #00c3fe;
+      border-right-color: #00c3fe;
+      // 渐变线条：从尖角(100%,100%)向左侧、上侧渐隐
+      background:
+        linear-gradient(to left, #00c3fe 0%, transparent 100%) bottom / 100% 2px no-repeat,
+        linear-gradient(to top, #00c3fe 0%, transparent 100%) right / 2px 100% no-repeat;
+      // 和左上尖角一致的科技发光，保证视觉统一
+      //box-shadow:
+      //  0 0 6px #00c3fe,
+      //  0 0 12px rgba(0, 195, 254, 0.6),
+      //  0 0 18px rgba(0, 195, 254, 0.3);
+      // 初始状态和动画和左上一致，同步显示/隐藏
+      opacity: 0;
+      transform: scale(0.9);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    // 悬浮时：角标淡入+放大，完全显示
+    &:hover::before,
+    &:hover::after {
+      opacity: 1;
+      transform: scale(1); // 放大到原尺寸，轻微弹起动态感
+    }
+  }
+  .chart-item-left,.chart-item-right{
+    width: 30vw;
+  }
+  .chart-item-center{
+    width: calc( 100vw - 60vw - 2rem );
+    //margin:0 20px;
+  }
+}

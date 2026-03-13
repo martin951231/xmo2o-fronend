@@ -36,7 +36,7 @@ export default {
   },
   methods: {
     handleClickMore() {
-      this.$emit('clickMore');
+      this.$emit('viewMore');
     },
     changeTypeHandle(item){
       if( this.changeType.length > 2 ){
@@ -62,7 +62,7 @@ export default {
   margin: 0;
   position: relative;
   z-index: 1;
-  padding: 1.5rem 0 1.5rem 2.2rem;
+  padding: 1.5rem 0.8rem 1.5rem 3.0rem;
   white-space: nowrap;
   font-weight: 600;
   cursor: context-menu;
@@ -72,7 +72,7 @@ export default {
 .org-title::before {
   content: "";
   position: absolute;
-  left: 0;
+  left: 0.8rem;
   top: 50%;
   transform: translateY(-50%);
   width: 1.8rem;

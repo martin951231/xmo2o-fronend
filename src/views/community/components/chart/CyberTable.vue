@@ -1,7 +1,7 @@
 <template>
   <div class="cyber-table-container">
     <div class="cyber-table-wrapper" ref="tableWrapper">
-      <!-- 表头：自定义宽高+排序图标同步 -->
+      <!-- 表头 -->
       <div class="cyber-table-header" ref="tableHeader">
         <div class="cyber-table-header-row">
           <div
@@ -15,16 +15,19 @@
             @click="() => column.sortable && handleSortClick(column.prop)"
           >
             <span class="header-text">{{ column.label }}</span>
-            <span v-if="column.sortable" class="sort-icon" :class="{ active: currentSort.prop === column.prop }">
+            <span
+              v-if="column.sortable"
+              class="sort-icon"
+              :class="{ active: currentSort.prop === column.prop }"
+            >
               {{ currentSort.order === 'asc' ? '↑' : '↓' }}
             </span>
           </div>
         </div>
       </div>
 
-      <!-- 表格内容区：绝对定位彻底防撑高，超出隐藏 -->
+      <!-- 表格内容区 -->
       <div class="cyber-table-body" ref="tableBody">
-        <!-- 核心：绝对定位，宽高100%，超出隐藏，永不撑高父盒 -->
         <div class="table-content">
           <div
             v-for="(row, rowIndex) in data"
@@ -40,21 +43,34 @@
                 textAlign: column.align || 'center'
               }"
             >
+              <!-- 保留你原来的 render 扩展能力 -->
               <template v-if="column.render">
                 <component :is="column.render(row, column)" />
               </template>
-              <span class="cell-text">{{ row[column.prop] || '-' }}</span>
+
+              <!-- 新增：环比颜色列 -->
+              <template v-else-if="isRatioColumn(column.prop)">
+                <span
+                  class="ratio-tag"
+                  :class="getRatioClass(row[column.prop])"
+                >
+                  {{ formatRatioText(row[column.prop]) }}
+                </span>
+              </template>
+
+              <!-- 默认文本 -->
+              <template v-else>
+                <span class="cell-text">{{ row[column.prop] || '-' }}</span>
+              </template>
             </div>
           </div>
         </div>
 
-        <!-- 浮动查看更多按钮：仅样式+结构，无事件，数据超出时显示 -->
         <div v-if="showMoreBtn" class="more-btn-wrapper">
           <button class="more-btn" @click="viewMore()">查看更多</button>
         </div>
       </div>
 
-      <!-- 空数据占位：判断父组件传入的data -->
       <div v-if="!data.length" class="empty-data">
         <span class="empty-icon">⊘</span>
         <span class="empty-text">暂无数据</span>
@@ -70,52 +86,92 @@ export default {
     columns: { type: Array, required: true, default: () => [] },
     data: { type: Array, required: true, default: () => [] },
     currentSort: { type: Object, default: () => ({ prop: '', order: '' }) },
-    enableSort: { type: Boolean, default: true }
+    enableSort: { type: Boolean, default: true },
+
+    // 是否允许显示“查看更多”
+    showMore: {
+      type: Boolean,
+      default: true
+    },
+
+    // 新增：环比列配置
+    ratioConfig: {
+      type: Object,
+      default: () => ({
+        enable: false,
+        columns: []
+      })
+    }
   },
   data() {
     return {
-      showMoreBtn: false, // 查看更多按钮显隐
-      rowHeight: 44,      // 单行高度（和样式保持一致）
-      bodyHeight: 0       // 内容区可视高度
+      needMoreBtn: false,
+      rowHeight: 44,
+      bodyHeight: 0
     };
   },
+  computed: {
+    // 最终是否显示查看更多
+    showMoreBtn() {
+      return this.showMore && this.needMoreBtn;
+    }
+  },
   watch: {
-    // 数据/列/排序变化，重新判断是否显示查看更多
-    data: { deep: true, handler() { this.$nextTick(() => this.judgeShowMore()); } },
-    columns: { deep: true, handler() { this.$nextTick(() => this.judgeShowMore()); } },
-    currentSort: { deep: true, handler() { this.$nextTick(() => this.judgeShowMore()); } }
+    data: {
+      deep: true,
+      handler() {
+        this.$nextTick(() => this.judgeShowMore());
+      }
+    },
+    columns: {
+      deep: true,
+      handler() {
+        this.$nextTick(() => this.judgeShowMore());
+      }
+    },
+    currentSort: {
+      deep: true,
+      handler() {
+        this.$nextTick(() => this.judgeShowMore());
+      }
+    },
+    showMore() {
+      this.$nextTick(() => this.judgeShowMore());
+    }
   },
   mounted() {
     this.$nextTick(() => {
       this.calcBaseParams();
       this.judgeShowMore();
     });
-    window.addEventListener('resize', () => this.$nextTick(() => this.judgeShowMore()));
+
+    this._resizeHandler = () => {
+      this.$nextTick(() => this.judgeShowMore());
+    };
+    window.addEventListener('resize', this._resizeHandler);
   },
   beforeUnmount() {
-    window.removeEventListener('resize', () => this.judgeShowMore());
+    window.removeEventListener('resize', this._resizeHandler);
   },
   methods: {
-    // 计算基础参数：仅获取内容区可视高度
     calcBaseParams() {
       if (!this.$refs.tableBody || !this.data.length) return;
       this.bodyHeight = this.$refs.tableBody.clientHeight;
-      // 兼容实际渲染的单行高度，避免样式修改后判断不准
-      this.rowHeight = this.$refs.tableBody?.querySelector('.cyber-table-row')?.offsetHeight || 44;
+      this.rowHeight =
+        this.$refs.tableBody?.querySelector('.cyber-table-row')?.offsetHeight || 44;
     },
 
-    // 判断是否显示查看更多：数据总高度 > 内容区可视高度 则显示
     judgeShowMore() {
       if (!this.data.length) {
-        this.showMoreBtn = false;
+        this.needMoreBtn = false;
         return;
       }
+
       this.calcBaseParams();
       const totalDataHeight = this.data.length * this.rowHeight;
-      this.showMoreBtn = totalDataHeight > this.bodyHeight;
+      this.needMoreBtn = totalDataHeight > this.bodyHeight;
     },
 
-    // 表头排序点击事件：保留原功能，向父组件派发排序指令
     handleSortClick(prop) {
       if (!this.enableSort) return;
       const isCurrentProp = this.currentSort.prop === prop;
@@ -125,25 +181,76 @@ export default {
       this.$emit('sort-change', { prop, order: newOrder });
     },
 
-    //查看更多
-    viewMore(){
+    viewMore() {
       this.$emit('viewMore');
+    },
+
+    // 是否为环比列
+    isRatioColumn(prop) {
+      return (
+        this.ratioConfig &&
+        this.ratioConfig.enable &&
+        Array.isArray(this.ratioConfig.columns) &&
+        this.ratioConfig.columns.includes(prop)
+      );
+    },
+
+    // 获取环比样式类名
+    getRatioClass(value) {
+      if (value === null || value === undefined || value === '') {
+        return 'is-empty';
+      }
+
+      const str = String(value).trim();
+
+      if (str.startsWith('+')) return 'is-up';
+      if (str.startsWith('-')) return 'is-down';
+
+      const num = parseFloat(str);
+      if (isNaN(num)) return 'is-empty';
+      if (num > 0) return 'is-up';
+      if (num < 0) return 'is-down';
+      return 'is-flat';
+    },
+
+    // 格式化显示文本
+    formatRatioText(value) {
+      if (value === null || value === undefined || value === '') return '-';
+
+      const str = String(value).trim();
+      const num = parseFloat(str);
+
+      if (isNaN(num)) return str;
+
+      if (num > 0) {
+        return `↑ ${str.startsWith('+') ? str : `+${str}`}`;
+      }
+      if (num < 0) {
+        return `↓ ${str}`;
+      }
+      return `→ ${str}`;
     }
   }
 };
 </script>
 
 <style lang="less" scoped>
-// 全局主色调：#00c3fe
 @mainColor: #00c3fe;
-@textLight: #e5eaf5;    // 浅色文字
-@textGray: #88aaff;     // 灰色文字
-@borderDark: #0a1929;   // 深色边框
-@glowPrimary: #00c3fe80;// 50%透明度主色
-@glowSecondary: #00c3fe4D;// 30%透明度主色
-@gridLine: #88aaff33;   // 网格线颜色
+@textLight: #e5eaf5;
+@textGray: #88aaff;
+@borderDark: #0a1929;
+@glowPrimary: #00c3fe80;
+@glowSecondary: #00c3fe4D;
+@gridLine: #88aaff33;
 
-// 容器：继承父级宽高，作为基础定位容器
+// 新增：环比标签颜色
+@upColor: #00e59b;
+@upBg: rgba(0, 229, 155, 0.18);
+@downColor: #ff6b6b;
+@downBg: rgba(255, 107, 107, 0.18);
+@flatColor: #ffd166;
+@flatBg: rgba(255, 209, 102, 0.18);
+
 .cyber-table-container {
   width: 100%;
   height: 100%;
@@ -165,7 +272,6 @@ export default {
   }
 }
 
-// 表格外框：严格继承父级宽高，永不被内容撑高
 .cyber-table-wrapper {
   width: 100%;
   height: 100%;
@@ -189,7 +295,6 @@ export default {
   }
 }
 
-// 表头样式：完全保留原科技风样式，无任何修改
 .cyber-table-header {
   width: 100%;
   background: linear-gradient(180deg, @glowSecondary, transparent);
@@ -255,16 +360,14 @@ export default {
   }
 }
 
-// 表格内容区：核心修改——相对定位，子元素绝对定位彻底防撑高
 .cyber-table-body {
   width: 100%;
-  height: calc(100% - 48px); // 固定高度=总高度-表头高度
-  position: relative;        // 作为内容的定位父级
+  height: calc(100% - 48px);
+  position: relative;
   z-index: 2;
   box-sizing: border-box;
-  overflow: hidden;          // 双重保险，防止溢出
+  overflow: hidden;
 
-  // 核心关键：绝对定位，宽高100%，超出隐藏，脱离文档流永不撑高父盒
   .table-content {
     position: absolute;
     top: 0;
@@ -272,10 +375,36 @@ export default {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-    overflow: hidden;        // 仅显示可视高度内容，超出直接隐藏
+    overflow-x: hidden;
+    overflow-y: scroll;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: fade(@borderDark, 50%);
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: fade(@mainColor, 60%);
+      border-radius: 3px;
+      border: 1px solid fade(@mainColor, 80%);
+      transition: all 0.2s ease;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: @mainColor;
+      box-shadow: 0 0 8px @glowPrimary;
+    }
+
+    &::-webkit-scrollbar-corner {
+      background: transparent;
+    }
   }
 
-  // 数据行：保留所有原样式、hover特效，固定高度44px
   .cyber-table-row {
     width: 100%;
     height: 44px;
@@ -294,7 +423,6 @@ export default {
     }
   }
 
-  // 单元格：完全保留原样式，不换行+超长省略+固定高度
   .cyber-table-cell {
     padding: 0 10px;
     float: left;
@@ -326,9 +454,55 @@ export default {
         text-shadow: 0 0 6px @glowPrimary, 0 0 12px @glowPrimary;
       }
     }
+
+    // 新增：环比标签
+    .ratio-tag {
+      min-width: 72px;
+      max-width: 100%;
+      height: 28px;
+      line-height: 28px;
+      padding: 0 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      text-align: center;
+      box-sizing: border-box;
+      display: inline-block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border: 1px solid transparent;
+      transition: all 0.3s ease;
+
+      &.is-up {
+        color: @upColor;
+        background: @upBg;
+        border-color: fade(@upColor, 80%);
+        box-shadow: 0 0 8px fade(@upColor, 20%);
+      }
+
+      &.is-down {
+        color: @downColor;
+        background: @downBg;
+        border-color: fade(@downColor, 80%);
+        box-shadow: 0 0 8px fade(@downColor, 20%);
+      }
+
+      &.is-flat {
+        color: @flatColor;
+        background: @flatBg;
+        border-color: fade(@flatColor, 80%);
+        box-shadow: 0 0 8px fade(@flatColor, 20%);
+      }
+
+      &.is-empty {
+        color: @textGray;
+        background: fade(@textGray, 8%);
+        border-color: fade(@textGray, 20%);
+      }
+    }
   }
 
-  // 查看更多按钮容器：浮动在底部，渐变遮罩，和原样式一致
   .more-btn-wrapper {
     position: absolute;
     bottom: 0;
@@ -340,7 +514,6 @@ export default {
     z-index: 2;
   }
 
-  // 查看更多按钮：保留科技风样式、hover特效，无任何事件
   .more-btn {
     padding: 4px 16px;
     border: 1px solid @mainColor;
@@ -366,7 +539,6 @@ export default {
   }
 }
 
-// 空数据样式：完全保留原样式，无修改
 .empty-data {
   width: 100%;
   height: calc(100% - 48px);
@@ -391,7 +563,6 @@ export default {
   }
 }
 
-// 清除浮动：保留原样式，防止列宽错乱
 .cyber-table-header-row::after,
 .cyber-table-row::after {
   content: '';

@@ -55,11 +55,20 @@
               />
             </a-tooltip>
           </template>
+<!--          <template v-if="showData">-->
+<!--            <a-button-->
+<!--              type="primary"-->
+<!--              style="float: right; margin-top: 15px"-->
+<!--              onclick="window.open(location.protocol + '//' + location.host + '/v20/public/platform/#/property/property/communityData','_blank')"-->
+<!--            >-->
+<!--              可视化大数据-->
+<!--            </a-button>-->
+<!--          </template>-->
           <template v-if="showData">
             <a-button
               type="primary"
               style="float: right; margin-top: 15px"
-              onclick="window.open(location.protocol + '//' + location.host + '/v20/public/platform/#/property/property/communityData','_blank')"
+              onclick="window.open(location.protocol + '//' + location.host + '/v20/public/platform/#/community/property/propertyStatistical','_blank')"
             >
               可视化大数据
             </a-button>
