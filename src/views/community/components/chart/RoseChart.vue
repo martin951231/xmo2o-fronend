@@ -2,8 +2,21 @@
   <div class="dynamic-rose-chart">
     <div class="rose-chart-left">
       <div
-        :style="{ width: containerWidth, height: containerHeight }"
+        v-if="!hasData"
+        class="empty-state"
+        :style="{ height: containerHeight }"
+      >
+        <div class="empty-state-inner">
+          <div class="empty-state-icon"></div>
+          <div class="empty-state-text">{{ emptyText }}</div>
+        </div>
+      </div>
+
+      <div
+        v-show="hasData"
         ref="chartRef"
+        :style="{ width: containerWidth, height: containerHeight }"
+        class="chart-inner"
       ></div>
     </div>
 
@@ -29,19 +42,12 @@ import * as echarts from 'echarts'
 export default {
   name: 'DynamicRoseChart',
   props: {
-    // 原始数据，一次性传全部
-    // 例：
-    // [
-    //   { name: '香榭华府', completionRate: 85, coverageRate: 90, abnormalCount: 2, repeatAbnormalCount: 1 },
-    //   { name: '公元公馆', completionRate: 75, coverageRate: 88, abnormalCount: 4, repeatAbnormalCount: 2 }
-    // ]
     chartData: {
       type: Array,
       required: true,
       default: () => []
     },
 
-    // 名称字段映射
     fieldMap: {
       type: Object,
       default: () => ({
@@ -49,21 +55,12 @@ export default {
       })
     },
 
-    // 右侧按钮列表配置
-    // 例：
-    // [
-    //   { key: 'completionRate', label: '完成率', unit: '%' },
-    //   { key: 'coverageRate', label: '覆盖率', unit: '%' },
-    //   { key: 'abnormalCount', label: '异常情况', unit: '次' },
-    //   { key: 'repeatAbnormalCount', label: '重复异常点位', unit: '个' }
-    // ]
     metricOptions: {
       type: Array,
       required: true,
       default: () => []
     },
 
-    // 默认选中的指标key
     defaultMetricKey: {
       type: String,
       default: ''
@@ -89,6 +86,11 @@ export default {
       default: true
     },
 
+    emptyText: {
+      type: String,
+      default: '暂无数据'
+    },
+
     containerWidth: {
       type: String,
       default: '100%'
@@ -99,13 +101,11 @@ export default {
       default: '100%'
     },
 
-    // 玫瑰图模式：radius / area
     roseType: {
       type: String,
       default: 'radius'
     },
 
-    // 内外半径
     radius: {
       type: Array,
       default: () => ['28%', '68%']
@@ -130,11 +130,11 @@ export default {
       currentMetricLabel: '',
       currentMetricUnit: '',
       techColorLib: [
-        '#ff00ff', // 洋红霓虹
-        '#00ffff', // 青色霓虹
-        '#ffff00', // 亮黄霓虹
-        '#ff6600', // 橙红霓虹
-        '#8b00ff'  // 紫色霓虹
+        '#ff00ff',
+        '#00ffff',
+        '#ffff00',
+        '#ff6600',
+        '#8b00ff'
       ]
     }
   },
@@ -144,6 +144,16 @@ export default {
       return (
         this.metricOptions.find(item => item.key === this.currentMetricKey) || {}
       )
+    },
+
+    hasData() {
+      if (!Array.isArray(this.chartData) || this.chartData.length === 0) return false
+      if (!this.currentMetricKey) return false
+
+      return this.chartData.some(item => {
+        const value = Number(item?.[this.currentMetricKey] ?? 0)
+        return !Number.isNaN(value) && value > 0
+      })
     }
   },
 
@@ -151,7 +161,7 @@ export default {
     chartData: {
       deep: true,
       handler() {
-        this.renderChart()
+        this.handleDataChange()
       }
     },
     metricOptions: {
@@ -163,19 +173,23 @@ export default {
         if (!hasCurrent) {
           this.initDefaultMetric()
         }
-        this.renderChart()
+        this.handleDataChange()
       }
     },
     currentMetricKey() {
-      this.renderChart()
+      this.handleDataChange()
     }
   },
 
   mounted() {
     this.$nextTick(() => {
       this.initDefaultMetric()
-      this.initChart()
-      this.resizeHandler = () => this.chartInstance?.resize()
+      this.initChartIfNeeded()
+      this.resizeHandler = () => {
+        if (this.chartInstance && this.hasData) {
+          this.chartInstance.resize()
+        }
+      }
       window.addEventListener('resize', this.resizeHandler)
     })
   },
@@ -189,13 +203,36 @@ export default {
   },
 
   methods: {
-    forceRefreshChart() {
-      if (!this.chartInstance) {
-        this.initChart()
-      } else {
+    handleDataChange() {
+      this.$nextTick(() => {
+        if (!this.hasData) {
+          if (this.chartInstance) {
+            this.chartInstance.clear()
+          }
+          return
+        }
+
+        this.initChartIfNeeded()
         this.renderChart()
-      }
-      this.chartInstance?.resize()
+      })
+    },
+
+    forceRefreshChart() {
+      this.$nextTick(() => {
+        if (!this.hasData) {
+          if (this.chartInstance) {
+            this.chartInstance.clear()
+          }
+          return
+        }
+
+        if (!this.chartInstance) {
+          this.initChart()
+        } else {
+          this.renderChart()
+          this.chartInstance.resize()
+        }
+      })
     },
 
     initDefaultMetric() {
@@ -216,8 +253,19 @@ export default {
       }
     },
 
-    initChart() {
+    initChartIfNeeded() {
+      if (!this.hasData) return
       if (!this.$refs.chartRef) return
+
+      if (!this.chartInstance) {
+        this.initChart()
+      } else {
+        this.renderChart()
+      }
+    },
+
+    initChart() {
+      if (!this.$refs.chartRef || !this.hasData) return
 
       if (this.chartInstance) {
         this.chartInstance.dispose()
@@ -235,20 +283,26 @@ export default {
     },
 
     renderChart() {
+      if (!this.hasData) {
+        if (this.chartInstance) this.chartInstance.clear()
+        return
+      }
+
       if (!this.chartInstance || !this.$refs.chartRef) return
 
-      if (!this.chartData.length || !this.currentMetricKey) {
+      const pieData = this.getRoseSeriesData()
+      if (!pieData.length) {
         this.chartInstance.clear()
         return
       }
 
-      const option = this.buildOption()
+      const option = this.buildOption(pieData)
       this.chartInstance.setOption(option, true)
+      this.chartInstance.resize()
     },
 
-    buildOption() {
+    buildOption(pieData) {
       const { baseStyle } = this
-      const pieData = this.getRoseSeriesData()
 
       return {
         color: this.techColorLib,
@@ -359,7 +413,6 @@ export default {
           color: baseStyle.textLight
         },
         formatter: (params) => {
-          const percent = params.percent || 0
           return `
             <div style="font-weight:bold;color:${params.color};margin-bottom:8px;font-size:14px;">
               ${params.name}
@@ -403,7 +456,7 @@ export default {
   display: flex;
   align-items: stretch;
   justify-content: space-between;
-  padding: 10px;
+  padding: 8px 10px 6px;
   box-sizing: border-box;
   background-color: transparent;
 }
@@ -412,6 +465,74 @@ export default {
   flex: 1;
   min-width: 0;
   height: 100%;
+  position: relative;
+}
+
+.chart-inner {
+  width: 100%;
+  height: 100%;
+  min-height: 260px;
+}
+
+.empty-state {
+  width: 100%;
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at center, rgba(34, 195, 255, 0.12) 0%, rgba(34, 195, 255, 0.03) 35%, rgba(0, 0, 0, 0) 70%);
+}
+
+.empty-state-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.empty-state-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  position: relative;
+  border: 1px solid rgba(34, 195, 255, 0.28);
+  box-shadow:
+    0 0 0 6px rgba(34, 195, 255, 0.04),
+    0 0 20px rgba(34, 195, 255, 0.08) inset;
+}
+
+.empty-state-icon::before,
+.empty-state-icon::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: rgba(34, 195, 255, 0.7);
+  transform: translate(-50%, -50%);
+  border-radius: 2px;
+}
+
+.empty-state-icon::before {
+  width: 24px;
+  height: 2px;
+}
+
+.empty-state-icon::after {
+  width: 2px;
+  height: 24px;
+  opacity: 0.35;
+}
+
+.empty-state-text {
+  color: rgba(192, 207, 255, 0.7);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-align: center;
 }
 
 .rose-chart-right {
@@ -462,5 +583,35 @@ export default {
   );
   box-shadow: 0 0 16px rgba(0, 240, 255, 0.32);
   font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .dynamic-rose-chart {
+    padding: 6px;
+  }
+
+  .chart-inner,
+  .empty-state {
+    min-height: 220px;
+  }
+
+  .empty-state-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .empty-state-text {
+    font-size: 13px;
+  }
+
+  .rose-chart-right {
+    width: 110px;
+    margin-left: 8px;
+  }
+
+  .metric-btn-item {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
 }
 </style>

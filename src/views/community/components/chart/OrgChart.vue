@@ -1,6 +1,6 @@
 <template>
   <div class="tech-org-wrapper">
-    <div ref="chartRef" style="width: 100%; height: 100%;"></div>
+    <div ref="chartRef" class="chart-inner"></div>
   </div>
 </template>
 
@@ -33,6 +33,32 @@ export default {
       }
     };
   },
+  computed: {
+    processedOrgData() {
+      // 第一步：完整递归统计 totalCount
+      const fullTree = this.buildTreeWithTotal(this.orgData, true);
+
+      // 第二步：只保留两层显示（根节点 + 第一层子节点）
+      return this.clipTreeLevel(fullTree, 1, 2);
+    }
+  },
+  watch: {
+    orgData: {
+      deep: true,
+      handler() {
+        this.renderChart();
+        this.$nextTick(() => {
+          setTimeout(() => this.updateFlowEffect(), 100);
+        });
+      }
+    },
+    labelDirection() {
+      this.renderChart();
+      this.$nextTick(() => {
+        setTimeout(() => this.updateFlowEffect(), 100);
+      });
+    }
+  },
   mounted() {
     this.$nextTick(() => {
       this.initChart();
@@ -47,34 +73,126 @@ export default {
     window.removeEventListener('resize', this.handleResize);
   },
   methods: {
-    // 格式化文字：竖向逐字换行，横向截断
-    formatLabelText(text, direction = this.labelDirection) {
-      const isVertical = direction === 'vertical';
-      const maxLen = isVertical ? 4 : 8;
-      const shortText = text && text.length > maxLen ? text.substring(0, maxLen) : (text || '');
-      return isVertical ? shortText.split('').join('\n') : shortText;
+    // 当前节点自身人数
+    getSelfCount(node) {
+      return Array.isArray(node && node.users) ? node.users.length : 0;
+    },
+
+    /**
+     * 第一步：构建完整树，并递归统计 totalCount
+     * 这里不裁剪层级，只负责把每个节点的 totalCount 算完整
+     */
+    buildTreeWithTotal(node, isRoot = false) {
+      if (!node || typeof node !== 'object') return null;
+
+      if (Number(node.type) === 1) {
+        return null;
+      }
+
+      const children = Array.isArray(node.children) ? node.children : [];
+      const visibleChildren = children
+        .map(child => this.buildTreeWithTotal(child, false))
+        .filter(Boolean);
+
+      const selfCount = this.getSelfCount(node);
+      const childrenTotal = visibleChildren.reduce((sum, child) => {
+        return sum + Number(child.totalCount || 0);
+      }, 0);
+
+      return {
+        ...node,
+        _isRoot: isRoot,
+        totalCount: selfCount + childrenTotal,
+        children: visibleChildren,
+        symbolSize: isRoot ? [130, 36] : [42, 98]
+      };
+    },
+
+    /**
+     * 第二步：裁剪展示层级
+     * 只保留 maxLevel 层，children 超出的直接截掉
+     * 但 totalCount 保留第一步已经算好的完整统计
+     */
+    clipTreeLevel(node, level = 1, maxLevel = 2) {
+      if (!node) return null;
+
+      const isRoot = !!node._isRoot;
+
+      if (level >= maxLevel) {
+        return {
+          ...node,
+          _isRoot: isRoot,
+          children: [],
+          // 保留已统计好的 totalCount
+          totalCount: Number(node.totalCount || 0),
+          symbolSize: isRoot ? [130, 36] : [42, 98]
+        };
+      }
+
+      const children = Array.isArray(node.children) ? node.children : [];
+
+      return {
+        ...node,
+        _isRoot: isRoot,
+        totalCount: Number(node.totalCount || 0),
+        children: children
+          .map(child => this.clipTreeLevel(child, level + 1, maxLevel))
+          .filter(Boolean),
+        symbolSize: isRoot ? [130, 36] : [42, 98]
+      };
+    },
+
+    // 节点显示名称：名称 + 总人数
+    getDisplayName(data) {
+      const name = (data && data.name) || '';
+      const totalCount = Number((data && data.totalCount) || 0);
+
+      if (!name) return '';
+      return `${name}（${totalCount}）`;
+    },
+
+    // 文本格式化
+    // 根节点：横向显示
+    // 其他节点：纵向显示
+    formatLabelText(data) {
+      const name = (data && data.name) || '';
+      const totalCount = Number((data && data.totalCount) || 0);
+      const isRoot = !!(data && data._isRoot);
+
+      const maxLen = 4;
+      const shortName = name.length > maxLen ? name.substring(0, maxLen) : name;
+
+      if (isRoot) {
+        return `${shortName}（${totalCount}）`;
+      }
+
+      return `${shortName.split('').join('\n')}\n（${totalCount}）`;
     },
 
     initChart() {
       const el = this.$refs.chartRef;
       if (!el) return;
+
       this.chart = echarts.init(el, null, { renderer: 'canvas' });
       this.renderChart();
+
       setTimeout(() => this.updateFlowEffect(), 100);
+
       this.chart.on('click', () => {
         setTimeout(() => this.updateFlowEffect(), 200);
       });
     },
 
     renderChart() {
-      const t = this.theme;
-      const isVertical = this.labelDirection === 'vertical';
+      if (!this.chart) return;
 
-      // 节点尺寸：所有节点都指定尺寸，保证框显示
-      const rootSize = isVertical ? [36, 120] : [120, 36];
-      const childSize = isVertical ? [36, 80] : [80, 36];
-      // 竖向文字行高缩小（从20→16），横向保持20
-      const labelLineHeight = isVertical ? 16 : 20;
+      const chartData = this.processedOrgData;
+      if (!chartData) {
+        this.chart.clear();
+        return;
+      }
+
+      const t = this.theme;
 
       const option = {
         backgroundColor: 'transparent',
@@ -85,44 +203,70 @@ export default {
           borderColor: t.primary,
           borderWidth: 1,
           padding: [12, 20],
-          textStyle: { color: '#fff', fontSize: 13 },
+          textStyle: {
+            color: '#fff',
+            fontSize: 13
+          },
           formatter: (params) => {
-            const data = params.data;
-            let html = `<div style="font-weight:bold;color:${t.primary};margin-bottom:8px;border-bottom:1px solid rgba(0,242,254,0.3);padding-bottom:4px;">${data.name}</div>`;
-            if (data.users && data.users.length) {
-              data.users.forEach(u => {
+            const data = params.data || {};
+            const totalCount = Number(data.totalCount || 0);
+            const users = Array.isArray(data.users) ? data.users : [];
+
+            let html = `
+              <div style="
+                font-weight:bold;
+                color:${t.primary};
+                margin-bottom:8px;
+                border-bottom:1px solid rgba(0,242,254,0.3);
+                padding-bottom:4px;
+              ">
+                ${data.name || ''}
+              </div>
+              <div style="font-size:12px;margin-bottom:8px;">
+                总人数：<span style="color:${t.primary};">${totalCount}</span>
+              </div>
+            `;
+
+            if (users.length) {
+              users.forEach(u => {
                 html += `<div style="font-size:12px;"><span style="color:${t.primary};">●</span> ${u}</div>`;
               });
             } else {
               html += `<div style="font-size:12px;color:#999;">暂无成员</div>`;
             }
+
             return html;
           }
         },
         series: [
           {
             type: 'tree',
-            data: [this.orgData],
-            // 核心调整：top从8%→15%，让图表整体往下移，避免上层节点溢出
-            top: '15%',
+            data: [chartData],
+            top: '20%',
             left: '8%',
-            bottom: '15%',
+            bottom: '30%',
             right: '8%',
             edgeShape: 'polyline',
             layout: 'orthogonal',
             orient: 'vertical',
-            symbol: 'rect', // 强制矩形框
-            symbolSize: childSize, // 全局默认子节点尺寸（保证框显示）
-            expandAndCollapse: true,
-            initialTreeDepth: -1,
-            nodeGap: isVertical ? 60 : 50,
-            levelGap: isVertical ? 120 : 80,
+            symbol: 'rect',
+            edgeForkPosition: '45%',
 
-            // 节点样式：保证框的背景、边框都显示
+            // 兜底
+            symbolSize: [42, 88],
+
+            // 保留展开收起功能
+            expandAndCollapse: true,
+            // 当前数据只有两层展示，这里全部展开即可
+            initialTreeDepth: 2,
+
+            nodeGap: 130,
+            levelGap: 170,
+
             itemStyle: {
-              color: t.nodeBg, // 框的背景色
-              borderColor: t.lineColor, // 框的边框色
-              borderWidth: 1.5, // 边框宽度（必须设，否则框不明显）
+              color: t.nodeBg,
+              borderColor: t.lineColor,
+              borderWidth: 1.5,
               shadowBlur: 10,
               shadowColor: t.glowColor
             },
@@ -134,46 +278,27 @@ export default {
               animationDuration: 300
             },
 
-            // 根节点：单独放大尺寸，保证框显示
-            topLevel: {
-              symbolSize: [120, 36], // 根节点始终横向尺寸
-              label: {
-                show: true,
-                position: 'inside',
-                color: '#fff',
-                fontSize: 120,
-                lineHeight: 20,
-                align: 'center',
-                verticalAlign: 'middle',
-                formatter: (params) => this.formatLabelText(params.name, 'horizontal')
-              }
-            },
-
-            // 普通子节点：指定尺寸+样式，保证框显示
             label: {
               show: true,
               position: 'inside',
               color: '#fff',
               fontSize: 12,
-              lineHeight: labelLineHeight,
+              lineHeight: 16,
               align: 'center',
               verticalAlign: 'middle',
-              // formatter: (params) => this.formatLabelText(params.name, params.dataIndex && params.dataIndex <=1 ? 'horizontal' :this.labelDirection )
-              formatter: (params) => this.formatLabelText(params.name, this.labelDirection )
+              formatter: (params) => this.formatLabelText(params.data)
             },
 
-            // 叶子节点：指定尺寸，保证框显示
             leaves: {
-              symbolSize: childSize,
               label: {
                 show: true,
                 position: 'inside',
                 color: '#fff',
                 fontSize: 12,
-                lineHeight: labelLineHeight,
+                lineHeight: 16,
                 align: 'center',
                 verticalAlign: 'middle',
-                formatter: (params) => this.formatLabelText(params.name, this.labelDirection)
+                formatter: (params) => this.formatLabelText(params.data)
               }
             },
 
@@ -186,7 +311,9 @@ export default {
             coordinateSystem: 'view',
             polyline: true,
             silent: true,
-            lineStyle: { width: 0 },
+            lineStyle: {
+              width: 0
+            },
             effect: {
               show: true,
               period: 3,
@@ -264,6 +391,11 @@ export default {
 
 <style scoped>
 .tech-org-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.chart-inner {
   width: 100%;
   height: 100%;
 }

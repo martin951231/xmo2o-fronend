@@ -1,41 +1,68 @@
 <template>
   <div
+    ref="containerRef"
     class="heatmap-container"
     :style="{ width: width, height: height }"
   >
     <!-- 筛选区 -->
     <div class="filter-bar">
-      <!-- 分类筛选（Y轴） -->
+      <!-- 分类 -->
       <div class="filter-group">
         <span class="label">分类：</span>
-        <span
-          v-for="(item,index) in yAxisData"
-          :key="`y-${index}`"
-          class="filter-item"
-          :class="{ active: selectedY.includes(index) }"
-          @click="toggleY(index)"
-        >
-          {{ item }}
-        </span>
+        <div ref="yFilterLine" class="filter-line">
+          <span
+            v-for="item in visibleYItems"
+            :key="`y-${item.realIndex}`"
+            class="filter-item"
+            :class="{ active: selectedY.includes(item.realIndex) }"
+            @click="toggleY(item.realIndex)"
+          >
+            {{ item.label }}
+          </span>
+        </div>
       </div>
 
-      <!-- 月份筛选（X轴）- 适配2026-02格式 -->
+      <!-- 月份 -->
       <div class="filter-group">
         <span class="label">月份：</span>
-        <span
-          v-for="(item,index) in xAxisData"
-          :key="`x-${index}`"
-          class="filter-item"
-          :class="{ active: selectedX.includes(index) }"
-          @click="toggleX(index)"
-        >
-          {{ item }}
-        </span>
+        <div ref="xFilterLine" class="filter-line">
+          <span
+            v-for="item in visibleXItems"
+            :key="`x-${item.realIndex}`"
+            class="filter-item"
+            :class="{ active: selectedX.includes(item.realIndex) }"
+            @click="toggleX(item.realIndex)"
+          >
+            {{ item.label }}
+          </span>
+        </div>
       </div>
     </div>
 
     <!-- 图表 -->
     <div ref="chartDom" class="chart"></div>
+
+    <!-- 隐藏测量区 -->
+    <div class="measure-box">
+      <div ref="measureYWrap" class="measure-line">
+        <span
+          v-for="(item, index) in yAxisData"
+          :key="`measure-y-${index}`"
+          class="filter-item active"
+        >
+          {{ item }}
+        </span>
+      </div>
+      <div ref="measureXWrap" class="measure-line">
+        <span
+          v-for="(item, index) in xAxisData"
+          :key="`measure-x-${index}`"
+          class="filter-item active"
+        >
+          {{ item }}
+        </span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -45,160 +72,279 @@ import * as echarts from 'echarts'
 export default {
   name: 'HeatMapChart',
   props: {
-    heatData: { type: Array, required: true },
-    xAxisData: {
+    heatData: {
       type: Array,
-      required: true, // 适配2026-02格式的月份数组（必填）
+      required: true,
       default: () => []
     },
-    yAxisData: { type: Array, required: true },
-    unit: { type: String, default: '元' },
-    width: { type: String, default: '100%' },
-    height: { type: String, default: '400px' },
-    maxSize: {
-      type: Number,
-      default: undefined,
-      validator: val => val === undefined || (Number.isInteger(val) && val >= 1)
+    xAxisData: {
+      type: Array,
+      required: true,
+      default: () => []
+    },
+    yAxisData: {
+      type: Array,
+      required: true,
+      default: () => []
+    },
+    unit: {
+      type: String,
+      default: '元'
+    },
+    width: {
+      type: String,
+      default: '100%'
+    },
+    height: {
+      type: String,
+      default: '400px'
     }
   },
   data() {
     return {
       chart: null,
       resizeHandler: null,
-      selectedX: [], // 月份选中索引
-      selectedY: []  // 分类选中索引
+
+      // 当前“可见”的项
+      visibleXItems: [],
+      visibleYItems: [],
+
+      // 当前“选中”的项（存真实索引）
+      selectedX: [],
+      selectedY: []
     }
-  },
-  // 关键：先初始化选中状态，再监听数据变化
-  created() {
-    // 提前初始化选中逻辑（兜底）
-    this.initSelectedStatus()
   },
   mounted() {
-    // 核心：$nextTick确保DOM完全渲染后再执行，解决刷新不生效问题
     this.$nextTick(() => {
-      // 重新确认选中状态（防止created阶段数据未加载）
-      this.initSelectedStatus()
-      // 初始化图表
-      this.initChart()
-      // 监听窗口resize
+      this.refreshDelayRender()
+
       this.resizeHandler = () => {
-        this.chart && this.chart.resize()
+        this.refreshDelayRender(false)
       }
+
       window.addEventListener('resize', this.resizeHandler)
     })
-  },
-  // 监听props变化，重新初始化选中状态（防止父组件异步传值）
-  watch: {
-    xAxisData: { handler() { this.initSelectedStatus(); this.initChart() }, immediate: true },
-    yAxisData: { handler() { this.initSelectedStatus(); this.initChart() }, immediate: true },
-    heatData: { handler() { this.initChart() }, deep: true },
-    selectedX: { handler() { this.initChart() }, immediate: true },
-    selectedY: { handler() { this.initChart() }, immediate: true },
-    maxSize() {
-      this.selectedX = this.limitSelectedCount(this.selectedX, 'month')
-      this.selectedY = this.limitSelectedCount(this.selectedY, 'category')
-      this.initChart()
-    }
   },
   beforeUnmount() {
     if (this.chart) {
       this.chart.dispose()
+      this.chart = null
     }
     window.removeEventListener('resize', this.resizeHandler)
   },
+  watch: {
+    xAxisData: {
+      handler() {
+        this.refreshDelayRender(true)
+      },
+      deep: true
+    },
+    yAxisData: {
+      handler() {
+        this.refreshDelayRender(true)
+      },
+      deep: true
+    },
+    heatData: {
+      handler() {
+        this.$nextTick(() => {
+          this.initChart()
+        })
+      },
+      deep: true
+    }
+  },
   methods: {
-    // 核心：统一初始化选中状态（解决刷新不生效）
-    initSelectedStatus() {
-      // 防呆：数据未加载时不执行
-      if (!this.xAxisData.length || !this.yAxisData.length) return
-
-      // 1. 月份（X轴）：默认选中最后6个月（适配2026-02格式）
-      const xSelectCount = Math.min(6, this.xAxisData.length)
-      this.selectedX = Array.from({ length: xSelectCount }, (_, i) => {
-        return this.xAxisData.length - xSelectCount + i
+    /**
+     * 弹窗打开后/组件首次显示后调用
+     * forceDefaultSelect = true  => 当前可见项全部默认选中
+     * forceDefaultSelect = false => 尽量保留之前的选择，只过滤不可见项
+     */
+    refreshDelayRender(forceDefaultSelect = true) {
+      this.$nextTick(() => {
+        setTimeout(() => {
+          this.calculateVisibleItems(() => {
+            this.syncSelectedWithVisible(forceDefaultSelect)
+            this.initChart()
+          })
+        }, 60)
       })
-
-      // 2. 分类（Y轴）：默认选中前6个
-      const ySelectCount = Math.min(6, this.yAxisData.length)
-      this.selectedY = Array.from({ length: ySelectCount }, (_, i) => i)
-
-      // 应用maxSize限制
-      this.selectedX = this.limitSelectedCount(this.selectedX, 'month')
-      this.selectedY = this.limitSelectedCount(this.selectedY, 'category')
-
-      // 调试日志（可选，验证选中状态）
-      // console.log('最终选中月份索引：', this.selectedX)
-      // console.log('最终选中分类索引：', this.selectedY)
     },
 
-    // 限制选中数量（区分月份/分类）
-    limitSelectedCount(selectedArr, type) {
-      if (this.maxSize === undefined || this.maxSize < 1) {
-        return selectedArr
+    /**
+     * 计算当前一行能显示哪些项
+     */
+    calculateVisibleItems(callback) {
+      if (!this.xAxisData.length || !this.yAxisData.length) {
+        this.visibleXItems = []
+        this.visibleYItems = []
+        callback && callback()
+        return
       }
-      // 月份：保留最后maxSize个；分类：保留前maxSize个
-      return type === 'month' ? selectedArr.slice(-this.maxSize) : selectedArr.slice(0, this.maxSize)
+
+      this.$nextTick(() => {
+        const xVisibleIndexes = this.getVisibleIndexes({
+          lineRef: this.$refs.xFilterLine,
+          measureWrapRef: this.$refs.measureXWrap,
+          sourceData: this.xAxisData,
+          mode: 'tail' // 月份保留最后几个
+        })
+
+        const yVisibleIndexes = this.getVisibleIndexes({
+          lineRef: this.$refs.yFilterLine,
+          measureWrapRef: this.$refs.measureYWrap,
+          sourceData: this.yAxisData,
+          mode: 'head' // 分类保留前几个
+        })
+
+        this.visibleXItems = xVisibleIndexes.map(i => ({
+          label: this.xAxisData[i],
+          realIndex: i
+        }))
+
+        this.visibleYItems = yVisibleIndexes.map(i => ({
+          label: this.yAxisData[i],
+          realIndex: i
+        }))
+
+        this.$nextTick(() => {
+          callback && callback()
+        })
+      })
     },
 
-    // 切换分类选中
-    toggleY(index) {
-      const i = this.selectedY.indexOf(index)
-      if (i > -1) {
-        this.selectedY.splice(i, 1)
+    /**
+     * 同步选中项和可见项
+     * forceDefaultSelect=true：当前可见项全部选中
+     * false：尽量保留之前选择，只过滤掉当前不可见项
+     */
+    syncSelectedWithVisible(forceDefaultSelect = true) {
+      const visibleXIndexes = this.visibleXItems.map(item => item.realIndex)
+      const visibleYIndexes = this.visibleYItems.map(item => item.realIndex)
+
+      if (forceDefaultSelect) {
+        this.selectedX = [...visibleXIndexes]
+        this.selectedY = [...visibleYIndexes]
+        return
+      }
+
+      const nextSelectedX = this.selectedX.filter(i => visibleXIndexes.includes(i))
+      const nextSelectedY = this.selectedY.filter(i => visibleYIndexes.includes(i))
+
+      // 如果过滤完一个都没有，就默认全选当前可见项
+      this.selectedX = nextSelectedX.length ? nextSelectedX : [...visibleXIndexes]
+      this.selectedY = nextSelectedY.length ? nextSelectedY : [...visibleYIndexes]
+    },
+
+    /**
+     * 根据一行宽度，计算当前能显示多少个
+     */
+    getVisibleIndexes({ lineRef, measureWrapRef, sourceData, mode = 'head' }) {
+      if (!lineRef || !measureWrapRef || !sourceData.length) return []
+
+      const lineWidth = lineRef.clientWidth || 0
+      if (!lineWidth) return []
+
+      const itemNodes = measureWrapRef.children
+      if (!itemNodes || !itemNodes.length) return []
+
+      const gap = 6
+      let usedWidth = 0
+      let indexes = []
+
+      if (mode === 'tail') {
+        for (let i = sourceData.length - 1; i >= 0; i--) {
+          const itemWidth = itemNodes[i].offsetWidth || 0
+          const currentNeedWidth = indexes.length === 0 ? itemWidth : itemWidth + gap
+
+          if (usedWidth + currentNeedWidth <= lineWidth) {
+            usedWidth += currentNeedWidth
+            indexes.unshift(i)
+          } else {
+            break
+          }
+        }
       } else {
-        this.selectedY.push(index)
-        this.selectedY = this.limitSelectedCount(this.selectedY, 'category')
+        for (let i = 0; i < sourceData.length; i++) {
+          const itemWidth = itemNodes[i].offsetWidth || 0
+          const currentNeedWidth = indexes.length === 0 ? itemWidth : itemWidth + gap
+
+          if (usedWidth + currentNeedWidth <= lineWidth) {
+            usedWidth += currentNeedWidth
+            indexes.push(i)
+          } else {
+            break
+          }
+        }
       }
+
+      return indexes
     },
 
-    // 切换月份选中
-    toggleX(index) {
-      const i = this.selectedX.indexOf(index)
-      if (i > -1) {
-        this.selectedX.splice(i, 1)
+    toggleX(realIndex) {
+      const idx = this.selectedX.indexOf(realIndex)
+      if (idx > -1) {
+        this.selectedX.splice(idx, 1)
       } else {
-        this.selectedX.push(index)
-        this.selectedX = this.limitSelectedCount(this.selectedX, 'month')
+        this.selectedX.push(realIndex)
       }
+      this.selectedX = [...this.selectedX]
+      this.initChart()
     },
 
-    // 初始化图表（核心渲染逻辑）
+    toggleY(realIndex) {
+      const idx = this.selectedY.indexOf(realIndex)
+      if (idx > -1) {
+        this.selectedY.splice(idx, 1)
+      } else {
+        this.selectedY.push(realIndex)
+      }
+      this.selectedY = [...this.selectedY]
+      this.initChart()
+    },
+
     initChart() {
-      // 防呆：DOM/数据未就绪时不执行
-      if (!this.$refs.chartDom || !this.xAxisData.length || !this.yAxisData.length) return
+      if (!this.$refs.chartDom) return
 
-      // 销毁旧实例，避免重复渲染
+      const visibleXIndexes = this.visibleXItems.map(item => item.realIndex)
+      const visibleYIndexes = this.visibleYItems.map(item => item.realIndex)
+
+      const renderXIndexes = visibleXIndexes.filter(i => this.selectedX.includes(i))
+      const renderYIndexes = visibleYIndexes.filter(i => this.selectedY.includes(i))
+
+      if (!renderXIndexes.length || !renderYIndexes.length) {
+        if (this.chart) {
+          this.chart.clear()
+        }
+        return
+      }
+
       if (this.chart) {
         this.chart.dispose()
       }
       this.chart = echarts.init(this.$refs.chartDom)
 
-      // 基于选中的索引获取渲染数据
-      const newXAxis = this.selectedX.map(i => this.xAxisData[i])
-      const newYAxis = this.selectedY.map(i => this.yAxisData[i])
+      const newXAxis = renderXIndexes.map(i => this.xAxisData[i])
+      const newYAxis = renderYIndexes.map(i => this.yAxisData[i])
 
-      // 格式化热力图数据
       const formatData = []
-      this.selectedY.forEach((yIdx, y) => {
-        this.selectedX.forEach((xIdx, x) => {
+      renderYIndexes.forEach((yIdx, y) => {
+        renderXIndexes.forEach((xIdx, x) => {
           const value = Number(this.heatData[yIdx]?.[xIdx]) || 0
           formatData.push([x, y, value])
         })
       })
 
-      // 计算视觉映射的极值
       const values = formatData.map(v => v[2])
       const min = values.length ? Math.min(...values) : 0
       const max = values.length ? Math.max(...values) : 100
 
-      // 图表配置项
       const option = {
         backgroundColor: 'transparent',
         tooltip: {
           trigger: 'item',
           confine: true,
-          backgroundColor: 'rgba(0,15,30,0.9)',
+          backgroundColor: 'rgba(0,15,30,0.92)',
           borderColor: '#00CFFA',
           borderWidth: 1,
           padding: 8,
@@ -207,6 +353,7 @@ export default {
             const x = params.data[0]
             const y = params.data[1]
             const value = params.data[2]
+
             return `
               <div style="line-height:1.6">
                 <div><b style="color:#8B5CF6">${newYAxis[y]}</b></div>
@@ -222,51 +369,83 @@ export default {
           calculable: true,
           orient: 'horizontal',
           left: 'center',
-          bottom: 15,
-          textStyle: { color: '#fff', fontSize: 10 },
+          bottom: 10,
+          textStyle: {
+            color: '#fff',
+            fontSize: 10
+          },
           inRange: {
             color: ['#0F172A', '#022B3A', '#006680', '#00CFFA', '#8B5CF6']
           }
-        },
-        xAxis: {
-          type: 'category',
-          data: newXAxis,
-          axisLabel: { color: '#fff', fontSize: 10 },
-          axisLine: { lineStyle: { color: '#006680' } }
-        },
-        yAxis: {
-          type: 'category',
-          data: newYAxis,
-          axisLabel: { color: '#fff', fontSize: 10 },
-          axisLine: { lineStyle: { color: '#006680' } }
         },
         grid: {
           left: 20,
           right: 20,
           top: 20,
-          bottom: 65,
+          bottom: 60,
           containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          data: newXAxis,
+          axisLabel: {
+            color: '#fff',
+            fontSize: 10
+          },
+          axisLine: {
+            lineStyle: {
+              color: '#006680'
+            }
+          },
+          axisTick: {
+            show: false
+          }
+        },
+        yAxis: {
+          type: 'category',
+          data: newYAxis,
+          axisLabel: {
+            color: '#fff',
+            fontSize: 10
+          },
+          axisLine: {
+            lineStyle: {
+              color: '#006680'
+            }
+          },
+          axisTick: {
+            show: false
+          }
         },
         series: [
           {
             type: 'heatmap',
             data: formatData,
-            itemStyle: { borderWidth: 1, borderColor: 'rgba(0,207,250,0.2)' },
+            itemStyle: {
+              borderWidth: 1,
+              borderColor: 'rgba(0,207,250,0.2)'
+            },
             emphasis: {
-              itemStyle: { borderColor: '#00CFFA', shadowBlur: 6, shadowColor: '#00CFFA' }
+              itemStyle: {
+                borderColor: '#00CFFA',
+                shadowBlur: 6,
+                shadowColor: '#00CFFA'
+              }
+            },
+            label: {
+              show: false
             }
           }
         ]
       }
 
-      // 强制设置配置项，确保渲染
       this.chart.setOption(option, true)
+      this.chart.resize()
     },
 
-    // 外部调用的刷新方法（可选）
+    // 给父组件调用
     renderChart() {
-      this.initSelectedStatus()
-      this.initChart()
+      this.refreshDelayRender(true)
     }
   }
 }
@@ -277,43 +456,86 @@ export default {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
 }
 
-/* 筛选栏样式 */
 .filter-bar {
   padding: 6px 10px;
   font-size: 12px;
   color: #fff;
-}
-.filter-group {
-  margin-bottom: 6px;
-}
-.label {
-  margin-right: 6px;
-  color: #00CFFA;
-}
-.filter-item {
-  display: inline-block;
-  padding: 2px 8px;
-  margin-right: 6px;
-  margin-bottom: 4px;
-  border: 1px solid #006680;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-.filter-item:hover {
-  border-color: #00CFFA;
-}
-.filter-item.active {
-  background: #00CFFA;
-  color: #000;
-  border-color: #00CFFA;
+  box-sizing: border-box;
 }
 
-/* 图表样式 */
+.filter-group {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.label {
+  flex: 0 0 auto;
+  margin-right: 6px;
+  line-height: 26px;
+  color: #00CFFA;
+}
+
+.filter-line {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.filter-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  height: 26px;
+  line-height: 20px;
+  padding: 2px 8px;
+  margin-right: 6px;
+  box-sizing: border-box;
+  border: 1px solid #006680;
+  border-radius: 3px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-item:hover {
+  border-color: #00CFFA;
+  box-shadow: 0 0 6px rgba(0, 207, 250, 0.25);
+}
+
+.filter-item.active {
+  background: #00CFFA;
+  border-color: #00CFFA;
+  color: #000;
+}
+
 .chart {
   width: 100%;
-  height: calc(100% - 110px);
+  height: calc(100% - 78px);
+}
+
+.measure-box {
+  position: absolute;
+  left: -99999px;
+  top: -99999px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.measure-line {
+  display: flex;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 </style>

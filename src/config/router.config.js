@@ -534,7 +534,7 @@ export const constantRouterMap = [
       name: 'propertyStatisticalIndex',
       component: () => import('@/views/community/property/propertyStatistical'),
       meta: {
-        title: '社区-小区统计报表',
+        title: '物业统计报表',
       },
     },
     //  街道-网络事件中心

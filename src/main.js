@@ -214,25 +214,25 @@ window.getMapConfig = ()=>{
       }
     }
   
-    const BMap_URL = "https://api.map.baidu.com/api?ak=" + baidu_web_ak + "&v=2.0&s=1&callback=onBMapCallback";
-    if(baidu_web_ak){
-      loadJs("https://mapv.baidu.com/gl/examples/static/common.js");
-      loadJs("https://api.map.baidu.com/api?type=webgl&v=1.0&ak=" + baidu_web_ak);
-    }
-    return new Promise((resolve, reject) => {
-        // 如果已加载直接返回
-        if(typeof BMap !== "undefined") {
-            resolve(BMap);
-            return true;
-        }
-        // 百度地图异步加载回调处理
-        window.onBMapCallback = function () {
-            console.log("百度地图脚本初始化成功");
-            resolve(BMap);
-        };
-        // 插入script脚本
-        loadJs(BMap_URL);
-    });
+    // const BMap_URL = "https://api.map.baidu.com/api?ak=" + baidu_web_ak + "&v=2.0&s=1&callback=onBMapCallback";
+    // if(baidu_web_ak){
+    //   loadJs("https://mapv.baidu.com/gl/examples/static/common.js");
+    //   loadJs("https://api.map.baidu.com/api?type=webgl&v=1.0&ak=" + baidu_web_ak);
+    // }
+    // return new Promise((resolve, reject) => {
+    //     // 如果已加载直接返回
+    //     if(typeof BMap !== "undefined") {
+    //         resolve(BMap);
+    //         return true;
+    //     }
+    //     // 百度地图异步加载回调处理
+    //     window.onBMapCallback = function () {
+    //         console.log("百度地图脚本初始化成功");
+    //         resolve(BMap);
+    //     };
+    //     // 插入script脚本
+    //     loadJs(BMap_URL);
+    // });
   })
 }
 

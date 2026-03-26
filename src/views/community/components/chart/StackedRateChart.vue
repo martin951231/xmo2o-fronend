@@ -1,6 +1,18 @@
 <template>
   <div class="dynamic-echart-chart">
     <div
+      v-if="!hasData"
+      class="empty-state"
+      :style="{ width: containerWidth, height: containerHeight }"
+    >
+      <div class="empty-state-inner">
+        <div class="empty-state-icon"></div>
+        <div class="empty-state-text">{{ emptyText }}</div>
+      </div>
+    </div>
+
+    <div
+      v-show="hasData"
       ref="chartRef"
       :style="{ width: containerWidth, height: containerHeight }"
       class="chart-inner"
@@ -26,14 +38,14 @@ export default {
       required: false,
       default: () => [],
       validator: val => {
-        if (!Array.isArray(val)) return false
-        if (val.length === 0) return true
-        return val.every(item => !!item.key && !!item.type && !!item.yAxisKey && !!item.field)
+        if (!Array.isArray(val)) return false;
+        if (val.length === 0) return true;
+        return val.every(item => !!item.key && !!item.type && !!item.yAxisKey && !!item.field);
       }
     },
     chartTitle: { type: String, default: '数据统计' },
     showTitle: { type: Boolean, default: true },
-    titleColor: { type: String, default: '#00f0ff' },
+    titleColor: { type: String, default: '#ffffff' },
     standardLine: {
       type: Object,
       default: () => ({
@@ -46,13 +58,32 @@ export default {
     },
     showLegend: { type: Boolean, default: true },
     showTooltip: { type: Boolean, default: true },
+
+    // 是否显示每个类目的总量（默认显示）
+    showCategoryTotal: {
+      type: Boolean,
+      default: true
+    },
+
+    // 新增：控制总量由哪些字段参与计算
+    // 不传时，保持原逻辑：统计所有 bar 系列字段
+    categoryTotalFields: {
+      type: Array,
+      default: () => []
+    },
+
+    emptyText: {
+      type: String,
+      default: '暂无数据'
+    },
+
     containerWidth: { type: String, default: '100%' },
     containerHeight: { type: String, default: '100%' },
     baseStyle: {
       type: Object,
       default: () => ({
-        textLight: '#e8f1ff',
-        textGray: '#8ea9c7',
+        textLight: '#ffffff',
+        textGray: '#ffffff',
         borderDark: '#0f172a',
         tooltipBorder: '#3b82f6'
       })
@@ -64,26 +95,83 @@ export default {
       resizeHandler: null,
       techColorLib: [
         '#22c3ff',
+        '#ff6b8b',
         '#7c5cff',
         '#16d9a6',
         '#ffb84d',
-        '#ff6b8b',
         '#8dd1ff'
       ]
     };
   },
+  computed: {
+    hasData() {
+      if (!Array.isArray(this.chartData) || this.chartData.length === 0) return false;
+
+      const validBarOrLineSeries = this.seriesList.filter(
+        item => item && item.field && (item.type === 'bar' || item.type === 'line')
+      );
+
+      if (!validBarOrLineSeries.length) return false;
+
+      return this.chartData.some(row => {
+        return validBarOrLineSeries.some(series => {
+          const value = Number(row[series.field]);
+          return !Number.isNaN(value) && value !== 0;
+        });
+      });
+    }
+  },
   watch: {
-    chartData: { deep: true, handler: 'renderChart' },
-    fieldMap: { deep: true, handler: 'renderChart' },
-    yAxisList: { deep: true, handler: 'renderChart' },
-    seriesList: { deep: true, handler: 'renderChart' },
-    standardLine: { deep: true, handler: 'renderChart' }
+    chartData: {
+      deep: true,
+      handler() {
+        this.handleChartChange();
+      }
+    },
+    fieldMap: {
+      deep: true,
+      handler() {
+        this.handleChartChange();
+      }
+    },
+    yAxisList: {
+      deep: true,
+      handler() {
+        this.handleChartChange();
+      }
+    },
+    seriesList: {
+      deep: true,
+      handler() {
+        this.handleChartChange();
+      }
+    },
+    standardLine: {
+      deep: true,
+      handler() {
+        this.handleChartChange();
+      }
+    },
+    showCategoryTotal() {
+      this.handleChartChange();
+    },
+    categoryTotalFields: {
+      deep: true,
+      handler() {
+        this.handleChartChange();
+      }
+    }
   },
   mounted() {
     this.$nextTick(() => {
-      this.initChart();
+      if (this.hasData) {
+        this.initChart();
+      }
+
       this.resizeHandler = () => {
-        this.chartInstance && this.chartInstance.resize();
+        if (this.chartInstance && this.hasData) {
+          this.chartInstance.resize();
+        }
       };
       window.addEventListener('resize', this.resizeHandler);
     });
@@ -96,7 +184,32 @@ export default {
     window.removeEventListener('resize', this.resizeHandler);
   },
   methods: {
+    handleChartChange() {
+      this.$nextTick(() => {
+        if (!this.hasData) {
+          if (this.chartInstance) {
+            this.chartInstance.clear();
+          }
+          return;
+        }
+
+        if (!this.chartInstance) {
+          this.initChart();
+        } else {
+          this.renderChart();
+          this.chartInstance.resize();
+        }
+      });
+    },
+
     forceRefreshChart() {
+      if (!this.hasData) {
+        if (this.chartInstance) {
+          this.chartInstance.clear();
+        }
+        return;
+      }
+
       if (!this.chartInstance) {
         this.initChart();
       } else {
@@ -106,7 +219,7 @@ export default {
     },
 
     initChart() {
-      if (!this.$refs.chartRef) return;
+      if (!this.$refs.chartRef || !this.hasData) return;
       if (this.chartInstance) {
         this.chartInstance.dispose();
       }
@@ -115,7 +228,7 @@ export default {
     },
 
     renderChart() {
-      if (!this.chartInstance || !this.$refs.chartRef || !this.chartData || this.chartData.length === 0) {
+      if (!this.chartInstance || !this.$refs.chartRef || !this.hasData) {
         if (this.chartInstance) this.chartInstance.clear();
         return;
       }
@@ -138,39 +251,40 @@ export default {
 
         title: this.showTitle
           ? {
-            text: this.chartTitle,
-            top: 4,
-            left: 'center',
-            textStyle: {
-              color: this.titleColor,
-              fontSize: 16,
-              fontWeight: 600
+              text: this.chartTitle,
+              top: 2,
+              left: 'center',
+              textStyle: {
+                color: this.titleColor,
+                fontSize: 18,
+                fontWeight: 700
+              }
             }
-          }
           : undefined,
 
         tooltip: this.showTooltip ? this.buildTooltip() : { show: false },
 
         legend: this.showLegend
           ? {
-            bottom: 0,
-            left: 'center',
-            itemGap: 18,
-            itemWidth: 12,
-            itemHeight: 12,
-            icon: 'roundRect',
-            textStyle: {
-              color: baseStyle.textGray,
-              fontSize: 12
+              bottom: 4,
+              left: 'center',
+              itemGap: 10,
+              itemWidth: 14,
+              itemHeight: 14,
+              icon: 'roundRect',
+              textStyle: {
+                color: '#c0cfff',
+                fontSize: 12,
+                fontWeight: 500
+              }
             }
-          }
           : { show: false },
 
         grid: {
-          left: yAxisList.length > 1 ? '7%' : '5%',
-          right: yAxisList.length > 1 ? '7%' : '5%',
-          bottom: this.showLegend ? '14%' : '8%',
-          top: this.showTitle ? '14%' : '8%',
+          left: yAxisList.length > 1 ? '7%' : '6%',
+          right: yAxisList.length > 1 ? '7%' : '6%',
+          bottom: this.showLegend ? '14%' : '18%',
+          top: this.showTitle ? '18%' : '8%',
           containLabel: true
         },
 
@@ -181,7 +295,7 @@ export default {
             boundaryGap: true,
             axisLine: {
               lineStyle: {
-                color: 'rgba(80, 130, 200, 0.55)',
+                color: 'rgba(255,255,255,0.35)',
                 width: 1
               }
             },
@@ -189,9 +303,12 @@ export default {
               show: false
             },
             axisLabel: {
-              color: baseStyle.textGray,
-              fontSize: 12,
-              margin: 12
+              color: '#c0cfff',
+              fontWeight: 500,
+              margin: 16,
+              interval: 0,
+              rotate: 0,
+              formatter: (value, index) => this.formatXAxisLabelByInterval(value, index)
             },
             splitLine: {
               show: false
@@ -223,8 +340,8 @@ export default {
             position: 'end',
             distance: 6,
             formatter: this.standardLine.label,
-            color: this.standardLine.color,
-            fontSize: 11,
+            color: '#ffffff',
+            fontSize: 12,
             backgroundColor: 'rgba(15,23,42,0.72)',
             borderRadius: 4,
             padding: [3, 6]
@@ -238,8 +355,33 @@ export default {
       this.chartInstance.setOption(option, true);
     },
 
+    getXAxisLabelInterval() {
+      const count = this.chartData.length || 0;
+
+      if (count <= 6) return 0;
+      if (count <= 10) return 1;
+      if (count <= 16) return 2;
+      if (count <= 24) return 3;
+      return 4;
+    },
+
+    formatXAxisLabelByInterval(value, index) {
+      const count = this.chartData.length || 0;
+
+      let step = 1;
+      if (count <= 6) step = 1;
+      else if (count <= 10) step = 2;
+      else if (count <= 16) step = 3;
+      else if (count <= 24) step = 4;
+      else step = 5;
+
+      if (index % step !== 0 && index !== count - 1) return '';
+
+      return value || '';
+    },
+
     buildYAxis() {
-      const { yAxisList, baseStyle, techColorLib } = this;
+      const { yAxisList } = this;
 
       const getYAxisPosition = (index, total) => {
         if (total === 1) return 'left';
@@ -255,18 +397,17 @@ export default {
         const offsetList = position === 'left' ? leftYAxis : rightYAxis;
         const offsetIndex = offsetList.findIndex(item => item.key === y.key);
         const offset = offsetIndex * 54;
-        const axisColor = y.color || techColorLib[index % techColorLib.length];
 
         return {
           type: 'value',
           name: `${y.name}${y.unit ? `（${y.unit}）` : ''}`,
           nameLocation: 'end',
-          nameGap: 16,
+          nameGap: 18,
           nameTextStyle: {
-            color: axisColor,
-            fontSize: 12,
-            fontWeight: 500,
-            padding: [0, 0, 4, 0]
+            color: '#ffffff',
+            fontSize: 14,
+            fontWeight: 600,
+            padding: [0, 0, 6, 0]
           },
           position,
           offset,
@@ -274,12 +415,12 @@ export default {
           max: typeof y.max === 'number'
             ? y.max
             : function (v) {
-              return Math.ceil(v.max * 1.15 || 10);
-            },
+                return Math.ceil(v.max * 1.2 || 10);
+              },
           axisLine: {
             show: true,
             lineStyle: {
-              color: 'rgba(80, 130, 200, 0.45)',
+              color: 'rgba(255,255,255,0.28)',
               width: 1
             }
           },
@@ -287,13 +428,14 @@ export default {
             show: false
           },
           axisLabel: {
-            color: baseStyle.textGray,
-            fontSize: 11
+            color: '#ffffff',
+            fontSize: 13,
+            fontWeight: 500
           },
           splitLine: {
             show: index === 0,
             lineStyle: {
-              color: 'rgba(120, 160, 220, 0.14)',
+              color: 'rgba(255,255,255,0.12)',
               type: 'dashed'
             }
           }
@@ -324,11 +466,6 @@ export default {
         const hoverColor = this.mixWithWhite(finalColor, 0.1);
         const lineLightColor = this.mixWithWhite(finalColor, 0.22);
 
-        const commonLabelFormatter = (params) => {
-          if (params.value === 0 || params.value == null) return '';
-          return `${params.value}${this.getYUnitByKey(yAxisKey)}`;
-        };
-
         const baseConfig = {
           name,
           type,
@@ -342,9 +479,11 @@ export default {
         if (type === 'bar') {
           return {
             ...baseConfig,
+            z: 5,
+            zlevel: 2,
             barWidth: series.barWidth || this.getAutoBarWidth(),
-            barMaxWidth: 22,
-            barGap: series.barGap || '30%',
+            barMaxWidth: 32,
+            barGap: series.barGap || '20%',
             itemStyle: {
               borderRadius: [6, 6, 2, 2],
               color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -379,25 +518,39 @@ export default {
             },
             label: showLabel
               ? {
-                show: true,
-                position: 'top',
-                distance: 6,
-                formatter: (params) => {
-                  const val = params.value;
-                  if (val === 0 || val == null) return '';
+                  show: true,
+                  position: 'insideTop',
+                  distance: 20,
+                  formatter: (params) => {
+                    const currentValue = Number(params.value || 0);
+                    if (!currentValue) return '';
 
-                  // 第三种方案：类目较多时，只显示每个类目中最大值的标签
-                  if (this.chartData.length >= 4) {
-                    if (!this.isCategoryMaxValue(params.dataIndex, val)) return '';
-                  }
+                    if (!this.showCategoryTotal) return '';
 
-                  return `${val}${this.getYUnitByKey(yAxisKey)}`;
-                },
-                color: this.rgbaString(finalColor, 0.96),
-                fontSize: this.chartData.length > 6 ? 10 : 12,
-                fontWeight: 600
-              }
-              : { show: false }
+                    if (!this.shouldShowBarLabel(currentValue)) return '';
+
+                    if (!this.isCategoryMaxBar(params.dataIndex, field)) return '';
+
+                    const total = this.getCategoryTotalValue(params.dataIndex);
+                    if (total == null || Number(total) === 0) return '';
+
+                    return this.formatCategoryTotalValue(total);
+                  },
+                  color: '#ffffff',
+                  fontSize: this.chartData.length > 6 ? 12 : 14,
+                  fontWeight: 700,
+                  z: 999,
+                  textBorderColor: 'rgba(0, 25, 50, 0.95)',
+                  textBorderWidth: 3,
+                  textShadowColor: 'rgba(0,0,0,0.45)',
+                  textShadowBlur: 3
+                }
+              : { show: false },
+            labelLayout: () => {
+              return {
+                hideOverlap: true
+              };
+            }
           };
         }
 
@@ -438,14 +591,18 @@ export default {
             },
             label: showLabel
               ? {
-                show: true,
-                position: 'top',
-                distance: 8,
-                formatter: commonLabelFormatter,
-                color: this.rgbaString(finalColor, 0.96),
-                fontSize: 12,
-                fontWeight: 600
-              }
+                  show: true,
+                  position: 'insideTop',
+                  distance: 8,
+                  formatter: (params) => {
+                    const val = params.value;
+                    if (val === 0 || val == null) return '';
+                    return ``;
+                  },
+                  color: '#ffffff',
+                  fontSize: 14,
+                  fontWeight: 700
+                }
               : { show: false }
           };
         }
@@ -455,7 +612,7 @@ export default {
     },
 
     buildTooltip() {
-      const { seriesList, baseStyle, techColorLib } = this;
+      const { seriesList, techColorLib } = this;
       const seriesUnitMap = {};
       const seriesColorMap = {};
 
@@ -474,23 +631,23 @@ export default {
         axisPointer: {
           type: 'line',
           lineStyle: {
-            color: 'rgba(125, 170, 255, 0.45)',
+            color: 'rgba(255,255,255,0.3)',
             width: 1
           }
         },
-        backgroundColor: 'rgba(10, 18, 35, 0.88)',
-        borderColor: 'rgba(90, 140, 255, 0.35)',
+        backgroundColor: 'rgba(10, 18, 35, 0.92)',
+        borderColor: 'rgba(255,255,255,0.22)',
         borderWidth: 1,
         borderRadius: 10,
         padding: [10, 12],
         textStyle: {
-          color: baseStyle.textLight,
-          fontSize: 12
+          color: '#ffffff',
+          fontSize: 13
         },
         formatter: (params) => {
           const xName = params[0]?.name || '-';
           let tip = `
-            <div style="margin-bottom:8px;font-size:13px;font-weight:600;color:#dbeafe;">
+            <div style="margin-bottom:8px;font-size:14px;font-weight:700;color:#ffffff;">
               ${xName}
             </div>
           `;
@@ -510,7 +667,7 @@ export default {
                     margin-right:8px;
                     box-shadow:0 0 6px ${this.hexOrRgba(color, 0.35)};
                   "></span>
-                  <span style="color:#b9c9e8;">${item.seriesName}</span>
+                  <span style="color:#ffffff;">${item.seriesName}</span>
                 </div>
                 <span style="color:#ffffff;font-weight:700;">
                   ${item.value}${unit}
@@ -519,34 +676,128 @@ export default {
             `;
           });
 
+          if (this.showCategoryTotal) {
+            const dataIndex = params[0]?.dataIndex;
+            if (dataIndex !== undefined && dataIndex !== null) {
+              const total = this.getCategoryTotalValue(dataIndex);
+              if (total > 0) {
+                tip += `
+                  <div style="
+                    margin-top:8px;
+                    padding-top:8px;
+                    border-top:1px dashed rgba(255,255,255,0.15);
+                    display:flex;
+                    align-items:center;
+                    justify-content:space-between;
+                    gap:16px;
+                  ">
+                    <span style="color:#c0cfff;">总量</span>
+                    <span style="color:#ffffff;font-weight:700;">${this.formatCategoryTotalValue(total)}</span>
+                  </div>
+                `;
+              }
+            }
+          }
+
           return tip;
         }
       };
     },
 
-    getAutoBarWidth() {
-      const count = this.chartData.length || 0;
-      if (count <= 2) return 18;
-      if (count <= 4) return 16;
-      if (count <= 6) return 14;
-      if (count <= 8) return 12;
-      return 10;
+    // 获取总量计算字段
+    // 不传 categoryTotalFields 时，沿用原逻辑：取所有 bar 系列的 field
+    getCategoryTotalCalcFields() {
+      if (Array.isArray(this.categoryTotalFields) && this.categoryTotalFields.length > 0) {
+        return this.categoryTotalFields.filter(Boolean);
+      }
+
+      return this.seriesList
+        .filter(series => series.type === 'bar' && series.field)
+        .map(series => series.field);
     },
 
-    // 每个类目下，只显示最大值柱子的标签
-    isCategoryMaxValue(dataIndex, currentValue) {
+    getCategoryTotalValue(dataIndex) {
+      const row = this.chartData[dataIndex];
+      if (!row) return 0;
+
+      const useCustomFields = Array.isArray(this.categoryTotalFields) && this.categoryTotalFields.length > 0;
+      const totalFields = this.getCategoryTotalCalcFields();
+
+      const total = totalFields.reduce((sum, field) => {
+        return sum + Number(row[field] || 0);
+      }, 0);
+
+      // 仅在使用 categoryTotalFields 自定义字段时，固定保留两位小数
+      if (!useCustomFields) return total;
+      return Math.round(total * 100) / 100;
+    },
+
+    formatCategoryTotalValue(total) {
+      const useCustomFields = Array.isArray(this.categoryTotalFields) && this.categoryTotalFields.length > 0;
+      if (!useCustomFields) return `${total}`;
+
+      const num = Number(total);
+      if (Number.isNaN(num)) return `${total}`;
+      return num.toFixed(2);
+    },
+
+    getGlobalBarMaxValue() {
+      let max = 0;
+
+      this.chartData.forEach(row => {
+        this.seriesList.forEach(series => {
+          if (series.type !== 'bar') return;
+          const value = Number(row[series.field] || 0);
+          if (value > max) {
+            max = value;
+          }
+        });
+      });
+
+      return max;
+    },
+
+    shouldShowBarLabel(value) {
+      const globalMax = this.getGlobalBarMaxValue();
+      if (!globalMax) return false;
+
+      return Number(value) >= globalMax * 0.1;
+    },
+
+    getAutoBarWidth() {
+      const categoryCount = this.chartData.length || 0;
+      const barSeriesCount = this.seriesList.filter(item => item.type === 'bar').length || 1;
+
+      if (categoryCount <= 3) {
+        if (barSeriesCount >= 4) return 24;
+        if (barSeriesCount === 3) return 28;
+        return 32;
+      }
+      if (categoryCount <= 5) {
+        if (barSeriesCount >= 4) return 20;
+        return 24;
+      }
+      if (categoryCount <= 8) return 18;
+      return 16;
+    },
+
+    isCategoryMaxBar(dataIndex, currentField) {
       const currentRow = this.chartData[dataIndex];
       if (!currentRow) return false;
 
       let max = -Infinity;
+      let maxField = '';
 
       this.seriesList.forEach(series => {
         if (series.type !== 'bar') return;
         const val = Number(currentRow[series.field] || 0);
-        if (val > max) max = val;
+        if (val > max) {
+          max = val;
+          maxField = series.field;
+        }
       });
 
-      return Number(currentValue) === max && max > 0;
+      return max > 0 && currentField === maxField;
     },
 
     getYUnitByKey(yAxisKey) {
@@ -608,6 +859,7 @@ export default {
   background: transparent;
   transition: all 0.3s ease;
   box-sizing: border-box;
+  position: relative;
 }
 
 .chart-inner {
@@ -616,13 +868,76 @@ export default {
   min-height: 260px;
 }
 
+.empty-state {
+  width: 100%;
+  height: 100%;
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at center, rgba(34, 195, 255, 0.12) 0%, rgba(34, 195, 255, 0.03) 35%, rgba(0, 0, 0, 0) 70%);
+}
+
+.empty-state-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.empty-state-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  position: relative;
+  border: 1px solid rgba(34, 195, 255, 0.28);
+  box-shadow:
+    0 0 0 6px rgba(34, 195, 255, 0.04),
+    0 0 20px rgba(34, 195, 255, 0.08) inset;
+}
+
+.empty-state-icon::before,
+.empty-state-icon::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: rgba(34, 195, 255, 0.7);
+  transform: translate(-50%, -50%);
+  border-radius: 2px;
+}
+
+.empty-state-icon::before {
+  width: 24px;
+  height: 2px;
+}
+
+.empty-state-icon::after {
+  width: 2px;
+  height: 24px;
+  opacity: 0.35;
+}
+
+.empty-state-text {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
 @media (max-width: 768px) {
   .dynamic-echart-chart {
     padding: 6px;
     border-radius: 10px;
   }
 
-  .chart-inner {
+  .chart-inner,
+  .empty-state {
     min-height: 220px;
   }
 }

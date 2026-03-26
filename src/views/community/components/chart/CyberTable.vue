@@ -26,8 +26,8 @@
         </div>
       </div>
 
-      <!-- 表格内容区 -->
-      <div class="cyber-table-body" ref="tableBody">
+      <!-- 有数据时显示表格 -->
+      <div v-if="data.length" class="cyber-table-body" ref="tableBody">
         <div class="table-content">
           <div
             v-for="(row, rowIndex) in data"
@@ -43,12 +43,10 @@
                 textAlign: column.align || 'center'
               }"
             >
-              <!-- 保留你原来的 render 扩展能力 -->
               <template v-if="column.render">
                 <component :is="column.render(row, column)" />
               </template>
 
-              <!-- 新增：环比颜色列 -->
               <template v-else-if="isRatioColumn(column.prop)">
                 <span
                   class="ratio-tag"
@@ -58,9 +56,18 @@
                 </span>
               </template>
 
-              <!-- 默认文本 -->
               <template v-else>
-                <span class="cell-text">{{ row[column.prop] || '-' }}</span>
+                <a-tooltip
+                  :title="tooltipVisibleKey === `${rowIndex}-${colIndex}` ? (row[column.prop] || '-') : null"
+                >
+                  <span
+                    class="cell-text"
+                    @mouseenter="handleCellMouseEnter($event, row[column.prop] || '-', rowIndex, colIndex)"
+                    @mouseleave="handleCellMouseLeave"
+                  >
+                    {{ row[column.prop] || '-' }}
+                  </span>
+                </a-tooltip>
               </template>
             </div>
           </div>
@@ -71,30 +78,35 @@
         </div>
       </div>
 
-      <div v-if="!data.length" class="empty-data">
-        <span class="empty-icon">⊘</span>
-        <span class="empty-text">暂无数据</span>
+      <!-- 无数据时显示空状态 -->
+      <div v-else class="empty-state">
+        <div class="empty-state-inner">
+          <div class="empty-state-icon"></div>
+          <div class="empty-state-text">暂无数据</div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import Tooltip from 'ant-design-vue/es/tooltip'
+import Avatar from 'ant-design-vue/lib/avatar'
+
 export default {
+  components: {
+    Tooltip
+  },
   name: 'CyberTable',
   props: {
     columns: { type: Array, required: true, default: () => [] },
     data: { type: Array, required: true, default: () => [] },
     currentSort: { type: Object, default: () => ({ prop: '', order: '' }) },
     enableSort: { type: Boolean, default: true },
-
-    // 是否允许显示“查看更多”
     showMore: {
       type: Boolean,
       default: true
     },
-
-    // 新增：环比列配置
     ratioConfig: {
       type: Object,
       default: () => ({
@@ -107,131 +119,148 @@ export default {
     return {
       needMoreBtn: false,
       rowHeight: 44,
-      bodyHeight: 0
-    };
+      bodyHeight: 0,
+      tooltipVisibleKey: null
+    }
   },
   computed: {
-    // 最终是否显示查看更多
     showMoreBtn() {
-      return this.showMore && this.needMoreBtn;
+      return this.showMore && this.needMoreBtn
     }
   },
   watch: {
     data: {
       deep: true,
       handler() {
-        this.$nextTick(() => this.judgeShowMore());
+        this.$nextTick(() => this.judgeShowMore())
       }
     },
     columns: {
       deep: true,
       handler() {
-        this.$nextTick(() => this.judgeShowMore());
+        this.$nextTick(() => this.judgeShowMore())
       }
     },
     currentSort: {
       deep: true,
       handler() {
-        this.$nextTick(() => this.judgeShowMore());
+        this.$nextTick(() => this.judgeShowMore())
       }
     },
     showMore() {
-      this.$nextTick(() => this.judgeShowMore());
+      this.$nextTick(() => this.judgeShowMore())
     }
   },
   mounted() {
     this.$nextTick(() => {
-      this.calcBaseParams();
-      this.judgeShowMore();
-    });
+      this.calcBaseParams()
+      this.judgeShowMore()
+    })
 
     this._resizeHandler = () => {
-      this.$nextTick(() => this.judgeShowMore());
-    };
-    window.addEventListener('resize', this._resizeHandler);
+      this.$nextTick(() => this.judgeShowMore())
+    }
+    window.addEventListener('resize', this._resizeHandler)
   },
   beforeUnmount() {
-    window.removeEventListener('resize', this._resizeHandler);
+    window.removeEventListener('resize', this._resizeHandler)
   },
   methods: {
+    handleCellMouseEnter(event, text, rowIndex, colIndex) {
+      const el = event.currentTarget
+      if (!el) {
+        this.tooltipVisibleKey = null
+        return
+      }
+
+      const isOverflow = el.scrollWidth > el.clientWidth
+
+      if (isOverflow && text !== null && text !== undefined && text !== '') {
+        this.tooltipVisibleKey = `${rowIndex}-${colIndex}`
+      } else {
+        this.tooltipVisibleKey = null
+      }
+    },
+
+    handleCellMouseLeave() {
+      this.tooltipVisibleKey = null
+    },
+
     calcBaseParams() {
-      if (!this.$refs.tableBody || !this.data.length) return;
-      this.bodyHeight = this.$refs.tableBody.clientHeight;
+      if (!this.$refs.tableBody || !this.data.length) return
+      this.bodyHeight = this.$refs.tableBody.clientHeight
       this.rowHeight =
-        this.$refs.tableBody?.querySelector('.cyber-table-row')?.offsetHeight || 44;
+        this.$refs.tableBody?.querySelector('.cyber-table-row')?.offsetHeight || 44
     },
 
     judgeShowMore() {
       if (!this.data.length) {
-        this.needMoreBtn = false;
-        return;
+        this.needMoreBtn = false
+        return
       }
 
-      this.calcBaseParams();
-      const totalDataHeight = this.data.length * this.rowHeight;
-      this.needMoreBtn = totalDataHeight > this.bodyHeight;
+      this.calcBaseParams()
+      const totalDataHeight = this.data.length * this.rowHeight
+      this.needMoreBtn = totalDataHeight > this.bodyHeight
     },
 
     handleSortClick(prop) {
-      if (!this.enableSort) return;
-      const isCurrentProp = this.currentSort.prop === prop;
+      if (!this.enableSort) return
+      const isCurrentProp = this.currentSort.prop === prop
       const newOrder = isCurrentProp
         ? (this.currentSort.order === 'asc' ? 'desc' : 'asc')
-        : 'asc';
-      this.$emit('sort-change', { prop, order: newOrder });
+        : 'asc'
+      this.$emit('sort-change', { prop, order: newOrder })
     },
 
     viewMore() {
-      this.$emit('viewMore');
+      this.$emit('viewMore')
     },
 
-    // 是否为环比列
     isRatioColumn(prop) {
       return (
         this.ratioConfig &&
         this.ratioConfig.enable &&
         Array.isArray(this.ratioConfig.columns) &&
         this.ratioConfig.columns.includes(prop)
-      );
+      )
     },
 
-    // 获取环比样式类名
     getRatioClass(value) {
       if (value === null || value === undefined || value === '') {
-        return 'is-empty';
+        return 'is-empty'
       }
 
-      const str = String(value).trim();
+      const str = String(value).trim()
 
-      if (str.startsWith('+')) return 'is-up';
-      if (str.startsWith('-')) return 'is-down';
+      if (str.startsWith('+')) return 'is-up'
+      if (str.startsWith('-')) return 'is-down'
 
-      const num = parseFloat(str);
-      if (isNaN(num)) return 'is-empty';
-      if (num > 0) return 'is-up';
-      if (num < 0) return 'is-down';
-      return 'is-flat';
+      const num = parseFloat(str)
+      if (isNaN(num)) return 'is-empty'
+      if (num > 0) return 'is-up'
+      if (num < 0) return 'is-down'
+      return 'is-flat'
     },
 
-    // 格式化显示文本
     formatRatioText(value) {
-      if (value === null || value === undefined || value === '') return '-';
+      if (value === null || value === undefined || value === '') return '-'
 
-      const str = String(value).trim();
-      const num = parseFloat(str);
+      const str = String(value).trim()
+      const num = parseFloat(str)
 
-      if (isNaN(num)) return str;
+      if (isNaN(num)) return str
 
       if (num > 0) {
-        return `↑ ${str.startsWith('+') ? str : `+${str}`}`;
+        return `↑ ${str.startsWith('+') ? str : `+${str}`}`
       }
       if (num < 0) {
-        return `↓ ${str}`;
+        return `↓ ${str}`
       }
-      return `→ ${str}`;
+      return `→ ${str}`
     }
   }
-};
+}
 </script>
 
 <style lang="less" scoped>
@@ -243,7 +272,6 @@ export default {
 @glowSecondary: #00c3fe4D;
 @gridLine: #88aaff33;
 
-// 新增：环比标签颜色
 @upColor: #00e59b;
 @upBg: rgba(0, 229, 155, 0.18);
 @downColor: #ff6b6b;
@@ -455,7 +483,6 @@ export default {
       }
     }
 
-    // 新增：环比标签
     .ratio-tag {
       min-width: 72px;
       max-width: 100%;
@@ -539,28 +566,68 @@ export default {
   }
 }
 
-.empty-data {
+.empty-state {
   width: 100%;
   height: calc(100% - 48px);
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 2;
+  background:
+    radial-gradient(circle at center, rgba(34, 195, 255, 0.12) 0%, rgba(34, 195, 255, 0.03) 35%, rgba(0, 0, 0, 0) 70%);
+}
+
+.empty-state-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: fade(@textGray, 60%);
+  gap: 14px;
+}
+
+.empty-state-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
   position: relative;
-  z-index: 2;
+  border: 1px solid rgba(34, 195, 255, 0.28);
+  box-shadow:
+    0 0 0 6px rgba(34, 195, 255, 0.04),
+    0 0 20px rgba(34, 195, 255, 0.08) inset;
+}
 
-  .empty-icon {
-    font-size: 40px;
-    margin-bottom: 10px;
-    color: fade(@borderDark, 80%);
-    text-shadow: 0 0 10px fade(@borderDark, 50%);
-  }
+.empty-state-icon::before,
+.empty-state-icon::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: rgba(34, 195, 255, 0.7);
+  transform: translate(-50%, -50%);
+  border-radius: 2px;
+}
 
-  .empty-text {
-    font-size: 14px;
-    letter-spacing: 1px;
-  }
+.empty-state-icon::before {
+  width: 24px;
+  height: 2px;
+}
+
+.empty-state-icon::after {
+  width: 2px;
+  height: 24px;
+  opacity: 0.35;
+}
+
+.empty-state-text {
+  color: rgba(192, 207, 255, 0.7);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-align: center;
 }
 
 .cyber-table-header-row::after,
