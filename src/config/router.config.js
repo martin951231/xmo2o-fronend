@@ -1382,6 +1382,18 @@ export const constantRouterMap = [
     component: () => import('@/views/community/village/houseWorker/sendAiMessageSetWorker')
 },
 {
+    path: '/village',
+    component: BasicLayout,
+    hidden: true,
+    children: [
+        {
+            path: '/village/device/cloudAccessControl',
+            name: 'cloudAccessControl',
+            component: () => import('@/views/community/village/device/cloudAccessControl/index')
+        }
+    ]
+},
+{
   path: '/village/village.materiel/setPrintTemplate',
   name: 'materielPrintPage',
   component: () => import('@/views/community/village/materiel/setPrintTemplate')

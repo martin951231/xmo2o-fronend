@@ -102,7 +102,7 @@
 </template>
 
 <script>
-import moment from 'moment';
+import moment from 'moment'
 
 export default {
   name: 'OrgTitle',
@@ -123,259 +123,259 @@ export default {
       })
     }
   },
-  data() {
+  data () {
     return {
       datePickerVisible: false,
       innerStartMonth: null,
       innerEndMonth: null,
       innerSingleMonth: null
-    };
+    }
   },
   computed: {
-    currentMonth() {
-      return moment().endOf('month');
+    currentMonth () {
+      return moment().endOf('month')
     },
 
     // 自动判断是否单个月份模式
-    isSingleMode() {
-      const val = this.dateRange;
+    isSingleMode () {
+      const val = this.dateRange
 
       // 字符串：2026-03
       if (typeof val === 'string') {
-        return !!val;
+        return !!val
       }
 
       // 对象：有 start/end -> 区间模式
       if (val && typeof val === 'object') {
-        const hasRangeField = 'start_date' in val || 'end_date' in val;
-        if (hasRangeField) return false;
+        const hasRangeField = 'start_date' in val || 'end_date' in val
+        if (hasRangeField) return false
 
         // 单值对象
         if (val.date || val.month || val.value) {
-          return true;
+          return true
         }
       }
 
       // 默认保留原逻辑：区间模式
-      return false;
+      return false
     },
 
-    canConfirm() {
+    canConfirm () {
       if (this.isSingleMode) {
-        if (!this.innerSingleMonth) return false;
-        if (this.innerSingleMonth.isAfter(this.currentMonth, 'month')) return false;
-        return true;
+        if (!this.innerSingleMonth) return false
+        if (this.innerSingleMonth.isAfter(this.currentMonth, 'month')) return false
+        return true
       }
 
-      if (!this.innerStartMonth || !this.innerEndMonth) return false;
-      if (this.innerEndMonth.isBefore(this.innerStartMonth, 'month')) return false;
+      if (!this.innerStartMonth || !this.innerEndMonth) return false
+      if (this.innerEndMonth.isBefore(this.innerStartMonth, 'month')) return false
 
       // 最多12个月（包含开始和结束月）
-      const diff = this.innerEndMonth.diff(this.innerStartMonth, 'months');
-      if (diff > 11) return false;
+      const diff = this.innerEndMonth.diff(this.innerStartMonth, 'months')
+      if (diff > 11) return false
 
       // 结束月超过当前月也允许点击确定，去除此处限制
       // if (this.innerEndMonth.isAfter(this.currentMonth, 'month')) return false;
 
-      return true;
+      return true
     },
 
-    displayText() {
+    displayText () {
       if (this.isSingleMode) {
-        return this.formatSingleDate(this.dateRange);
+        return this.formatSingleDate(this.dateRange)
       }
-      return this.formatDateRange(this.dateRange);
+      return this.formatDateRange(this.dateRange)
     },
 
-    hasDisplayValue() {
+    hasDisplayValue () {
       if (this.isSingleMode) {
-        return !!this.formatSingleDate(this.dateRange);
+        return !!this.formatSingleDate(this.dateRange)
       }
 
       return !!(
         this.dateRange &&
         (this.dateRange.start_date || this.dateRange.end_date)
-      );
+      )
     }
   },
   watch: {
     dateRange: {
       immediate: true,
       deep: true,
-      handler(val) {
-        this.syncInnerValue(val);
+      handler (val) {
+        this.syncInnerValue(val)
       }
     },
-    datePickerVisible(val) {
+    datePickerVisible (val) {
       if (val) {
-        this.syncInnerValue(this.dateRange);
+        this.syncInnerValue(this.dateRange)
       }
     }
   },
   methods: {
-    handleClickMore() {
-      this.$emit('viewMore');
+    handleClickMore () {
+      this.$emit('viewMore')
     },
 
-    handleDateRangeClick() {
-      this.datePickerVisible = true;
+    handleDateRangeClick () {
+      this.datePickerVisible = true
     },
 
-    getSingleValue(val) {
-      if (!val) return '';
+    getSingleValue (val) {
+      if (!val) return ''
 
       if (typeof val === 'string') {
-        return val;
+        return val
       }
 
       if (typeof val === 'object') {
-        return val.date || val.month || val.value || '';
+        return val.date || val.month || val.value || ''
       }
 
-      return '';
+      return ''
     },
 
-    syncInnerValue(val) {
+    syncInnerValue (val) {
       if (this.isSingleMode) {
-        const singleValue = this.getSingleValue(val);
+        const singleValue = this.getSingleValue(val)
         this.innerSingleMonth = singleValue
           ? moment(singleValue, 'YYYY-MM')
-          : null;
+          : null
 
-        this.innerStartMonth = null;
-        this.innerEndMonth = null;
-        return;
+        this.innerStartMonth = null
+        this.innerEndMonth = null
+        return
       }
 
       this.innerStartMonth = val && val.start_date
         ? moment(val.start_date, 'YYYY-MM')
-        : null;
+        : null
 
       this.innerEndMonth = val && val.end_date
         ? moment(val.end_date, 'YYYY-MM')
-        : null;
+        : null
 
-      this.innerSingleMonth = null;
+      this.innerSingleMonth = null
     },
 
-    formatDateRange(item) {
-      if (!item || typeof item !== 'object') return '';
-      const start = item.start_date || '';
-      const end = item.end_date || '';
-      if (start && end) return `${start} - ${end}`;
-      return start || end || '';
+    formatDateRange (item) {
+      if (!item || typeof item !== 'object') return ''
+      const start = item.start_date || ''
+      const end = item.end_date || ''
+      if (start && end) return `${start} - ${end}`
+      return start || end || ''
     },
 
-    formatSingleDate(item) {
-      return this.getSingleValue(item);
+    formatSingleDate (item) {
+      return this.getSingleValue(item)
     },
 
-    disabledSingleMonth(current) {
-      if (!current) return false;
-      return current.isAfter(this.currentMonth, 'month');
+    disabledSingleMonth (current) {
+      if (!current) return false
+      return current.isAfter(this.currentMonth, 'month')
     },
 
-    disabledEndMonth(current) {
-      if (!current) return false;
+    disabledEndMonth (current) {
+      if (!current) return false
 
       // 如果选了开始月
       if (this.innerStartMonth) {
         // 结束月不能早于开始月
         if (current.isBefore(this.innerStartMonth, 'month')) {
-          return true;
+          return true
         }
       }
 
       // 去除“结束月不能超过当前月”的限制
 
-      return false;
+      return false
     },
 
-    disabledStartMonth(current) {
-      if (!current) return false;
+    disabledStartMonth (current) {
+      if (!current) return false
 
       // 如果选了结束月
       if (this.innerEndMonth) {
         // 开始月不能晚于结束月
         if (current.isAfter(this.innerEndMonth, 'month')) {
-          return true;
+          return true
         }
       }
 
-      return false;
+      return false
     },
 
-    handleSingleChange(value) {
-      this.innerSingleMonth = value;
+    handleSingleChange (value) {
+      this.innerSingleMonth = value
     },
 
-    handleStartChange(value) {
-      this.innerStartMonth = value;
+    handleStartChange (value) {
+      this.innerStartMonth = value
 
       if (this.innerStartMonth && this.innerEndMonth) {
         // 结束月 < 开始月，自动清空结束月
         if (this.innerEndMonth.isBefore(this.innerStartMonth, 'month')) {
-          this.innerEndMonth = null;
-          return;
+          this.innerEndMonth = null
+          return
         }
 
         // 超过12个月，自动清空结束月
-        const diff = this.innerEndMonth.diff(this.innerStartMonth, 'months');
+        const diff = this.innerEndMonth.diff(this.innerStartMonth, 'months')
         if (diff > 11) {
-          this.innerEndMonth = null;
+          this.innerEndMonth = null
         }
       }
     },
 
-    handleEndChange(value) {
-      this.innerEndMonth = value;
+    handleEndChange (value) {
+      this.innerEndMonth = value
 
       if (this.innerStartMonth && this.innerEndMonth) {
         // 结束月 < 开始月，自动清空开始月
         if (this.innerEndMonth.isBefore(this.innerStartMonth, 'month')) {
-          this.innerStartMonth = null;
-          return;
+          this.innerStartMonth = null
+          return
         }
 
         // 超过12个月，自动清空开始月
-        const diff = this.innerEndMonth.diff(this.innerStartMonth, 'months');
+        const diff = this.innerEndMonth.diff(this.innerStartMonth, 'months')
         if (diff > 11) {
-          this.innerStartMonth = null;
+          this.innerStartMonth = null
         }
       }
     },
 
-    handleReset() {
+    handleReset () {
       if (this.isSingleMode) {
-        this.innerSingleMonth = null;
+        this.innerSingleMonth = null
       } else {
-        this.innerStartMonth = null;
-        this.innerEndMonth = null;
+        this.innerStartMonth = null
+        this.innerEndMonth = null
       }
     },
 
-    handleConfirm() {
-      if (!this.canConfirm) return;
+    handleConfirm () {
+      if (!this.canConfirm) return
 
       if (this.isSingleMode) {
-        const result = this.innerSingleMonth.format('YYYY-MM');
+        const result = this.innerSingleMonth.format('YYYY-MM')
 
         // 单个月份模式返回单值
-        this.$emit('changeDateRange', result);
-        this.datePickerVisible = false;
-        return;
+        this.$emit('changeDateRange', result)
+        this.datePickerVisible = false
+        return
       }
 
       const result = {
         start_date: this.innerStartMonth.format('YYYY-MM'),
         end_date: this.innerEndMonth.format('YYYY-MM')
-      };
+      }
 
-      this.$emit('changeDateRange', result);
-      this.datePickerVisible = false;
+      this.$emit('changeDateRange', result)
+      this.datePickerVisible = false
     }
   }
-};
+}
 </script>
 
 <style scoped lang="less">
