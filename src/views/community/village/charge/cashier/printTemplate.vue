@@ -450,6 +450,7 @@
                                 <div class="info-content">
                                   <span v-if="printList.findIndex(v=>v.title=='小区')!=-1" >【小区名称】</span>
                                   <span v-if="printList.findIndex(v=>v.title=='房号')!=-1" >【房间号】</span>
+                                  <span v-if="printList.findIndex(v=>v.title=='车位号')!=-1" >【车位号】</span>
                                   <span v-if="printList.findIndex(v=>v.title=='住户姓名')!=-1" >【住户姓名】</span>
                                 </div>
                             </div>

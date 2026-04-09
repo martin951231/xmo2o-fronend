@@ -13,6 +13,7 @@
                         <div class="info-content">
                           <span v-if="printList1.findIndex(v=>v.title=='小区')!=-1" >{{ (item = list1.find(i => i.title === '小区')) && item.value || '' }}&nbsp;&nbsp;</span>
                           <span v-if="printList1.findIndex(v=>v.title=='房号')!=-1" >{{ (item = list1.find(i => i.title === '房号')) && item.value || '' }}&nbsp;&nbsp;</span>
+                          <span v-if="printList1.findIndex(v=>v.title=='车位号')!=-1" >{{ (item = list1.find(i => i.title === '车位号')) && item.value || '' }}&nbsp;&nbsp;</span>
                           <span v-if="printList1.findIndex(v=>v.title=='住户姓名')!=-1" >{{ (item = list1.find(i => i.title === '住户姓名')) && item.value || '' }}&nbsp;&nbsp;</span>
                         </div>
                     </div>
