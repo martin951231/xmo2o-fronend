@@ -1,45 +1,45 @@
 <template>
-    <div style="height: 100%">
-        <!-- 没有找到iframe地址 -->
-        <div class="iframe-container">
-            <iframe
-                class="iframe-style"
-                v-for="item of paramArr"
-                :key="item.name"
-                v-show="srcUrl === item.src"
-                :src="item.src"
-                frameborder="no"
-                :ref="item.name"
-                @load="iframeOnload"
-                scrolling="yes"
-                height="100%"
-            ></iframe>
-        </div>
-
-        <!-- 目前页面最多支持三个连续的弹框 -->
-        <iframe-dialog ref="iframeModel" @handleOk="handleOK" @handleClose="handleClose" />
-        <iframe-dialog ref="iframeModel2" @handleOk="handleOK" @handleClose="handleClose" />
-        <iframe-dialog ref="iframeModel3" @handleOk="handleOK" @handleClose="handleClose" />
-        <!-- 图片预览框 -->
-        <a-modal
-            v-if="imgModalInfo"
-            :footer="null"
-            :title="imgModalInfo.title"
-            :visible="imgModalVisiable"
-            :width="imgModalInfo.width + 50"
-            destroyOnClose
-            @cancel="handleImgPreviewClose"
-        >
-            <img
-                :src="imgModalInfo.url"
-                @click="imgClick"
-                :style="{ width: imgModalInfo.width + 'px', height: imgModalInfo.height + 'px' }"
-            />
-        </a-modal>
-
-        <!-- 抽屉组件 -->
-        <IframeDrawer @handleDrawerClose="handleDrawerClose" ref="iframeDrawerModel1"/>
+  <div style="height: 100%">
+    <!-- 没有找到iframe地址 -->
+    <div class="iframe-container">
+      <iframe
+        class="iframe-style"
+        v-for="item of paramArr"
+        :key="item.name"
+        v-show="srcUrl === item.src"
+        :src="item.src"
+        frameborder="no"
+        :ref="item.name"
+        @load="iframeOnload"
+        scrolling="yes"
+        height="100%"
+      ></iframe>
     </div>
+
+    <!-- 目前页面最多支持三个连续的弹框 -->
+    <iframe-dialog ref="iframeModel" @handleOk="handleOK" @handleClose="handleClose" />
+    <iframe-dialog ref="iframeModel2" @handleOk="handleOK" @handleClose="handleClose" />
+    <iframe-dialog ref="iframeModel3" @handleOk="handleOK" @handleClose="handleClose" />
+    <!-- 图片预览框 -->
+    <a-modal
+      v-if="imgModalInfo"
+      :footer="null"
+      :title="imgModalInfo.title"
+      :visible="imgModalVisiable"
+      :width="imgModalInfo.width + 50"
+      destroyOnClose
+      @cancel="handleImgPreviewClose"
+    >
+      <img
+        :src="imgModalInfo.url"
+        @click="imgClick"
+        :style="{ width: imgModalInfo.width + 'px', height: imgModalInfo.height + 'px' }"
+      />
+    </a-modal>
+
+    <!-- 抽屉组件 -->
+    <IframeDrawer @handleDrawerClose="handleDrawerClose" ref="iframeDrawerModel1"/>
+  </div>
 </template>
 
 <script>
@@ -59,11 +59,11 @@ export default {
     components: {
         IframeDialog,
         CustomTooltip,
-        IframeDrawer,
+        IframeDrawer
         // RichText,
         // ColorPicker
     },
-    data() {
+    data () {
         return {
             url: '',
             iframeDom: null,
@@ -75,31 +75,49 @@ export default {
             paramArr: [], // 参数数组 {name,src}
             imgModalVisiable: false,
             imgModalInfo: null,
-            dialogAllRefreshList: [],//所有的弹框Iframe列表
+            dialogAllRefreshList: []// 所有的弹框Iframe列表
         }
     },
     watch: {
         // 监听路由变化
         '$route.path': {
-            handler(val) {
+            handler (val) {
                 console.log('val----', val)
-                if (val.indexOf('iframe') != -1) {
+                if (val.indexOf('iframe') !== -1 && this.isCurrentIframeRoute()) {
                     submiting = false
                     this.getMenuList()
                 }
             }
         }
     },
-    mounted() {
+    mounted () {
         _this = this
         this.getMenuList()
-        if('village' == getSystemName(this.$route.path)){
+        if (getSystemName(this.$route.path) === 'village') {
             store.dispatch('SetVillageConfig')
         }
     },
     methods: {
+        isCurrentIframeRoute (route = this.$route) {
+            if (!route || !route.matched || !route.matched.length) {
+                return false
+            }
+            const currentRecord = route.matched[route.matched.length - 1]
+            if (!currentRecord) {
+                return false
+            }
+            const currentInstance = currentRecord.instances && currentRecord.instances.default
+            if (currentInstance && currentInstance.$options) {
+                return currentInstance.$options.name === 'IframePage'
+            }
+            const currentComponent = currentRecord.components && currentRecord.components.default
+            const componentName = currentComponent
+                ? (currentComponent.options && currentComponent.options.name) || currentComponent.name
+                : ''
+            return componentName === 'IframePage'
+        },
         // 功能库链接
-        setLinkBases(source = 'platform', type = 'h5') {
+        setLinkBases (source = 'platform', type = 'h5') {
             this.$LinkBases({
                 // visible: true,
                 source: source, // 必填
@@ -115,7 +133,7 @@ export default {
                 // }
             })
         },
-        getMenuList() {
+        getMenuList () {
             const sysMenu = getSystemName(this.$route.path) + '_system_menu'
             this.routers = Vue.ls.get(sysMenu)
             if (this.routers && this.routers.length) {
@@ -123,7 +141,7 @@ export default {
             }
         },
         // 获取iframe的url
-        getPath() {
+        getPath () {
             const pathName = this.$route.name
             this.pathName = pathName
             let findSrc = false
@@ -164,7 +182,7 @@ export default {
                 this.currentItem = null
             }
         },
-        iframeOnload() {
+        iframeOnload () {
             // console.log('加载完成')
             const iframeDom = this.$refs[this.pathName][0]
             this.iframeDom = iframeDom
@@ -172,12 +190,12 @@ export default {
             // iframeDom.style.height = this.deviceHeight - 100 + 'px'
             try {
                 setTimeout(() => {
-                    const htmlHeight =iframeDom.contentWindow.document.documentElement!=undefined && iframeDom.contentWindow.document.documentElement.scrollHeight!=undefined ? iframeDom.contentWindow.document.documentElement.scrollHeight:0;
-                    const bodyHeight = iframeDom.contentWindow.document.body!=undefined && iframeDom.contentWindow.document.body.scrollHeight!=undefined ? iframeDom.contentWindow.document.body.scrollHeight :0;                   
+                    const htmlHeight = iframeDom.contentWindow.document.documentElement != undefined && iframeDom.contentWindow.document.documentElement.scrollHeight != undefined ? iframeDom.contentWindow.document.documentElement.scrollHeight : 0
+                    const bodyHeight = iframeDom.contentWindow.document.body != undefined && iframeDom.contentWindow.document.body.scrollHeight != undefined ? iframeDom.contentWindow.document.body.scrollHeight : 0
                     // console.log(111111111111111111, autoHeight)
                     // console.log(2222222222222222222, document.documentElement.clientHeight)
                     const contentHeight = document.documentElement.clientHeight - 120
-                    let autoHeight = bodyHeight?bodyHeight + 100:htmlHeight
+                    const autoHeight = bodyHeight ? bodyHeight + 100 : htmlHeight
                     if (contentHeight > autoHeight) {
                         iframeDom.style.minHeight = contentHeight + 'px'
                     } else {
@@ -188,7 +206,7 @@ export default {
                 console.log('iframe高度获取失败了')
             }
         },
-        handleOK(item) {
+        handleOK (item) {
             if (submiting) {
                 this.$message.warning('请勿重复提交！')
                 return
@@ -206,20 +224,20 @@ export default {
                 const submits = iframe.document.getElementById('dosubmit')
                 if (submits) {
                     submits.click()
-                    this.dialogAllRefreshList = JSON.parse(JSON.stringify(dialogs));
+                    this.dialogAllRefreshList = JSON.parse(JSON.stringify(dialogs))
                 } else {
-                    if (typeof iframe.dialogConfirm == 'function') {
+                    if (typeof iframe.dialogConfirm === 'function') {
                         iframe.dialogConfirm()
                     }
                 }
             } else {
                 this.$message.error('操作失败，请重试！')
             }
-            if (typeof this.iframeDom.contentWindow.dialogConfirm == 'function') {
+            if (typeof this.iframeDom.contentWindow.dialogConfirm === 'function') {
                 this.iframeDom.contentWindow.dialogConfirm()
             }
         },
-        handleClose(item) {
+        handleClose (item) {
             let childDom = null
             if (dialogs[2]) {
                 dialogs[2] = 0
@@ -235,37 +253,37 @@ export default {
                 this.$refs.iframeModel.visible = false
             }
             const iframe = childDom.contentWindow
-            if (typeof iframe.dialogCancel == 'function') {
+            if (typeof iframe.dialogCancel === 'function') {
                 iframe.dialogCancel()
             }
-            if (typeof this.iframeDom.contentWindow.dialogCancel == 'function') {
+            if (typeof this.iframeDom.contentWindow.dialogCancel === 'function') {
                 this.iframeDom.contentWindow.dialogCancel()
             }
         },
-        imgClick() {
+        imgClick () {
             if (this.imgModalInfo.click) {
                 window.open(this.imgModalInfo.url)
             }
         },
-        handleImgPreviewClose() {
+        handleImgPreviewClose () {
             this.imgModalVisiable = false
         },
-        //抽屉组件关闭事件
-        handleDrawerClose(){
-            _this.$refs.iframeDrawerModel1.closeVisible();
+        // 抽屉组件关闭事件
+        handleDrawerClose () {
+            _this.$refs.iframeDrawerModel1.closeVisible()
         },
-        //刷新所有弹窗的嵌套层
-        dialogAllRefresh(){
-            let newArr = this.dialogAllRefreshList.filter(v=>v==1);
-            let index = newArr.length;
-            if(index == 2){
+        // 刷新所有弹窗的嵌套层
+        dialogAllRefresh () {
+            const newArr = this.dialogAllRefreshList.filter(v => v == 1)
+            const index = newArr.length
+            if (index == 2) {
                 _this.$refs.iframeModel.$refs.childIframe.contentWindow.location.reload(true)
             }
-            if(index == 3){
+            if (index == 3) {
                 _this.$refs.iframeModel2.$refs.childIframe.contentWindow.location.reload(true)
             }
-            this.dialogAllRefreshList = [];
-        },
+            this.dialogAllRefreshList = []
+        }
     }
 }
 
@@ -328,31 +346,31 @@ window['artiframe'] = (
     console.log(params, 'params')
     if (!_this.$refs.iframeModel.visible) {
         dialogs = [1, 0, 0]
-        _this.$refs.iframeModel.zIndex = 997;
+        _this.$refs.iframeModel.zIndex = 997
         _this.$refs.iframeModel.openDialog(params)
     } else if (!_this.$refs.iframeModel2.visible) {
         dialogs = [1, 1, 0]
-        _this.$refs.iframeModel2.zIndex = 998;
+        _this.$refs.iframeModel2.zIndex = 998
         _this.$refs.iframeModel2.openDialog(params)
     } else if (!_this.$refs.iframeModel3.visible) {
         dialogs = [1, 1, 1]
-        _this.$refs.iframeModel3.zIndex = 999;
+        _this.$refs.iframeModel3.zIndex = 999
         _this.$refs.iframeModel3.openDialog(params)
     }
 }
 
-//挂在抽屉弹出层
+// 挂在抽屉弹出层
 window['iframeDrawer'] = (data) => {
-    if(!_this.$refs.iframeDrawerModel1.visible){
+    if (!_this.$refs.iframeDrawerModel1.visible) {
         _this.$refs.iframeDrawerModel1.openDrawer(data)
     }
 }
-//关闭抽屉弹出层
+// 关闭抽屉弹出层
 window['closeIframeDrawer'] = () => {
-    _this.$refs.iframeDrawerModel1.closeVisible();
+    _this.$refs.iframeDrawerModel1.closeVisible()
 }
 
-function getClientHeight() {
+function getClientHeight () {
     let clientHeight = 0
     if (document.body.clientHeight && document.documentElement.clientHeight) {
         clientHeight =
@@ -395,38 +413,38 @@ window['msg'] = (status, msg, lock, time) => {
 // 刷新框架页面
 window['main_refresh'] = () => {
     _this.iframeDom.contentWindow.location.reload(true)
-    //延时调用刷新弹框方法给个缓冲的时间
-    setTimeout(()=>{
-        _this.dialogAllRefresh();
-    },500)
-} 
-let artConfirm = null;
+    // 延时调用刷新弹框方法给个缓冲的时间
+    setTimeout(() => {
+        _this.dialogAllRefresh()
+    }, 500)
+}
+let artConfirm = null
 window['art'] = {
-    dialog: function(d) {
+    dialog: function (d) {
         if (d.content) {
             artConfirm = _this.$confirm({
                 title: d.title,
                 content: d.content,
-                okText: d.okText?d.okText:'确认',
-                okType: d.okType?d.okType:'danger',
-                cancelText: d.cancelText?d.cancelText:'取消',
-                onOk() {
-                    d.ok && typeof d.ok == "function" && d.ok()
+                okText: d.okText ? d.okText : '确认',
+                okType: d.okType ? d.okType : 'danger',
+                cancelText: d.cancelText ? d.cancelText : '取消',
+                onOk () {
+                    d.ok && typeof d.ok === 'function' && d.ok()
                 },
-                onCancel() {
-                    d.cancel && typeof d.cancel == "function" && d.cancel()
+                onCancel () {
+                    d.cancel && typeof d.cancel === 'function' && d.cancel()
                 }
             })
         }
     },
-    preview: function(data) {
+    preview: function (data) {
         _this.imgModalInfo = data
         _this.imgModalVisiable = true
     }
 }
 
-window.closeArt = ()=>{
-    artConfirm && artConfirm.destroy();
+window.closeArt = () => {
+    artConfirm && artConfirm.destroy()
 }
 
 window.art.dialog.data = (t1, t2) => {
@@ -440,10 +458,10 @@ window['closeiframe'] = () => {
 }
 
 window['layer'] = {
-    open: function(args) {
+    open: function (args) {
         const params = {
             title: args.title,
-            centered: args.centered?true:false
+            centered: !!args.centered
         }
         if (args.content) {
             params['url'] = args.content
@@ -465,7 +483,7 @@ window['layer'] = {
             _this.$refs.iframeModel3.openDialog(params)
         }
     },
-    close: function(refresh) {
+    close: function (refresh) {
         _this.$refs.iframeModel.handleClose()
         if (refresh) {
             _this.iframeDom.contentWindow.location.reload(true)
@@ -482,7 +500,7 @@ window.addIframe = (name, tab, href, params) => {
             href.indexOf('village') != -1 ||
             ((href.indexOf('merchant') != -1 || href.indexOf('storestaff') != -1) && href.indexOf('.php') == -1)
         ) {
-            let query = params ? params : {} // 参数
+            const query = params || {} // 参数
             _this.$router.push({ path: href, query })
         } else {
             if (href.indexOf('http') == -1) {
@@ -552,7 +570,7 @@ window.setLinkBases = (currentIframe = '', source = 'platform', type = 'h5') => 
     })
 }
 window.openNewTab = url => {
-    let path = url.split('#')[1]
+    const path = url.split('#')[1]
     _this.$router.push(path)
 }
 
@@ -577,7 +595,7 @@ window.GenerateRoutes = (path = '', query = {}, tokenName = '') => {
                 console.log('GenerateRoutes', path)
                 console.log('tokenName', tokenName)
                 if (path) {
-                    setTimeout(function() {
+                    setTimeout(function () {
                         console.log('1GenerateRoutes', path)
                         window.goV20Url(url)
                     }, 1000)

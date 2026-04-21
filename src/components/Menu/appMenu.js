@@ -56,6 +56,21 @@ export default {
     }
   },
   methods: {
+    findMenuPathChain(menus, targetPath, parents = []) {
+      for (const item of menus) {
+        const currentParents = parents.concat(item.path)
+        if (item.path === targetPath) {
+          return currentParents
+        }
+        if (item.children && item.children.length) {
+          const childResult = this.findMenuPathChain(item.children, targetPath, currentParents)
+          if (childResult.length) {
+            return childResult
+          }
+        }
+      }
+      return []
+    },
     // select menu item
     onOpenChange(openKeys) {
       // 在水平模式下时执行，并且不再执行后续
@@ -77,6 +92,13 @@ export default {
       this.$emit('select', { item, key, selectedKeys })
     },
     updateMenu() {
+      const menuPathChain = this.findMenuPathChain(this.menu, this.$route.path)
+      if (menuPathChain.length) {
+        this.selectedKeys = [menuPathChain[menuPathChain.length - 1]]
+        const openKeys = this.mode === 'inline' ? menuPathChain.slice(0, -1) : []
+        this.collapsed ? (this.cachedOpenKeys = openKeys) : (this.openKeys = openKeys)
+        return
+      }
       const routes = this.$route.matched.concat()
       const { hidden } = this.$route.meta
       const open_key = routes[routes.length - 1].meta.open_key

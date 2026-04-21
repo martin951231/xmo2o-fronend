@@ -165,6 +165,20 @@ const pageVillageComunityComponents = {
     NBFingerprintDeviceList: () => import('@/views/community/village/device/fingerprint/deviceList'), // 指纹锁
     NBFingerprintLockOpenRecord: () => import('@/views/community/village/device/fingerprint/openRecordList'), // 指纹锁开门记录
 
+    // 云门禁
+    houseAccessDeviceDeviceList: () => import('@/views/community/village/device/cloudAccessControl/index'), // 门禁设备管理
+    access_device_device_list: () => import('@/views/community/village/device/cloudAccessControl/index'), // 门禁设备管理
+    house_access_device_device_list: () => import('@/views/community/village/device/cloudAccessControl/index'), // 门禁设备管理
+    houseSensorsSensorsList: () => import('@/views/community/village/device/cloudAccessControl/sensors'), // 门禁感应器管理
+    sensors_sensors_list: () => import('@/views/community/village/device/cloudAccessControl/sensors'), // 门禁感应器管理
+    house_sensors_sensors_list: () => import('@/views/community/village/device/cloudAccessControl/sensors'), // 门禁感应器管理
+    houseRecordsRecordsList: () => import('@/views/community/village/device/cloudAccessControl/records'), // 门禁出入记录管理
+    records_records_list: () => import('@/views/community/village/device/cloudAccessControl/records'), // 门禁出入记录管理
+    house_records_records_list: () => import('@/views/community/village/device/cloudAccessControl/records'), // 门禁出入记录管理
+    houseNonMotorizedVehicleList: () => import('@/views/community/village/device/cloudAccessControl/nonMotorVehicle'), // 非机动车管理
+    non_motorized_vehicle_list: () => import('@/views/community/village/device/cloudAccessControl/nonMotorVehicle'), // 非机动车管理
+    house_non_motorized_vehicle_list: () => import('@/views/community/village/device/cloudAccessControl/nonMotorVehicle'), // 非机动车管理
+
     //停暖功能
     closeHeatingList: () => import('@/views/community/village/closeHeating/closeHeating/closeHeatingList'), // 申请停暖列表
     flowChargingList: () => import('@/views/community/village/closeHeating/flowCharging/flowChargingList'), // 申请流量计费列表

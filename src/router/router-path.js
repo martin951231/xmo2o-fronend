@@ -138,6 +138,10 @@ const path = {
     villageHotZoneindex: '/community/village/cockpit/hotZone', // 画热点区域
     villageEquipPointindex: '/community/village/cockpit/equipPoint', // 画热点区域
     villageRtspPlayer: '/community/village/device/rtspPlayer', //rtsp页面
+    houseAccessDeviceDeviceList: '/village/village.iframe/house_access_device_device_list', // 门禁设备管理
+    houseSensorsSensorsList: '/village/village.iframe/house_sensors_sensors_list', // 门禁感应器管理
+    houseRecordsRecordsList: '/village/village.iframe/house_records_records_list', // 门禁出入记录管理
+    houseNonMotorizedVehicleList: '/village/village.iframe/house_non_motorized_vehicle_list', // 非机动车管理
     chatRecord: '/community/village/building/roomCom/ownerCom/chatRecord', //聊天记录
     // 2.4小区-智能电表
     meterLogin: '/user/meter/login', // 登录

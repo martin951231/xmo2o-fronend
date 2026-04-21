@@ -18,6 +18,27 @@ import {
 
 const constantRouterComponents = routerComponents
 
+const fixedPathComponentMap = {
+  [path.houseAccessDeviceDeviceList]: 'house_access_device_device_list',
+  [path.houseSensorsSensorsList]: 'house_sensors_sensors_list',
+  [path.houseRecordsRecordsList]: 'house_records_records_list',
+  [path.houseNonMotorizedVehicleList]: 'house_non_motorized_vehicle_list'
+}
+
+const fixedPathTitleMap = {
+  [path.houseAccessDeviceDeviceList]: '门禁设备管理',
+  [path.houseSensorsSensorsList]: '门禁感应器管理',
+  [path.houseRecordsRecordsList]: '门禁出入记录管理',
+  [path.houseNonMotorizedVehicleList]: '非机动车管理'
+}
+
+const getRouteComponentKey = (item) => {
+  if (item && item.path && fixedPathComponentMap[item.path]) {
+    return fixedPathComponentMap[item.path]
+  }
+  return item.component || item.key
+}
+
 // 前端未找到页面路由（固定不用改）
 const notFoundRouter = {
   path: '*',
@@ -25,9 +46,8 @@ const notFoundRouter = {
   hidden: true
 }
 
-let currentAppId = '' //当前菜单的appid
+let currentAppId = '' // 当前菜单的appid
 let currentAppTitle = '' // 当前一级菜单title
-
 
 /**
  * 动态生成菜单
@@ -53,7 +73,7 @@ export const generatorDynamicRouter = (tokenName, location) => {
       // ----------------- 处理应用菜单 start -----------------
       let app_id = 0
       let homeItem = null
-      let arr = result.filter(item => item.path == location) // 找出当前路由
+      const arr = result.filter(item => item.path == location) // 找出当前路由
       if (arr.length) { //
         app_id = arr[0].app_id
         if (app_id) { // 如果有appid表示此路由时应用菜单路由，应该筛选出此应用下的路由
@@ -78,7 +98,7 @@ export const generatorDynamicRouter = (tokenName, location) => {
           })
         }
       }
-      // ----------------- 处理应用菜单 end ----------------- 
+      // ----------------- 处理应用菜单 end -----------------
       //      后端数据, 根级树数组,  根级 PID
       const menuNav = []
       const childrenNav = []
@@ -86,7 +106,7 @@ export const generatorDynamicRouter = (tokenName, location) => {
         if (item.parentId != 0 && item.meta && item.meta.show == false) {
           item.open_key = item.parentId
         }
-        return item;
+        return item
       })
       listToTree(result, childrenNav, parentId)
       if (childrenNav.length && !indexPath) {
@@ -140,31 +160,33 @@ export const generator = (routerMap, parent) => {
       keepAlive,
       permission
     } = item.meta || {}
-    let dTitle = title
+    const routeTitle = title || fixedPathTitleMap[item.path] || ''
+    let dTitle = routeTitle
     // 应用菜单文档标题显示处理
     if (currentAppId) {
-      dTitle = `${title} - ${currentAppTitle}`
+      dTitle = `${routeTitle} - ${currentAppTitle}`
     }
+    const componentKey = getRouteComponentKey(item)
     const currentRouter = {
       // 如果路由设置了 path，则作为默认 path，否则 路由地址 动态拼接生成如 /dashboard/workplace
       path: item.path || `${parent && parent.path || ''}/${item.key}`,
       // 路由名称，建议唯一
       name: item.name || item.key || '',
       // 该路由对应页面的 组件
-      component: (constantRouterComponents[item.component || item.key]) || (() => import(`@/views/${item.component}`)),
+      component: constantRouterComponents[componentKey] || (() => import(`@/views/${item.component}`)),
       // meta: 页面标题, 菜单图标, 页面权限(供指令权限用，可去掉)
       meta: {
-        title: title,
+        title: routeTitle,
         documentTitle: dTitle,
         icon: icon || undefined,
         hiddenHeaderContent: hiddenHeader,
         target: target,
         permission: permission,
-        keepAlive: keepAlive ? keepAlive : false,
+        keepAlive: keepAlive || false,
         not_audit_num: item.meta.not_audit_num ? item.meta.not_audit_num : null,
         app_id: item.app_id ? item.app_id : null,
-        open_key: item.open_key ? item.open_key : null,
-      },
+        open_key: item.open_key ? item.open_key : null
+      }
 
     }
     // 是否设置了隐藏菜单

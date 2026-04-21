@@ -1,22 +1,28 @@
 <script>
 import events from './events'
-import Vue from 'vue'
+import path from '@/router/router-path.js'
 import { setCustomTitle } from './setMenuTitle'
 import { isEmpty } from '@/utils/util'
 
 let pages = []
 let fullPathList = []
+const fixedPathTitleMap = {
+  [path.houseAccessDeviceDeviceList]: '门禁设备管理',
+  [path.houseSensorsSensorsList]: '门禁感应器管理',
+  [path.houseRecordsRecordsList]: '门禁出入记录管理',
+  [path.houseNonMotorizedVehicleList]: '非机动车管理'
+}
 export default {
   name: 'MultiTab',
-  data() {
+  data () {
     return {
       // fullPathList: [],
       // pages: [],
       activeKey: '',
-      newTabIndex: 0,
+      newTabIndex: 0
     }
   },
-  created() {
+  created () {
     // bind event
     events
       .$on('open', (val) => {
@@ -44,10 +50,10 @@ export default {
     // this.selectedLastPath()
   },
   methods: {
-    onEdit(targetKey, action) {
+    onEdit (targetKey, action) {
       this[action](targetKey)
     },
-    remove(targetKey) {
+    remove (targetKey) {
       pages = pages.filter((page) => page.fullPath !== targetKey)
       fullPathList = fullPathList.filter((path) => path !== targetKey)
       this.$forceUpdate()
@@ -56,12 +62,12 @@ export default {
         this.selectedLastPath()
       }
     },
-    selectedLastPath() {
+    selectedLastPath () {
       this.activeKey = fullPathList[fullPathList.length - 1]
     },
 
     // content menu
-    closeThat(e) {
+    closeThat (e) {
       // 判断是否为最后一个标签页，如果是最后一个，则无法被关闭
       if (fullPathList.length > 1) {
         this.remove(e)
@@ -69,7 +75,7 @@ export default {
         // this.$message.info('这是最后一个标签了, 无法被关闭')
       }
     },
-    closeLeft(e) {
+    closeLeft (e) {
       const currentIndex = fullPathList.indexOf(e)
       if (currentIndex > 0) {
         fullPathList.forEach((item, index) => {
@@ -81,7 +87,7 @@ export default {
         this.$message.info('左侧没有标签')
       }
     },
-    closeRight(e) {
+    closeRight (e) {
       const currentIndex = fullPathList.indexOf(e)
       if (currentIndex < fullPathList.length - 1) {
         fullPathList.forEach((item, index) => {
@@ -93,7 +99,7 @@ export default {
         this.$message.info('右侧没有标签')
       }
     },
-    closeAll(e) {
+    closeAll (e) {
       const currentIndex = fullPathList.indexOf(e)
       fullPathList.forEach((item, index) => {
         if (index !== currentIndex) {
@@ -101,21 +107,21 @@ export default {
         }
       })
     },
-    closeMenuClick(key, route) {
+    closeMenuClick (key, route) {
       this[key](route)
     },
-    refreshPath() {
+    refreshPath () {
       this.$router.replace({ path: '/refresh' })
     },
-    renderTabPaneMenu(e) {
+    renderTabPaneMenu (e) {
       return (
         <a-menu
           {...{
             on: {
               click: ({ key, item, domEvent }) => {
                 this.closeMenuClick(key, e)
-              },
-            },
+              }
+            }
           }}
         >
           <a-menu-item key="refreshPath">刷新当前标签</a-menu-item>
@@ -127,7 +133,7 @@ export default {
       )
     },
     // render
-    renderTabPane(title, keyPath) {
+    renderTabPane (title, keyPath) {
       const menu = this.renderTabPaneMenu(keyPath)
       const refreshIcon = this.renderRefreshIcon(keyPath)
       return (
@@ -139,8 +145,8 @@ export default {
         </a-dropdown>
       )
     },
-    renderRefreshIcon(keyPath) {
-      if (keyPath == this.activeKey) {
+    renderRefreshIcon (keyPath) {
+      if (keyPath === this.activeKey) {
         return (
           <a-icon
             style="margin-left:10px;font-size: 12px;"
@@ -149,21 +155,40 @@ export default {
               on: {
                 click: () => {
                   this.refreshPath()
-                },
-              },
+                }
+              }
             }}
           />
         )
       }
     },
     // 当前路由是否已经在tab列表里
-    handlePageList(val) {
+    handlePageList (val) {
       this.activeKey = val.fullPath
-      if (fullPathList.indexOf(val.fullPath) < 0) {
+      const fixedTitle = fixedPathTitleMap[val.path] || ''
+      if (!val.meta) {
+        val.meta = {}
+      }
+      if (!val.meta.title && fixedTitle) {
+        val.meta.title = fixedTitle
+      }
+      const pageIndex = fullPathList.indexOf(val.fullPath)
+      if (pageIndex < 0) {
         fullPathList.push(val.fullPath)
         pages.push(val)
+        return
       }
-    },
+      const currentPage = pages[pageIndex]
+      if (!currentPage.meta) {
+        currentPage.meta = {}
+      }
+      if (!currentPage.meta.title && fixedTitle) {
+        currentPage.meta.title = fixedTitle
+      }
+      if (!currentPage.name && val.name) {
+        currentPage.name = val.name
+      }
+    }
   },
   watch: {
     $route: function (newVal) {
@@ -171,9 +196,9 @@ export default {
     },
     activeKey: function (newPathKey) {
       this.$router.push({ path: newPathKey })
-    },
+    }
   },
-  render() {
+  render () {
     const { onEdit } = this
     const panes = pages.map((page) => {
       let cTitle = ''
@@ -181,10 +206,11 @@ export default {
         // 一般情况下有参数才会导致标题不一样，加个判断节省渲染时间
         cTitle = setCustomTitle(page)
       }
+      const fallbackTitle = fixedPathTitleMap[page.path] || page.name || '未命名页面'
       return (
         <a-tab-pane
           style={{ height: 0 }}
-          tab={this.renderTabPane(cTitle || page.meta.customTitle || page.meta.title, page.fullPath)}
+          tab={this.renderTabPane(cTitle || page.meta.customTitle || page.meta.title || fallbackTitle, page.fullPath)}
           key={page.fullPath}
           closable={pages.length > 1}
         ></a-tab-pane>
@@ -209,6 +235,6 @@ export default {
       )
     }
     return null
-  },
+  }
 }
 </script>
