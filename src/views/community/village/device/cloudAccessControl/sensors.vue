@@ -4,7 +4,7 @@
       <div class="page-header">
         <div>
           <div class="page-title">门禁感应器管理</div>
-          <div class="page-desc">维护感应器编码和车牌编号信息，供门禁鉴权与出入记录联动使用。</div>
+          <div class="page-desc">维护感应器编码和关联编号，并查看白名单已下发到哪些控制器。</div>
         </div>
         <a-button type="primary" icon="plus" @click="openModal()">
           添加感应器
@@ -21,11 +21,11 @@
               @keyup.enter.native="handleSearch"
             />
           </a-form-model-item>
-          <a-form-model-item label="车牌编号">
+          <a-form-model-item label="关联编号">
             <a-input
               v-model="searchForm.parking_num"
               allow-clear
-              placeholder="请输入车牌编号"
+              placeholder="请输入关联编号"
               @keyup.enter.native="handleSearch"
             />
           </a-form-model-item>
@@ -58,6 +58,27 @@
             {{ Number(text) === 1 ? '启用' : '禁用' }}
           </a-tag>
         </template>
+        <template slot="whitelistStatus" slot-scope="text, record">
+          <a-tag :color="Number(text) === 1 ? 'green' : 'orange'">
+            {{ Number(text) === 1 ? '已全部下发' : '待下发' }}
+          </a-tag>
+          <span class="progress-text">{{ record.whitelist_progress || '0/0' }}</span>
+        </template>
+        <template slot="whitelistDevices" slot-scope="text, record">
+          <div class="device-delivery-cell">
+            <div v-if="record.whitelist_device_list && record.whitelist_device_list.length" class="device-tags">
+              <a-tag
+                v-for="item in record.whitelist_device_list"
+                :key="item.device_id"
+                color="blue"
+                class="device-tag"
+              >
+                {{ item.label }}
+              </a-tag>
+            </div>
+            <span v-else class="device-empty">暂无</span>
+          </div>
+        </template>
         <template slot="action" slot-scope="text, record">
           <a @click="openModal(record)">编辑</a>
           <a-divider type="vertical" />
@@ -87,8 +108,8 @@
         <a-form-model-item label="感应器编码" prop="code">
           <a-input v-model="formData.code" :max-length="50" placeholder="请输入感应器编码" />
         </a-form-model-item>
-        <a-form-model-item label="车牌编号" prop="parking_num">
-          <a-input v-model="formData.parking_num" :max-length="50" placeholder="请输入车牌编号" />
+        <a-form-model-item label="关联编号" prop="parking_num">
+          <a-input v-model="formData.parking_num" :max-length="50" placeholder="请输入关联编号" />
         </a-form-model-item>
         <a-form-model-item label="启用状态" prop="enable">
           <a-radio-group v-model="formData.enable">
@@ -140,8 +161,10 @@ export default {
       columns: [
         { title: 'ID', dataIndex: 'id', key: 'id', width: 90 },
         { title: '感应器编码', dataIndex: 'code', key: 'code', width: 220 },
-        { title: '车牌编号', dataIndex: 'parking_num', key: 'parking_num', width: 180 },
+        { title: '关联编号', dataIndex: 'parking_num', key: 'parking_num', width: 180 },
         { title: '启用状态', dataIndex: 'enable', key: 'enable', width: 120, scopedSlots: { customRender: 'enable' } },
+        { title: '下发状态', dataIndex: 'is_add_to_whitelist', key: 'is_add_to_whitelist', width: 180, scopedSlots: { customRender: 'whitelistStatus' } },
+        { title: '已下发控制器', dataIndex: 'whitelist_device_names', key: 'whitelist_device_names', scopedSlots: { customRender: 'whitelistDevices' } },
         { title: '添加时间', dataIndex: 'createdAt', key: 'createdAt', width: 180 },
         { title: '更新时间', dataIndex: 'updatedAt', key: 'updatedAt', width: 180 },
         { title: '操作', key: 'action', width: 160, scopedSlots: { customRender: 'action' } }
@@ -151,7 +174,7 @@ export default {
           { required: true, message: '请输入感应器编码', trigger: 'blur' }
         ],
         parking_num: [
-          { required: true, message: '请输入车牌编号', trigger: 'blur' }
+          { required: true, message: '请输入关联编号', trigger: 'blur' }
         ],
         enable: [
           { required: true, message: '请选择启用状态', trigger: 'change' }
@@ -259,8 +282,14 @@ export default {
           this.$message.warning('暂无可导出的数据')
           return
         }
-        const headers = ['感应器编码', '车牌编号']
-        const rows = exportList.map(item => [item.code || '', item.parking_num || ''])
+        const headers = ['感应器编码', '关联编号', '下发状态', '下发进度', '已下发控制器']
+        const rows = exportList.map(item => [
+          item.code || '',
+          item.parking_num || '',
+          Number(item.is_add_to_whitelist) === 1 ? '已全部下发' : '待下发',
+          item.whitelist_progress || '',
+          item.whitelist_device_names || ''
+        ])
         this.downloadCsv(headers, rows)
         this.$message.success(`成功导出 ${exportList.length} 条数据`)
       } finally {
@@ -357,6 +386,29 @@ export default {
 
 .action-danger {
   color: #ff4d4f;
+}
+
+.progress-text {
+  margin-left: 8px;
+  color: #8c8c8c;
+}
+
+.device-delivery-cell {
+  min-height: 32px;
+}
+
+.device-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.device-tag {
+  margin-right: 0;
+}
+
+.device-empty {
+  color: #bfbfbf;
 }
 
 /deep/ .ant-form-item {
