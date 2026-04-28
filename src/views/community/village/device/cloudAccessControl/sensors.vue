@@ -35,6 +35,12 @@
               <a-select-option :value="0">禁用</a-select-option>
             </a-select>
           </a-form-model-item>
+          <a-form-model-item label="是否绑定业主">
+            <a-select v-model="searchForm.is_bind_owner" allow-clear placeholder="请选择" style="width: 150px">
+              <a-select-option :value="1">已绑定</a-select-option>
+              <a-select-option :value="0">未绑定</a-select-option>
+            </a-select>
+          </a-form-model-item>
           <a-form-model-item>
             <a-button type="primary" icon="search" @click="handleSearch">查询</a-button>
             <a-button style="margin-left: 8px" @click="handleReset">重置</a-button>
@@ -78,6 +84,9 @@
             </div>
             <span v-else class="device-empty">暂无</span>
           </div>
+        </template>
+        <template slot="ownerBind" slot-scope="text">
+          {{ text || '未绑定' }}
         </template>
         <template slot="action" slot-scope="text, record">
           <a @click="openModal(record)">编辑</a>
@@ -129,7 +138,8 @@ import { getSystemName } from '@/utils/util'
 const defaultSearchForm = () => ({
   code: '',
   parking_num: '',
-  enable: undefined
+  enable: undefined,
+  is_bind_owner: undefined
 })
 
 const defaultFormData = () => ({
@@ -163,6 +173,7 @@ export default {
         { title: '感应器编码', dataIndex: 'code', key: 'code', width: 220 },
         { title: '关联编号', dataIndex: 'parking_num', key: 'parking_num', width: 180 },
         { title: '启用状态', dataIndex: 'enable', key: 'enable', width: 120, scopedSlots: { customRender: 'enable' } },
+        { title: '是否绑定业主', dataIndex: 'owner_bind_text', key: 'owner_bind_text', width: 160, scopedSlots: { customRender: 'ownerBind' } },
         { title: '下发状态', dataIndex: 'is_add_to_whitelist', key: 'is_add_to_whitelist', width: 180, scopedSlots: { customRender: 'whitelistStatus' } },
         { title: '已下发控制器', dataIndex: 'whitelist_device_names', key: 'whitelist_device_names', scopedSlots: { customRender: 'whitelistDevices' } },
         { title: '添加时间', dataIndex: 'createdAt', key: 'createdAt', width: 180 },
@@ -282,10 +293,11 @@ export default {
           this.$message.warning('暂无可导出的数据')
           return
         }
-        const headers = ['感应器编码', '关联编号', '下发状态', '下发进度', '已下发控制器']
+        const headers = ['感应器编码', '关联编号', '是否绑定业主', '下发状态', '下发进度', '已下发控制器']
         const rows = exportList.map(item => [
           item.code || '',
           item.parking_num || '',
+          item.owner_bind_text || '未绑定',
           Number(item.is_add_to_whitelist) === 1 ? '已全部下发' : '待下发',
           item.whitelist_progress || '',
           item.whitelist_device_names || ''
