@@ -115,7 +115,14 @@
           </a-select>
         </a-form-model-item>
 
-        <a-form-model-item label="房间" prop="vacancy_id" extra="按当前小区房间逐级选择，选到房间后自动带出绑定业主">
+        <a-form-model-item label="人员类型" prop="person_type">
+          <a-radio-group v-model="formData.person_type" @change="handlePersonTypeChange">
+            <a-radio :value="1">业主</a-radio>
+            <a-radio :value="2">工作人员</a-radio>
+          </a-radio-group>
+        </a-form-model-item>
+
+        <a-form-model-item v-if="formData.person_type === 1" label="房间" prop="vacancy_id" extra="按当前小区房间逐级选择，选到房间后自动带出绑定业主">
           <a-cascader
             style="width: 100%;"
             :options="options"
@@ -128,8 +135,8 @@
           />
         </a-form-model-item>
 
-        <a-form-model-item label="绑定业主" prop="user_id" extra="自动读取当前房间绑定的业主信息">
-          <a-spin :spinning="ownerLoading">
+        <a-form-model-item label="绑定业主/工作人员" prop="user_id" :extra="formData.person_type === 1 ? '自动读取当前房间绑定的业主信息' : '按组织架构选择一个工作人员'">
+          <a-spin v-if="formData.person_type === 1" :spinning="ownerLoading">
             <a-input
               :value="ownerDisplayText"
               disabled
@@ -144,6 +151,24 @@
               当前房间未绑定业主，请先绑定业主后再新增映射
             </div>
           </a-spin>
+          <div v-else>
+            <a-spin :spinning="orgLoading || staffLoading">
+              <a-cascader
+                style="width: 100%;"
+                :options="staffCascaderOptions"
+                :load-data="loadStaffDataFunc"
+                :value="staffCascaderValue"
+                allow-clear
+                placeholder="请选择工作人员"
+                @change="handleStaffCascaderChange"
+              />
+            </a-spin>
+            <div v-if="formData.user_id" class="owner-detail-list">
+              <div class="owner-detail-item">姓名：{{ ownerNameDisplay }}</div>
+              <div class="owner-detail-item">电话：{{ ownerPhoneDisplay }}</div>
+              <div class="owner-detail-item">组织：{{ formData.group_name || '-' }}</div>
+            </div>
+          </div>
         </a-form-model-item>
 
         <a-form-model-item label="车辆类型" prop="type">
@@ -161,6 +186,7 @@
 <script>
 import villageApi from '@/api/community/village'
 import villageDeviceApi from '@/api/community/village/device'
+import propertyApi from '@/api/community/property/packages'
 import { getSystemName } from '@/utils/util'
 
 const TYPE_OPTIONS = [
@@ -178,6 +204,7 @@ const defaultSearchForm = () => ({
 
 const defaultFormData = () => ({
   id: 0,
+  person_type: 1,
   sensors_id: undefined,
   parking_num: '',
   sensor_code: '',
@@ -185,6 +212,8 @@ const defaultFormData = () => ({
   user_name: '',
   user_phone: '',
   room: '',
+  group_id: undefined,
+  group_name: '',
   vacancy_id: undefined,
   roomArr: [],
   type: 1
@@ -207,6 +236,11 @@ export default {
       sensorOptions: [],
       options: [],
       sensorSearchTimer: null,
+      orgLoading: false,
+      staffLoading: false,
+      staffCascaderOptions: [],
+      staffCascaderValue: [],
+      currentVillageId: undefined,
       pagination: {
         current: 1,
         pageSize: 10,
@@ -229,11 +263,14 @@ export default {
         sensors_id: [
           { required: true, message: '请选择车牌编号', trigger: 'change' }
         ],
+        person_type: [
+          { required: true, message: '请选择人员类型', trigger: 'change' }
+        ],
         vacancy_id: [
-          { required: true, message: '请选择房间', trigger: 'change' }
+          { validator: this.validateVacancyId, trigger: 'change' }
         ],
         user_id: [
-          { required: true, message: '当前房间未绑定业主', trigger: 'change' }
+          { validator: this.validateUserId, trigger: 'change' }
         ],
         type: [
           { required: true, message: '请选择车辆类型', trigger: 'change' }
@@ -243,7 +280,7 @@ export default {
   },
   computed: {
     ownerNameDisplay () {
-      return this.formData.user_name || '未命名业主'
+      return this.formData.user_name || '未命名人员'
     },
     ownerPhoneDisplay () {
       return this.formData.user_phone || '-'
@@ -271,6 +308,30 @@ export default {
       }
       const number = Number(value)
       return Number.isNaN(number) ? undefined : number
+    },
+    validateVacancyId (rule, value, callback) {
+      if (this.formData.person_type === 2 || value) {
+        callback()
+        return
+      }
+      callback(new Error('请选择房间'))
+    },
+    validateUserId (rule, value, callback) {
+      if (value) {
+        callback()
+        return
+      }
+      callback(new Error(this.formData.person_type === 2 ? '请选择工作人员' : '当前房间未绑定业主'))
+    },
+    getRecordPersonType (record = {}) {
+      const rawType = this.normalizeNumber(record.person_type || record.user_type || record.bind_type)
+      if (rawType === 2) {
+        return 2
+      }
+      if (!record.vacancy_id && !record.room_id && !record.room_data && (record.group_id || record.worker_id || record.wid)) {
+        return 2
+      }
+      return 1
     },
     getTypeLabel (value) {
       const current = this.typeOptions.find(item => item.value === Number(value))
@@ -301,13 +362,19 @@ export default {
     getSubmitPayload () {
       return {
         id: this.formData.id,
+        person_type: this.formData.person_type,
+        bind_type: this.formData.person_type,
         sensors_id: this.formData.sensors_id,
         parking_num: this.formData.parking_num,
         sensor_code: this.formData.sensor_code,
         user_id: this.formData.user_id,
+        worker_id: this.formData.person_type === 2 ? this.formData.user_id : undefined,
         user_name: this.formData.user_name,
         user_phone: this.formData.user_phone,
         room: this.formData.room,
+        vacancy_id: this.formData.person_type === 1 ? this.formData.vacancy_id : undefined,
+        group_id: this.formData.group_id,
+        group_name: this.formData.group_name,
         type: this.formData.type,
         tokenName: this.tokenName
       }
@@ -346,31 +413,40 @@ export default {
     },
     async openModal (record) {
       const roomArr = record ? this.getRoomPathFromRecord(record) : []
+      const personType = record ? this.getRecordPersonType(record) : 1
 
       this.modalVisible = true
       this.modalTitle = record && record.id ? '编辑映射' : '新增映射'
       this.formData = record
         ? {
             id: Number(record.id),
+            person_type: personType,
             sensors_id: this.normalizeNumber(record.sensors_id),
             parking_num: record.parking_num || '',
             sensor_code: record.sensor_code || '',
-            user_id: this.normalizeNumber(record.user_id || record.pigcms_id),
+            user_id: this.normalizeNumber(record.user_id || record.worker_id || record.wid || record.pigcms_id),
             user_name: record.user_name || record.name || '',
             user_phone: record.user_phone || record.phone || record.mobile || record.phone_num || '',
             room: record.room || record.room_address || '',
+            group_id: this.normalizeNumber(record.group_id || record.department_id),
+            group_name: record.group_name || record.department_name || '',
             vacancy_id: this.normalizeNumber(record.vacancy_id || record.room_data || record.room_id),
-            roomArr,
+            roomArr: personType === 1 ? roomArr : [],
             type: Number(record.type || 1)
           }
         : defaultFormData()
 
       this.ownerLoading = false
       this.sensorOptions = []
+      this.staffCascaderValue = []
       this.ensureSelectedSensorOption()
 
-      await this.ensureRoomRootOptions()
-      if (roomArr.length === 4) {
+      if (this.formData.person_type === 1) {
+        await this.ensureRoomRootOptions()
+      } else {
+        await this.ensureOrgTreeData()
+      }
+      if (this.formData.person_type === 1 && roomArr.length === 4) {
         await this.restoreRoomSelection(roomArr)
       }
 
@@ -394,6 +470,201 @@ export default {
       this.ownerLoading = false
       this.formData = defaultFormData()
       this.sensorOptions = []
+      this.staffCascaderValue = []
+    },
+    handlePersonTypeChange () {
+      this.formData.user_id = undefined
+      this.formData.user_name = ''
+      this.formData.user_phone = ''
+      this.formData.room = ''
+      this.formData.group_id = undefined
+      this.formData.group_name = ''
+      this.staffCascaderValue = []
+
+      if (this.formData.person_type === 1) {
+        this.formData.vacancy_id = undefined
+        this.formData.roomArr = []
+        this.ensureRoomRootOptions()
+      } else {
+        this.formData.vacancy_id = undefined
+        this.formData.roomArr = []
+        this.ensureOrgTreeData()
+      }
+
+      this.$nextTick(() => {
+        if (this.$refs.formRef) {
+          this.$refs.formRef.clearValidate(['vacancy_id', 'user_id'])
+        }
+      })
+    },
+    ensureOrgTreeData () {
+      if (this.staffCascaderOptions.length) {
+        return Promise.resolve(this.staffCascaderOptions)
+      }
+      return this.fetchOrgTreeData()
+    },
+    async fetchOrgTreeData () {
+      this.orgLoading = true
+      try {
+        const [res, villageId] = await Promise.all([
+          this.request(propertyApi.frameworkTissueNav, {
+            tokenName: this.tokenName
+          }),
+          this.ensureCurrentVillageId()
+        ])
+        const menuList = res && res.menu_list ? res.menu_list : []
+        const currentVillageId = villageId || this.getCurrentVillageId(res)
+        const villageNode = this.findCurrentVillageNode(menuList, currentVillageId) || this.getOnlyVillageNode(menuList)
+        this.staffCascaderOptions = villageNode && villageNode.children
+          ? villageNode.children.map(item => this.mapOrgNodeToStaffOption(item))
+          : []
+        return this.staffCascaderOptions
+      } finally {
+        this.orgLoading = false
+      }
+    },
+    ensureCurrentVillageId () {
+      const localVillageId = this.getCurrentVillageId()
+      if (localVillageId) {
+        this.currentVillageId = localVillageId
+        return Promise.resolve(localVillageId)
+      }
+      return this.request('/community/village_api.VillageConfig/getConfig')
+        .then((res) => {
+          const villageId = this.normalizeNumber(
+            res && (res.village_id || res.current_village_id || res.now_village_id || res.login_village_id)
+          )
+          this.currentVillageId = villageId
+          return villageId
+        })
+        .catch(() => undefined)
+    },
+    getCurrentVillageId (res = {}) {
+      const userInfo = (this.$store && this.$store.getters && this.$store.getters.userInfo) || {}
+      const config = (this.$store && this.$store.getters && this.$store.getters.config) || {}
+      const query = (this.$route && this.$route.query) || {}
+      return this.normalizeNumber(
+        this.currentVillageId ||
+        userInfo.village_id ||
+        userInfo.villageId ||
+        userInfo.current_village_id ||
+        userInfo.login_village_id ||
+        config.village_id ||
+        query.village_id ||
+        query.village ||
+        query.current_village_id ||
+        res.current_village_id ||
+        res.village_id
+      )
+    },
+    findCurrentVillageNode (nodes = [], villageId) {
+      if (!villageId) {
+        return null
+      }
+      for (const node of nodes) {
+        if (Number(node.village_id || 0) === Number(villageId)) {
+          return node
+        }
+        const children = node.children || []
+        const current = this.findCurrentVillageNode(children, villageId)
+        if (current) {
+          return current
+        }
+      }
+      return null
+    },
+    getOnlyVillageNode (nodes = []) {
+      if (nodes.length === 1 && nodes[0] && nodes[0].children) {
+        return nodes[0]
+      }
+      return null
+    },
+    mapOrgNodeToStaffOption (node = {}) {
+      return {
+        label: node.title || node.name || '-',
+        value: `org_${node.id}`,
+        isLeaf: false,
+        orgId: this.normalizeNumber(node.id),
+        orgName: node.title || node.name || '',
+        rawChildren: node.children || []
+      }
+    },
+    mapWorkerToStaffOption (worker = {}, groupId, groupName) {
+      const workerId = this.normalizeNumber(worker.wid || worker.worker_id || worker.id)
+      const name = worker.name || worker.user_name || '-'
+      const phone = worker.phone || worker.mobile || worker.phone_num || ''
+      return {
+        label: phone ? `${name}（${phone}）` : name,
+        value: `staff_${workerId}`,
+        isLeaf: true,
+        userId: workerId,
+        userName: name,
+        userPhone: phone,
+        groupId: this.normalizeNumber(worker.group_id || worker.department_id || groupId),
+        groupName: worker.group_name || groupName || ''
+      }
+    },
+    loadStaffDataFunc (selectedOptions) {
+      const targetOption = selectedOptions[selectedOptions.length - 1]
+      if (!targetOption || targetOption.isLeaf || targetOption.children) {
+        return
+      }
+      targetOption.loading = true
+      this.getOrgWorkerOptions(targetOption.orgId, targetOption.orgName)
+        .then((workerOptions) => {
+          const childOrgOptions = (targetOption.rawChildren || []).map(item => this.mapOrgNodeToStaffOption(item))
+          targetOption.children = childOrgOptions.concat(workerOptions)
+          this.staffCascaderOptions = [...this.staffCascaderOptions]
+        })
+        .finally(() => {
+          targetOption.loading = false
+        })
+    },
+    getOrgWorkerOptions (groupId, groupName) {
+      if (!groupId) {
+        return Promise.resolve([])
+      }
+      this.staffLoading = true
+      return this.request(propertyApi.frameworkTissueUser, {
+        assets_id: '0',
+        num: '',
+        status: '0',
+        time: '',
+        keywords: '',
+        group_id: groupId,
+        page: 1,
+        pageSize: 1000,
+        tokenName: this.tokenName
+      }).then((res) => {
+        const list = res && res.list ? res.list : []
+        return list.map(item => this.mapWorkerToStaffOption(item, groupId, groupName))
+      }).finally(() => {
+        this.staffLoading = false
+      })
+    },
+    handleStaffCascaderChange (value = [], selectedOptions = []) {
+      this.staffCascaderValue = Array.isArray(value) ? value : []
+      const staffOption = selectedOptions.find(item => item && item.isLeaf && item.userId)
+      if (!staffOption) {
+        this.formData.user_id = undefined
+        this.formData.user_name = ''
+        this.formData.user_phone = ''
+        this.formData.group_id = undefined
+        this.formData.group_name = ''
+        this.formData.room = ''
+        return
+      }
+      this.formData.user_id = staffOption.userId
+      this.formData.user_name = staffOption.userName
+      this.formData.user_phone = staffOption.userPhone
+      this.formData.group_id = staffOption.groupId
+      this.formData.group_name = staffOption.groupName
+      this.formData.room = this.formData.group_name
+      this.$nextTick(() => {
+        if (this.$refs.formRef) {
+          this.$refs.formRef.validateField('user_id')
+        }
+      })
     },
     handleSensorFocus () {
       if (!this.sensorOptions.length) {

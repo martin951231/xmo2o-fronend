@@ -17,6 +17,7 @@ const configDeviceApi = {
   accessSensorsAdd: '/community/device.HouseAccessSensors/sensors_add', // 娣诲姞闂ㄧ鎰熷簲鍣?
   accessSensorsEdit: '/community/device.HouseAccessSensors/sensors_edit', // 缂栬緫闂ㄧ鎰熷簲鍣?
   accessSensorsDelete: '/community/device.HouseAccessSensors/sensors_del', // 鍒犻櫎闂ㄧ鎰熷簲鍣?
+  accessSensorsImport: '/community/device.HouseAccessSensors/sensors_import', // 闂ㄧ鎰熷簲鍣ㄥ鍏?
   accessRecordsIndex: '/community/device.HouseAccessRecords/records_index', // 闂ㄧ鍑哄叆璁板綍鍒楄〃
   accessRecordsAdd: '/community/device.HouseAccessRecords/records_add', // 娣诲姞闂ㄧ鍑哄叆璁板綍
   accessRecordsEdit: '/community/device.HouseAccessRecords/records_edit', // 缂栬緫闂ㄧ鍑哄叆璁板綍

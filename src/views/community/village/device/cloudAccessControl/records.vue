@@ -91,7 +91,7 @@
           </a-tag>
         </template>
         <template slot="reader" slot-scope="text">
-          <a-tag :color="Number(text) === 0 ? 'green' : 'orange'">
+          <a-tag :color="Number(text) === 1 ? 'green' : 'orange'">
             {{ getReaderLabel(text) }}
           </a-tag>
         </template>

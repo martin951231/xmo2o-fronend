@@ -47,6 +47,19 @@
             <a-button style="margin-left: 8px" icon="download" :loading="exporting" @click="handleExport">
               导出
             </a-button>
+            <a-upload
+              accept=".xlsx,.xls,.csv,.txt"
+              name="file"
+              :action="importAction"
+              :data="importData"
+              :headers="importHeaders"
+              :showUploadList="false"
+              :before-upload="beforeImportSensors"
+              @change="handleImportChange"
+            >
+              <a-button style="margin-left: 8px" icon="upload" :loading="importing">导入</a-button>
+            </a-upload>
+            <a-button style="margin-left: 8px" icon="download" @click="handleDownloadTemplate">导出模板</a-button>
           </a-form-model-item>
         </a-form-model>
       </div>
@@ -60,7 +73,7 @@
         @change="handleTableChange"
       >
         <template slot="enable" slot-scope="text">
-          <a-tag :color="Number(text) === 1 ? 'green' : 'default'">
+          <a-tag :color="Number(text) === 1 ? 'green' : '#8c8c8c'">
             {{ Number(text) === 1 ? '启用' : '禁用' }}
           </a-tag>
         </template>
@@ -132,6 +145,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 import villageDeviceApi from '@/api/community/village/device'
 import { getSystemName } from '@/utils/util'
 
@@ -156,6 +170,14 @@ export default {
       loading: false,
       submitting: false,
       exporting: false,
+      importing: false,
+      importAction: '/v20/public/index.php' + villageDeviceApi.accessSensorsImport,
+      importData: {
+        system_type: 'village',
+        enable: 0
+      },
+      importHeaders: {},
+      crcTableCache: null,
       modalVisible: false,
       modalTitle: '添加感应器',
       tokenName: 'village_access_token',
@@ -196,6 +218,10 @@ export default {
   mounted () {
     const sysName = getSystemName(location.hash) || 'village'
     this.tokenName = sysName + '_access_token'
+    this.importData.system_type = sysName
+    this.importHeaders = {
+      ticket: Vue.ls.get(this.tokenName) || ''
+    }
     this.fetchList()
   },
   methods: {
@@ -285,6 +311,157 @@ export default {
         this.fetchList()
       })
     },
+    beforeImportSensors (file) {
+      if (this.importing) {
+        this.$message.warning('正在导入，请稍后')
+        return false
+      }
+      const fileName = file.name || ''
+      if (!/\.(xlsx|xls|csv|txt)$/i.test(fileName)) {
+        this.$message.warning('请上传 Excel 或 CSV 文件')
+        return false
+      }
+      this.importHeaders = {
+        ticket: Vue.ls.get(this.tokenName) || ''
+      }
+      this.importData = {
+        system_type: getSystemName(this.tokenName) || 'village',
+        enable: 0
+      }
+      this.importing = true
+      return true
+    },
+    handleImportChange (info) {
+      if (info.file.status === 'uploading') {
+        this.importing = true
+        return
+      }
+      if (info.file.status === 'done') {
+        this.importing = false
+        const response = info.file.response || {}
+        if (this.isImportSuccess(response)) {
+          const data = response.data || {}
+          const count = data.success_count || data.count
+          const failCount = Number(data.fail_count || 0)
+          const message = count ? `成功导入 ${count} 条感应器` : '导入成功'
+          this.$message.success(failCount ? `${message}，跳过 ${failCount} 条` : message)
+          this.pagination.current = 1
+          this.fetchList()
+        } else {
+          this.$message.error(response.msg || response.message || '导入失败')
+        }
+      } else if (info.file.status === 'error') {
+        this.importing = false
+        this.$message.error('上传失败')
+      }
+    },
+    isImportSuccess (response) {
+      return response.status === 1000 || response.err_code === 0 || response.error === 0 || response.code === 0
+    },
+    handleDownloadTemplate () {
+      const headers = ['序号', '表面码', 'EPC', 'TID', 'code']
+      const rows = [
+        headers,
+        ['', '', '', '', '']
+      ]
+      const blob = this.createXlsxBlob(rows)
+      this.downloadBlob(blob, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', `门禁感应器导入模板_${this.formatExportTime()}.xlsx`)
+    },
+    createXlsxBlob (rows) {
+      const sheetRows = rows.map((row, rowIndex) => {
+        const cells = row.map((cell, cellIndex) => {
+          const ref = `${this.indexToColumn(cellIndex + 1)}${rowIndex + 1}`
+          return `<c r="${ref}" t="inlineStr"><is><t>${this.escapeHtml(cell)}</t></is></c>`
+        }).join('')
+        return `<row r="${rowIndex + 1}">${cells}</row>`
+      }).join('')
+      const entries = {
+        '[Content_Types].xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>',
+        '_rels/.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+        'xl/workbook.xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets></workbook>',
+        'xl/_rels/workbook.xml.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>',
+        'xl/worksheets/sheet1.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>`
+      }
+      return new Blob([this.createStoredZip(entries)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    },
+    createStoredZip (entries) {
+      const encoder = new TextEncoder()
+      const localParts = []
+      const centralParts = []
+      let offset = 0
+      Object.keys(entries).forEach(name => {
+        const nameBytes = encoder.encode(name)
+        const data = encoder.encode(entries[name])
+        const crc = this.crc32(data)
+        const localHeader = this.zipHeader([0x50, 0x4b, 0x03, 0x04], [
+          [20, 2], [0, 2], [0, 2], [0, 2], [0, 2], [crc, 4], [data.length, 4], [data.length, 4], [nameBytes.length, 2], [0, 2]
+        ])
+        localParts.push(localHeader, nameBytes, data)
+        const centralHeader = this.zipHeader([0x50, 0x4b, 0x01, 0x02], [
+          [20, 2], [20, 2], [0, 2], [0, 2], [0, 2], [0, 2], [crc, 4], [data.length, 4], [data.length, 4], [nameBytes.length, 2], [0, 2], [0, 2], [0, 2], [0, 2], [0, 4], [offset, 4]
+        ])
+        centralParts.push(centralHeader, nameBytes)
+        offset += localHeader.length + nameBytes.length + data.length
+      })
+      const centralOffset = offset
+      const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0)
+      const end = this.zipHeader([0x50, 0x4b, 0x05, 0x06], [
+        [0, 2], [0, 2], [Object.keys(entries).length, 2], [Object.keys(entries).length, 2], [centralSize, 4], [centralOffset, 4], [0, 2]
+      ])
+      const size = localParts.reduce((sum, part) => sum + part.length, 0) + centralSize + end.length
+      const output = new Uint8Array(size)
+      let cursor = 0
+      localParts.concat(centralParts, [end]).forEach(part => {
+        output.set(part, cursor)
+        cursor += part.length
+      })
+      return output
+    },
+    zipHeader (signature, fields) {
+      const length = signature.length + fields.reduce((sum, field) => sum + field[1], 0)
+      const bytes = new Uint8Array(length)
+      bytes.set(signature, 0)
+      const view = new DataView(bytes.buffer)
+      let offset = signature.length
+      fields.forEach(field => {
+        if (field[1] === 2) {
+          view.setUint16(offset, field[0], true)
+        } else {
+          view.setUint32(offset, field[0], true)
+        }
+        offset += field[1]
+      })
+      return bytes
+    },
+    crc32 (data) {
+      let crc = -1
+      for (let i = 0; i < data.length; i += 1) {
+        crc = (crc >>> 8) ^ this.crcTable()[(crc ^ data[i]) & 0xff]
+      }
+      return (crc ^ -1) >>> 0
+    },
+    crcTable () {
+      if (this.crcTableCache) {
+        return this.crcTableCache
+      }
+      this.crcTableCache = Array.from({ length: 256 }, (item, index) => {
+        let crc = index
+        for (let i = 0; i < 8; i += 1) {
+          crc = crc & 1 ? 0xedb88320 ^ (crc >>> 1) : crc >>> 1
+        }
+        return crc >>> 0
+      })
+      return this.crcTableCache
+    },
+    indexToColumn (index) {
+      let column = ''
+      while (index > 0) {
+        const mod = (index - 1) % 26
+        column = String.fromCharCode(65 + mod) + column
+        index = Math.floor((index - mod) / 26)
+      }
+      return column
+    },
     async handleExport () {
       this.exporting = true
       try {
@@ -336,11 +513,14 @@ export default {
       const csvText = '\uFEFF' + [headers, ...rows]
         .map(row => row.map(this.escapeCsvValue).join(','))
         .join('\r\n')
-      const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' })
+      this.downloadBlob(csvText, 'text/csv;charset=utf-8;', `门禁感应器导出_${this.formatExportTime()}.csv`)
+    },
+    downloadBlob (content, type, fileName) {
+      const blob = content instanceof Blob ? content : new Blob([content], { type })
       const url = window.URL.createObjectURL(blob)
       const downloadLink = document.createElement('a')
       downloadLink.href = url
-      downloadLink.download = `门禁感应器导出_${this.formatExportTime()}.csv`
+      downloadLink.download = fileName
       document.body.appendChild(downloadLink)
       downloadLink.click()
       document.body.removeChild(downloadLink)
@@ -348,6 +528,14 @@ export default {
     },
     escapeCsvValue (value) {
       return `"${String(value == null ? '' : value).replace(/"/g, '""')}"`
+    },
+    escapeHtml (value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
     },
     formatExportTime () {
       const date = new Date()
