@@ -9,7 +9,6 @@
                 <component @hideUserTab="hideUserTab" @getRoomAddress="getAddress" v-if="currentKey == item.key" :is="item.component" :roomId="roomId" :roomParams="roomParams" />
             </a-tab-pane>
         </a-tabs>
-        
         <!-- <roomInformation v-if="type=='room_edit' && visible" :roomId="roomId" :roomParams="roomParams" /> -->
     </a-drawer>
 </template>
@@ -100,8 +99,17 @@
                 Vue.prototype.request('/community/village_api.Building/getRoomOptionType', {
                     vacancy_id: props.roomId
                 }).then((res) => {
-                    tabList.value = res.option_list
-                    currentKey.value = res.option_list[0].key
+                    const optionList = res.option_list || []
+                    if (!optionList.find(item => item.component === 'onlineFile')) {
+                        optionList.push({
+                            key: 'roomAttachment',
+                            icon_type: 'paper-clip',
+                            tab_name: '附件',
+                            component: 'onlineFile'
+                        })
+                    }
+                    tabList.value = optionList
+                    currentKey.value = optionList[0].key
                     roomParams.value = res
                 })
             }

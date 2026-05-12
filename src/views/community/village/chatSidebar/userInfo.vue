@@ -37,7 +37,8 @@
       </a-tabs>
     </div>
     <div class="tab_components">
-      <paymentRecord :is="currentTab" :usernum="usernum" :pigcmsId="bind_id" :name="name" v-if="visible" :villageId="village_id" :uid="uid" :key="currentTab"></paymentRecord>
+      <attachment-list v-if="currentTab === 'attachmentList' && bind_id" source-type="user" :source-id="bind_id" :readonly="true" />
+      <paymentRecord v-else :is="currentTab" :usernum="usernum" :pigcmsId="bind_id" :name="name" v-if="visible" :villageId="village_id" :uid="uid" :key="currentTab"></paymentRecord>
     </div>
   </div>
 </template>
@@ -51,6 +52,7 @@ import decorationOrder from './decorationOrder'
 import expressManagement from './expressManagement'
 import depositManagement from '../charge/cashier/receivableOrderList'
 import villageApi from '@/api/community/village'
+import AttachmentList from '../components/AttachmentList'
 
 export default {
   name: 'userInfo',
@@ -62,7 +64,8 @@ export default {
     chatRecord,
     decorationOrder,
     expressManagement,
-    depositManagement
+    depositManagement,
+    AttachmentList
   },
   data () {
     return {
@@ -99,7 +102,7 @@ export default {
           order_count: res.order_count,
           chat_name: res.chat_name
         }
-        this.tab_list = res.tab_list
+        this.tab_list = Object.assign({}, res.tab_list, { attachmentList: '附件' })
         this.bind_id = res.userInfo.pigcms_id
         this.village_id = res.userInfo.village_id
         this.uid = res.userInfo.uid

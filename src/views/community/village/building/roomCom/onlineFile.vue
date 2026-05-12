@@ -1,37 +1,32 @@
 <template>
-    <div class="online_file">
-        显示所有该{{$store.getters.config.room_name}}下所有用户参与的在线文件管理
-    </div>
+  <div class="online_file">
+    <attachment-list source-type="room" :source-id="roomId" :readonly="false" upload-path="houseRoomAttachment" />
+  </div>
 </template>
 
 <script>
-    import Vue from 'vue';
-    import {
-        ref,
-        watch,
-        reactive,
-        onMounted,
-        onUpdated,
-        defineComponent
-    } from '@vue/composition-api';
+    import { defineComponent } from '@vue/composition-api'
+    import AttachmentList from '../../components/AttachmentList.vue'
+
     export default defineComponent({
+        components: {
+            AttachmentList
+        },
         props: {
             roomParams: {
                 type: Object,
-                default: ()=>{return {}}
+                default: () => { return {} }
             },
             roomId: {
                 type: [String, Number],
                 defalut: ''
-            }
-        },
-        setup(props, context) {
-            return{
-                
             }
         }
     })
 </script>
 
 <style lang="less" scoped>
+.online_file {
+    padding: 12px 0;
+}
 </style>

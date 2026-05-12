@@ -334,6 +334,9 @@ const configVillageApi = {
 
     // ---------------------业主详情---------------------------
     getCommunityUserInfo: '/community/village_api.ChatSidebar/getCommunityUserInfo', // 获取业主企微相关信息
+    getUserAttachmentList: '/community/village_api.ChatSidebar/getUserAttachmentList', // 业主附件列表
+    getRoomAttachmentList: '/community/village_api.Building/getRoomAttachmentList', // 房间附件列表
+    saveRoomAttachmentList: '/community/village_api.Building/saveRoomAttachmentList', // 保存房间附件
     getUserInfo: '/community/village_api.ChatSidebar/getUserInfo', // 获取业主资料信息
     editUserInfo: '/community/village_api.ChatSidebar/editUserInfo', // 获取业主资料信息
     getLivingPaymentLog: '/community/village_api.ChatSidebar/getLivingPaymentLog', // 获取缴费记录
