@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import { welcome, setCookie, delCookie,commonStatHandle } from '@/utils/util'
+import { welcome, setCookie, delCookie,commonStatHandle, noOperationExit } from '@/utils/util'
 import { request } from '@/utils/request'
 import userPlatformApi from '@/api/user/platform/index'
 import { getTokenName } from '@/utils/util'
@@ -47,6 +47,7 @@ const user = {
             commit('SET_TOKEN', response.ticket)// 存入到vuex
             commonStatHandle(tokenName)
             window.getMapConfig && window.getMapConfig()//获取地图配置
+            noOperationExit()
             resolve(response)
           }).catch(error => {
             reject(error)
@@ -97,6 +98,20 @@ const user = {
             reject(new Error('getInfo: roles must be a non-null array !'))
           }
           commit('SET_NAME', { name: result.name, welcome: welcome() })
+          resolve(response)
+        }).catch(error => {
+          reject(error)
+        })
+      })
+    },
+
+    // 获取用户信息
+    SocialActivityGetInfo({ commit }, params) {
+      return new Promise((resolve, reject) => {
+        request('/social_activity/socialactivity.SocialActivityAdmin/userInfo', { tokenName: params.tokenName }).then(response => {
+          const result = response
+          commit('SET_INFO', result) // 用户基本信息
+          commit('SET_NAME', { name: result.role_name, welcome: welcome() })
           resolve(response)
         }).catch(error => {
           reject(error)

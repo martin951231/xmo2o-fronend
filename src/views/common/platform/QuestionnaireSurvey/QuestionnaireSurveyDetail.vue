@@ -9,7 +9,7 @@
                 <span class="ml-20">{{formData.title || ''}}</span>
             </div>
             <div class="center">
-                <a-tabs v-model="activeKey" @change="tabsCallback">
+                <a-tabs v-model="activeKey" @change="tabsCallback" v-if="actionType != 'signup'">
                     <a-tab-pane v-for="item in tabList" :key="item.key" :tab="item.tab"></a-tab-pane>
                 </a-tabs>
             </div>
@@ -32,9 +32,9 @@
         </div>
         <!-- 内容区域 -->
         <div class="content flex-1">
-            <CustomDraggableForm ref="customDraggableForm" v-show="activeKey == 1" @changeFormEvent="changeFormEvent" />
-            <CustomDraggableFormStting ref="customDraggableFormStting" v-show="activeKey == 2" />
-            <CustomDraggableFormStatistics ref="customDraggableFormStatistics" :form_id="id" v-show="activeKey == 3" />
+            <CustomDraggableForm ref="customDraggableForm" v-show="activeKey == 1" @changeFormEvent="changeFormEvent" :actionType="actionType"/>
+            <CustomDraggableFormStting ref="customDraggableFormStting" v-show="activeKey == 2 && actionType != 'signup'" />
+            <CustomDraggableFormStatistics ref="customDraggableFormStatistics" :form_id="id" :tokenName="tokenName" v-show="activeKey == 3 && actionType != 'signup'" />
         </div>
         <div class="loading-box" :class="{'show': spinLoading}">
             <div class="mb-20 fs-18">{{loadingTip}}</div>
@@ -51,6 +51,7 @@ import CustomDraggableForm from './components/CustomDraggableForm/index'
 import CustomDraggableFormStting from './components/CustomDraggableFormStting/CustomDraggableFormStting'
 import CustomDraggableFormStatistics from './components/CustomDraggableFormStatistics/CustomDraggableFormStatistics'
 import questionnaireSurveyApi from '@/api/common/platform/questionnaireSurvey'
+import { getSystemName } from '@/utils/util'
 export default {
     components: { IconFont, CustomDraggableForm, CustomDraggableFormStting, CustomDraggableFormStatistics },
     data() {
@@ -77,6 +78,8 @@ export default {
             },
             loadingTip: this.L('加载中...'),
             spinLoading: false,
+            tokenName: '',
+            actionType: '',
         }
     },
     created() {
@@ -84,6 +87,12 @@ export default {
         this.back = this.$route.query.back
         this.activeKey = this.$route.query.tabValue || 1
         this.activeKey = this.activeKey * 1
+        this.actionType = this.$route.query.actionType || ''
+        if(this.actionType == 'signup'){
+            document.title = this.L('报名表单详情')
+        }
+        let sysName = getSystemName(location.hash);
+        this.tokenName = sysName;
         if (this.id) {
             this.getSurveyDetail()
         } else {
@@ -104,6 +113,7 @@ export default {
             this.spinLoading = true
             this.request(questionnaireSurveyApi.getSurveyDetail, {
                 form_id: this.id,
+                tokenName: this.tokenName + '_access_token',
             })
                 .then((res) => {
                     this.spinLoading = false
@@ -149,6 +159,8 @@ export default {
                 status,
                 ...formDataStting,
                 form_id: this.id,
+                tokenName: this.tokenName + '_access_token',
+                type: this.actionType,
             }
             return this.formData
         },

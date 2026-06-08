@@ -42,27 +42,6 @@
     <!-- 图表 -->
     <div ref="chartDom" class="chart"></div>
 
-    <!-- 隐藏测量区 -->
-    <div class="measure-box">
-      <div ref="measureYWrap" class="measure-line">
-        <span
-          v-for="(item, index) in yAxisData"
-          :key="`measure-y-${index}`"
-          class="filter-item active"
-        >
-          {{ item }}
-        </span>
-      </div>
-      <div ref="measureXWrap" class="measure-line">
-        <span
-          v-for="(item, index) in xAxisData"
-          :key="`measure-x-${index}`"
-          class="filter-item active"
-        >
-          {{ item }}
-        </span>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -100,7 +79,7 @@ export default {
       default: '400px'
     }
   },
-  data() {
+  data () {
     return {
       chart: null,
       resizeHandler: null,
@@ -114,7 +93,7 @@ export default {
       selectedY: []
     }
   },
-  mounted() {
+  mounted () {
     this.$nextTick(() => {
       this.refreshDelayRender()
 
@@ -125,7 +104,7 @@ export default {
       window.addEventListener('resize', this.resizeHandler)
     })
   },
-  beforeUnmount() {
+  beforeUnmount () {
     if (this.chart) {
       this.chart.dispose()
       this.chart = null
@@ -134,19 +113,19 @@ export default {
   },
   watch: {
     xAxisData: {
-      handler() {
+      handler () {
         this.refreshDelayRender(true)
       },
       deep: true
     },
     yAxisData: {
-      handler() {
+      handler () {
         this.refreshDelayRender(true)
       },
       deep: true
     },
     heatData: {
-      handler() {
+      handler () {
         this.$nextTick(() => {
           this.initChart()
         })
@@ -160,7 +139,7 @@ export default {
      * forceDefaultSelect = true  => 当前可见项全部默认选中
      * forceDefaultSelect = false => 尽量保留之前的选择，只过滤不可见项
      */
-    refreshDelayRender(forceDefaultSelect = true) {
+    refreshDelayRender (forceDefaultSelect = true) {
       this.$nextTick(() => {
         setTimeout(() => {
           this.calculateVisibleItems(() => {
@@ -174,7 +153,7 @@ export default {
     /**
      * 计算当前一行能显示哪些项
      */
-    calculateVisibleItems(callback) {
+    calculateVisibleItems (callback) {
       if (!this.xAxisData.length || !this.yAxisData.length) {
         this.visibleXItems = []
         this.visibleYItems = []
@@ -183,19 +162,8 @@ export default {
       }
 
       this.$nextTick(() => {
-        const xVisibleIndexes = this.getVisibleIndexes({
-          lineRef: this.$refs.xFilterLine,
-          measureWrapRef: this.$refs.measureXWrap,
-          sourceData: this.xAxisData,
-          mode: 'tail' // 月份保留最后几个
-        })
-
-        const yVisibleIndexes = this.getVisibleIndexes({
-          lineRef: this.$refs.yFilterLine,
-          measureWrapRef: this.$refs.measureYWrap,
-          sourceData: this.yAxisData,
-          mode: 'head' // 分类保留前几个
-        })
+        const xVisibleIndexes = this.xAxisData.map((_, index) => index)
+        const yVisibleIndexes = this.yAxisData.map((_, index) => index)
 
         this.visibleXItems = xVisibleIndexes.map(i => ({
           label: this.xAxisData[i],
@@ -218,7 +186,7 @@ export default {
      * forceDefaultSelect=true：当前可见项全部选中
      * false：尽量保留之前选择，只过滤掉当前不可见项
      */
-    syncSelectedWithVisible(forceDefaultSelect = true) {
+    syncSelectedWithVisible (forceDefaultSelect = true) {
       const visibleXIndexes = this.visibleXItems.map(item => item.realIndex)
       const visibleYIndexes = this.visibleYItems.map(item => item.realIndex)
 
@@ -236,52 +204,7 @@ export default {
       this.selectedY = nextSelectedY.length ? nextSelectedY : [...visibleYIndexes]
     },
 
-    /**
-     * 根据一行宽度，计算当前能显示多少个
-     */
-    getVisibleIndexes({ lineRef, measureWrapRef, sourceData, mode = 'head' }) {
-      if (!lineRef || !measureWrapRef || !sourceData.length) return []
-
-      const lineWidth = lineRef.clientWidth || 0
-      if (!lineWidth) return []
-
-      const itemNodes = measureWrapRef.children
-      if (!itemNodes || !itemNodes.length) return []
-
-      const gap = 6
-      let usedWidth = 0
-      let indexes = []
-
-      if (mode === 'tail') {
-        for (let i = sourceData.length - 1; i >= 0; i--) {
-          const itemWidth = itemNodes[i].offsetWidth || 0
-          const currentNeedWidth = indexes.length === 0 ? itemWidth : itemWidth + gap
-
-          if (usedWidth + currentNeedWidth <= lineWidth) {
-            usedWidth += currentNeedWidth
-            indexes.unshift(i)
-          } else {
-            break
-          }
-        }
-      } else {
-        for (let i = 0; i < sourceData.length; i++) {
-          const itemWidth = itemNodes[i].offsetWidth || 0
-          const currentNeedWidth = indexes.length === 0 ? itemWidth : itemWidth + gap
-
-          if (usedWidth + currentNeedWidth <= lineWidth) {
-            usedWidth += currentNeedWidth
-            indexes.push(i)
-          } else {
-            break
-          }
-        }
-      }
-
-      return indexes
-    },
-
-    toggleX(realIndex) {
+    toggleX (realIndex) {
       const idx = this.selectedX.indexOf(realIndex)
       if (idx > -1) {
         this.selectedX.splice(idx, 1)
@@ -292,7 +215,7 @@ export default {
       this.initChart()
     },
 
-    toggleY(realIndex) {
+    toggleY (realIndex) {
       const idx = this.selectedY.indexOf(realIndex)
       if (idx > -1) {
         this.selectedY.splice(idx, 1)
@@ -303,7 +226,7 @@ export default {
       this.initChart()
     },
 
-    initChart() {
+    initChart () {
       if (!this.$refs.chartDom) return
 
       const visibleXIndexes = this.visibleXItems.map(item => item.realIndex)
@@ -444,7 +367,7 @@ export default {
     },
 
     // 给父组件调用
-    renderChart() {
+    renderChart () {
       this.refreshDelayRender(true)
     }
   }
@@ -458,6 +381,8 @@ export default {
   box-sizing: border-box;
   overflow: hidden;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .filter-bar {
@@ -486,9 +411,10 @@ export default {
   min-width: 0;
   display: flex;
   align-items: center;
-  flex-wrap: nowrap;
-  overflow: hidden;
-  white-space: nowrap;
+  flex-wrap: wrap;
+  overflow: visible;
+  white-space: normal;
+  gap: 6px;
 }
 
 .filter-item {
@@ -499,7 +425,6 @@ export default {
   height: 26px;
   line-height: 20px;
   padding: 2px 8px;
-  margin-right: 6px;
   box-sizing: border-box;
   border: 1px solid #006680;
   border-radius: 3px;
@@ -522,20 +447,8 @@ export default {
 
 .chart {
   width: 100%;
-  height: calc(100% - 78px);
+  flex: 1;
+  min-height: 0;
 }
 
-.measure-box {
-  position: absolute;
-  left: -99999px;
-  top: -99999px;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.measure-line {
-  display: flex;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-}
 </style>

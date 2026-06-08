@@ -763,8 +763,8 @@ export default {
     },
 
     handleViewMore () {
-      const url = '/community/village/workOrder/orderTongji/orderTongji'
-      window.open(url, '__blank')
+      const url = `${window.location.origin}/v20/public/platform/#/community/village/workOrder/orderTongji/orderTongji`
+      window.open(url, '_blank')
       // this.openTableModal('complaint')
     },
 

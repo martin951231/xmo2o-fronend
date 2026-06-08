@@ -15,7 +15,8 @@
         <component
           v-if="type === 'heatmap'"
           :is="heatmapComponent"
-          v-bind="heatmapProps"
+          class="modal-chart-content"
+          v-bind="normalizedHeatmapProps"
           ref="dynamicRef"
         />
 
@@ -42,7 +43,7 @@
 <script>
 // 引入基础组件（可改为异步引入，优化性能）
 import EnergyHeatmap from './EnergyHeatmap.vue' // 你的热力图基础组件
-import CyberTable from './CyberTable.vue'     // 你的表格基础组件
+import CyberTable from './CyberTable.vue' // 你的表格基础组件
 
 export default {
   name: 'UniversalChartModal',
@@ -63,7 +64,7 @@ export default {
     // 显示类型：heatmap=热力图，table=表格
     type: {
       type: String,
-      required: true,
+      required: true
     },
     modalWidth: {
       type: String,
@@ -106,17 +107,25 @@ export default {
     // 表格事件透传（支持任意表格事件，通过事件名转发）
     'table-event'
   ],
+  computed: {
+    normalizedHeatmapProps () {
+      return {
+        height: '100%',
+        ...this.heatmapProps
+      }
+    }
+  },
   methods: {
     // 关闭弹窗
-    handleClose() {
+    handleClose () {
       this.$emit('close')
     },
     // 确认按钮
-    handleConfirm() {
+    handleConfirm () {
       this.$emit('confirm')
     },
     // 表格事件统一转发（通用化处理）
-    handleTableEvent(eventName, eventData) {
+    handleTableEvent (eventName, eventData) {
       this.$emit('table-event', { eventName, eventData })
     }
   }
@@ -184,7 +193,15 @@ export default {
 .modal-body {
   flex: 1;
   padding: 15px;
-  overflow: auto;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.modal-chart-content {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 
 .modal-footer {

@@ -71,6 +71,31 @@ router.beforeEach((to, from, next) => {
                 // 店员不需要左侧菜单 直接进入首页
                 next()
                 NProgress.done()
+            } else if (sysName == 'socialactivity') {
+                if (store.getters.userInfo.admin_id) {
+                    next()
+                    NProgress.done()
+                    return
+                }
+                store.dispatch('SocialActivityGetInfo', { tokenName })
+                    .then((res) => {
+                        store.dispatch('GenerateSocialActivityRouters', { res, tokenName, url: to.path }).then(() => {
+                            router.addRoutes(store.getters.addSocialActivityRouters)
+                            next({
+                                path: to.path,
+                                query: to.query,
+                            })
+                        })
+                    })
+                    .catch(() => {
+                        notification.error({
+                            message: '登录超时',
+                            description: '请重新登录',
+                        })
+                        store.dispatch('Logout', tokenName).then(() => {
+                            next({ path: loginPath })
+                        })
+                    })
             } else if (store.getters.roles.length === 0) {
                 // 若未获取用户信息和权限信息，则请求用户信息
                 store

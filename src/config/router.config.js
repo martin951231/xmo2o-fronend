@@ -1,5 +1,5 @@
 // eslint-disable-next-line
-import { UserLayout, BasicLayout, RouteView, BlankLayout, PageView } from '@/layouts'
+import { UserLayout, BasicLayout, RouteView, BlankLayout, PageView, SocialActivityBasicLayout } from '@/layouts'
 import path from '@/router/router-path.js'
 // 静态路由表
 export const asyncRouterMap = [
@@ -1433,5 +1433,33 @@ export const constantRouterMap = [
   path: '/village/village.materiel/materielCheckouts',
   name: 'materielCheckoutsName',
   component: () => import('@/views/community/village/materiel/materielCheckouts')
+},
+{
+  path: '/dialog/card/merchant/PointGoodsType',
+  name: 'DialogPointGoodsType',
+  component: () => import('@/views/card/merchant/pointGoodsType')
+},
+{
+  path: '/socialactivity',
+  component: SocialActivityBasicLayout,
+  hidden: true,
+  redirect: path.socialactivityIndex,
+  children: []
+},
+{
+  path: '/socialactivity/socialactivityLogin',
+  name: 'socialactivityLogin',
+  component: () => import('@/views/social_activity/Login/Login'),
+  meta: {
+    title: '登录'
+  }
+},
+{
+  path: '/common/socialactivity.QuestionnaireSurvey/QuestionnaireSurveyDetail',
+  name: 'SocialactivityQuestionnaireSurveyDetail',
+  component: () => import('@/views/common/platform/QuestionnaireSurvey/QuestionnaireSurveyDetail'),
+  meta: {
+    title: '问卷调查详情'
+  }
 }
 ]

@@ -245,3 +245,83 @@ const listToTree = (list, tree, parentId) => {
     }
   })
 }
+
+// 社群活动路由
+export const generatorDynamicSocialActivityRouter = (tokenName, location, menu) => {
+  const sys = getSystemName(tokenName)
+  return new Promise((resolve) => {
+    const sysName = sys + '_system_menu'
+    Vue.ls.set(sysName, menu)
+    const indexPath = getRouter(tokenName, 'index')
+    const rootRouter = [{
+      key: '',
+      name: 'socialactivity',
+      path: '/socialactivity',
+      component: 'SocialActivityBasicLayout',
+      redirect: indexPath,
+      meta: {
+        title: '首页'
+      },
+      children: menu
+    }]
+    const routers = generatorSocialActivity(rootRouter)
+    routers.push(notFoundRouter)
+    resolve(routers)
+  })
+}
+
+const generatorSocialActivity = (routerMap, parent) => {
+  return routerMap.map(item => {
+    const {
+      title,
+      show,
+      hideChildren,
+      hiddenHeader,
+      target,
+      icon,
+      keepAlive,
+      permissions
+    } = item
+    const currentRouter = {
+      path: item.path || `${parent && parent.path || ''}/${item.key}`,
+      name: item.name || item.key || '',
+      component: constantRouterComponents[item.component || item.key] || (() => import(`@/views/${item.component}`)),
+      meta: {
+        title: title,
+        documentTitle: currentAppId ? `${title} - ${currentAppTitle}` : title,
+        icon: icon || undefined,
+        hiddenHeaderContent: hiddenHeader,
+        target: target,
+        permissions,
+        keepAlive: keepAlive || false,
+        app_id: item.app_id ? item.app_id : null,
+        open_key: item.open_key ? item.open_key : null
+      }
+    }
+    if (show === false) {
+      currentRouter.hidden = true
+    }
+    if (hideChildren) {
+      currentRouter.hideChildrenInMenu = true
+    }
+    if (!currentRouter.path.startsWith('http')) {
+      currentRouter.path = currentRouter.path.replace('//', '/')
+    }
+    item.redirect && (currentRouter.redirect = item.redirect)
+    if (item.children && item.children.length > 0) {
+      if (item.type === 3) {
+        currentRouter.permissions = generatorSocialActivity(item.children, currentRouter)
+      } else {
+        currentRouter.children = generatorSocialActivity(item.children, currentRouter)
+        let hideChildren = true
+        currentRouter.children.forEach(item => {
+          if (!item.hidden) {
+            hideChildren = false
+          }
+        })
+        currentRouter.hideChildrenInMenu = hideChildren
+      }
+    }
+    return currentRouter
+  })
+}

@@ -18,7 +18,8 @@ export const COMMUNITY_ACCESS_TOKEN = 'community' // 社区后台 token存储名
 export const PROPERTY_ACCESS_TOKEN = 'property' // 物业后台 token存储名称为property_access_token
 export const VILLAGE_ACCESS_TOKEN = 'village' // 小区后台 token存储名称为village_access_token
 export const METER_ACCESS_TOKEN = 'meter';// 智能电表后台 token存储名称为meter_access_token
-export const SYSTEM_TYPES = [PLATFORM_ACCESS_TOKEN, MERCHANT_ACCESS_TOKEN, STORESTAFF_ACCESS_TOKEN,COMMUNITY_ACCESS_TOKEN,PROPERTY_ACCESS_TOKEN,VILLAGE_ACCESS_TOKEN,METER_ACCESS_TOKEN]
+export const SOCIALACTIVITY_ACCESS_TOKEN = 'socialactivity';// 启明星社群后台 token存储名称为socialactivity_access_token
+export const SYSTEM_TYPES = [PLATFORM_ACCESS_TOKEN, MERCHANT_ACCESS_TOKEN, STORESTAFF_ACCESS_TOKEN,COMMUNITY_ACCESS_TOKEN,PROPERTY_ACCESS_TOKEN,VILLAGE_ACCESS_TOKEN,METER_ACCESS_TOKEN,SOCIALACTIVITY_ACCESS_TOKEN]
 
 export const CONTENT_WIDTH_TYPE = {
   Fluid: 'Fluid',

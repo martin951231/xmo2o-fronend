@@ -77,6 +77,9 @@
                                 <BeautifulImage class="mr-10 mb-10" v-for="(item,index) in record.images" :key="index" :src="item" width="50px" height="50px" visible></BeautifulImage>
                             </div>
                         </span>
+                        <span slot="file" slot-scope="text, record">
+                            <a :title="item" style="display: block;width:300px;overflow: hidden;text-overflow:ellipsis;white-space: nowrap;" v-for="(item,index) in record.files" :key="index" :href="item" target="_blank">{{item}}</a>
+                        </span>
                     </a-table>
                 </a-tab-pane>
             </a-tabs>
@@ -93,6 +96,10 @@ export default {
         form_id: {
             type: [Number, String],
             default: 0,
+        },
+        tokenName: {
+            type: String,
+            default: '',
         },
     },
     components: { BeautifulImage },
@@ -177,7 +184,7 @@ export default {
                 this.formSubmiColumns.push({
                     title: item.title,
                     dataIndex: item.type + '_value_' + item.id,
-                    scopedSlots: { customRender: item.type == 'image' ? 'image' : '' },
+                    scopedSlots: { customRender: item.type },
                 })
             })
             this.getOverview()
@@ -186,6 +193,7 @@ export default {
         getOverview() {
             this.request(questionnaireSurveyApi.overview, {
                 form_id: this.form_id,
+                tokenName: this.tokenName + '_access_token',
             }).then((res) => {
                 this.form_data = res.form_data
                 this.question_data = res.question_data
@@ -198,6 +206,7 @@ export default {
             let params = {
                 ...this.queryParams,
                 form_id: this.form_id,
+                tokenName: this.tokenName + '_access_token',
             }
             if (actions == 'export') {
                 params.is_export = 1
@@ -217,6 +226,9 @@ export default {
                             v[item.type + '_value_' + a.question_id] = a.answer
                             if (item.type == 'image') {
                                 v['images'] = a.extra_answer
+                            }
+                            if (item.type == 'file') {
+                                v['files'] = a.extra_answer
                             }
                         })
                         return v

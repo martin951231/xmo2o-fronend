@@ -1,11 +1,13 @@
 <template>
-    <a-modal :title="xtitle" :width="1000" :visible="visible" :maskClosable="false" :footer="isImporting || currentKey==2 ?null:undefined"
+    <a-modal :title="xtitle" :width="1000" :visible="visible" :maskClosable="false" :footer="isImporting || currentKey==2 ? null : undefined"
         @cancel="handleCancel">
         <a-tabs :default-active-key="1" @change="tabChange">
             <a-tab-pane :key="1" tab="导入操作">
                 <div class="step_one" v-show="firstStep && !isImporting">
-                    <h4>步骤一：选择需要上传【{{order_msg}}账单】所属【收费项目】</h4>
-                    <h5><span style="color: #ff4d4f;">注意：</span>1. 仅支持<span style="color: #ff4d4f;">【收费模式：一次性费用】</span>的<span style="color: #ff4d4f;">【收费项目】</span>。</h5>
+                    <h4>步骤一：选择需要上传【{{ order_msg }}账单】所属【收费项目】</h4>
+                    <h5 v-if="!isCycleType()"><span style="color: #ff4d4f;">注意：</span>1. 仅支持<span style="color: #ff4d4f;">【收费模式：一次性费用】</span>的<span style="color: #ff4d4f;">【收费项目】</span>。</h5>
+                    <h5 v-else-if="isCyclePayType()"><span style="color: #ff4d4f;">注意：</span>1. 仅支持<span style="color: #ff4d4f;">【收费模式：周期性费用】</span>的<span style="color: #ff4d4f;">【收费项目】</span>，下载模板前请先选择收费科目和收费项目；房间、缴费人和收款人按 Excel 每行校验。</h5>
+                    <h5 v-else><span style="color: #ff4d4f;">注意：</span>1. 仅支持<span style="color: #ff4d4f;">【收费模式：周期性费用】</span>的<span style="color: #ff4d4f;">【收费项目】</span>，下载模板前请先选择收费科目和收费项目。</h5>
                     <div>
                         <span class="label_col" style="color:rgba(0, 0, 0, 0.85)">收费科目：</span>
                         <a-select v-model="subjectId" show-search style="width: 282px;margin-left:20px;" @change="handleChargeNumberChange">
@@ -20,38 +22,43 @@
                     </div>
                     <div v-if="projectId">
                         <h4>步骤二：上传 Excel 文件</h4>
-                        <h5><span style="color: #ff4d4f;">注意：</span>1. 导入的{{order_msg}}账单会归属到所选<span style="color: #ff4d4f;">【收费项目】</span>下，以导入表中<span style="color: #ff4d4f;">[{{uploadType=='billPayExcel' ? '已缴':'欠缴'}}费用名称]</span>为名称的<span style="color: #ff4d4f;">【计费模式：固定费用】</span>的<span style="color: #ff4d4f;">【收费标准】</span>中。</h5>
-                        <h5 style="padding-left:35px;">2. 表中相同<span style="color: #ff4d4f;">[{{uploadType=='billPayExcel' ? '已缴':'欠缴'}}费用名称]</span>不同<span style="color: #ff4d4f;">[{{uploadType=='billPayExcel' ? '已缴':'欠缴'}}金额]</span>会生成不同的<span style="color: #ff4d4f;">【收费标准】</span>。</h5>
+                        <template v-if="!isCycleType()">
+                            <h5><span style="color: #ff4d4f;">注意：</span>1. 导入的{{ order_msg }}账单会归属到所选<span style="color: #ff4d4f;">【收费项目】</span>下，以导入表中<span style="color: #ff4d4f;">[{{ uploadType=='billPayExcel' ? '已缴' : '欠缴' }}费用名称]</span>为名称的<span style="color: #ff4d4f;">【计费模式：固定费用】</span>的<span style="color: #ff4d4f;">【收费标准】</span>中。</h5>
+                            <h5 style="padding-left:35px;">2. 表中相同<span style="color: #ff4d4f;">[{{ uploadType=='billPayExcel' ? '已缴' : '欠缴' }}费用名称]</span>不同<span style="color: #ff4d4f;">[{{ uploadType=='billPayExcel' ? '已缴' : '欠缴' }}金额]</span>会生成不同的<span style="color: #ff4d4f;">【收费标准】</span>。</h5>
+                        </template>
+                        <template v-else>
+                            <h5><span style="color: #ff4d4f;">注意：</span>1. 导入的{{ isCyclePayType() ? '周期性已缴' : '周期性' }}账单会归属到所选<span style="color: #ff4d4f;">【收费项目】</span>下，表中<span style="color: #ff4d4f;">【收费标准名称】</span>必须是当前项目下已存在且房间已绑定的收费标准。</h5>
+                            <h5 style="padding-left:35px;">2. 同一房间同一收费标准的计费时间不能重叠；收费周期默认1，收费周期类型默认自定义收费周期。</h5>
+                        </template>
                         <p>您要从何处导入数据，请选择导入的 Excel 文件</p>
                         <div style="display: flex; width: 80%;">
                             <div class="label" style="width: 82px; text-align:left;">Excel文件</div>
                             <a-upload-dragger style="height: 100px;width: calc(100% - 82px); margin-left: 10px;" name="file" :multiple="true" :action="uploadUrl" :beforeUpload="beforeUploadExcel"
                                 :showUploadList="false" :headers="headers" @change="handleUploadChange"
                                 :data="{upload_dir: 'billExcel', system_type: 'village', type: uploadType}">
-                                <a-icon :type="uploadLoading?'loading':'upload'" /> {{uploadFileName?uploadFileName:'拖拽或点击上传 Excel 文件'}}
+                                <a-icon :type="uploadLoading?'loading':'upload'" /> {{ uploadFileName ? uploadFileName : '拖拽或点击上传 Excel 文件' }}
                             </a-upload-dragger>
                         </div>
                         <div v-if="fileList.length>0" class="select_list" style="display: flex;align-items: center;height: 50px;">
                             <div class="label" style="width: 82px; text-align:left;">选择Sheet表</div>
                             <a-select :default-value="0" style="width: 120px; margin-left: 10px;" @change="handleSelectChange">
                                 <a-select-option v-for="(item, index) in fileList" :key="index" :value="index">
-                                    {{item.worksheetName}}
+                                    {{ item.worksheetName }}
                                 </a-select-option>
                             </a-select>
-                            <div style="color: red;margin-left: 10px;">总数据量：{{selectObj.totalRows ? (selectObj.totalRows - 1):0}} 条</div>
+                            <div style="color: red;margin-left: 10px;">总数据量：{{ selectObj.totalRows ? (selectObj.totalRows - 1) : 0 }} 条</div>
                         </div>
-                        
                         <h5>导入步骤：</h5>
                         <h5>
                             <span style="color: #ff4d4f;">注意：</span>
-                            1. 
-                            <span style="color: #ff4d4f;">【{{$store.getters.config.single_name}}】</span>、
-                            <span style="color: #ff4d4f;">【{{$store.getters.config.room_name}}】</span>、
+                            1.
+                            <span style="color: #ff4d4f;">【{{ $store.getters.config.single_name }}】</span>、
+                            <span style="color: #ff4d4f;">【{{ $store.getters.config.room_name }}】</span>、
                             <span style="color: #ff4d4f;">【楼层】</span>、
-                            <span style="color: #ff4d4f;">【{{$store.getters.config.room_name}}号】</span>
-                            是和对应名称或编号<span style="color: #ff4d4f;">全匹配[就是名称或者编号需要完全一致]</span>定位对应{{$store.getters.config.room_name}}的。</h5>
-                        <p> 第一步：上传存储有的资料 Excel 文件；【您可以直接上传 Excel 文件或者下载模板：<a-button type="link" @click="downloadExcel">
-                                模板下载</a-button>】 <span style="color: #000000;font-weight: bold;">Excel中的数据请都用<span style="color:red;">文本格式</span>填写，程序对文本格式的数据读取兼容性最好</span></p>
+                            <span style="color: #ff4d4f;">【{{ $store.getters.config.room_name }}号】</span>
+                            是和对应名称或编号<span style="color: #ff4d4f;">全匹配</span>，就是名称或者编号需要完全一致定位对应{{ $store.getters.config.room_name }}。
+                        </h5>
+                        <p> 第一步：上传存储有资料的 Excel 文件；【您可以直接上传 Excel 文件或者下载模板：<a-button type="link" @click="downloadExcel">模板下载</a-button>】<span style="color: #000000;font-weight: bold;">Excel中的数据请都用<span style="color:red;">文本格式</span>填写，程序对文本格式的数据读取兼容性最好</span></p>
                         <p> 第二步：设置 Excel 里的列与系统中的列的对应关系</p>
                         <p> 第三步：开始导入</p>
                     </div>
@@ -70,11 +77,10 @@
                 </div>
             </div>
         </template>
-        
         <div class="progress_content" style="width: 100%; height: 450px; display: flex; align-items: center; justify-content:center; flex-direction: column;" v-if="isImporting && currentKey!=2">
-            <a-progress type="circle" :stroke-color="{'0%': '#108ee9','100%': '#87d068',}" :percent="percentVal"/>
+            <a-progress type="circle" :stroke-color="{'0%': '#108ee9','100%': '#87d068'}" :percent="percentVal"/>
             <div class="importing" style="margin-top: 15px;">
-                总行数 <span style="font-size: larger">{{ readRowTotal }}</span>，正在导入，剩余<span style="font-size: larger">{{readRowTotal - (successInsterTotal +errorTotal) }} </span> 条记录待导入，成功<span style="color: #68C472;font-size: larger">{{successInsterTotal}}</span>条,失败<span style="color: red;font-size: larger"> {{ errorTotal }} </span>条
+                总行数 <span style="font-size: larger">{{ readRowTotal }}</span>，正在导入，剩余<span style="font-size: larger">{{ readRowTotal - (successInsterTotal + errorTotal) }} </span> 条记录待导入，成功<span style="color: #68C472;font-size: larger">{{ successInsterTotal }}</span>条，失败<span style="color: red;font-size: larger"> {{ errorTotal }} </span>条
             </div>
             <div class="desc" style="margin-top: 15px; color: #999999; font-size: 14px;">
                 <span v-if="percentVal != 100">提示：正在等待导入，如果关闭本窗口，导入不会中断</span>
@@ -82,10 +88,8 @@
                 <a-button v-if="percentVal == 100" type="link" @click="goBack">重新导入</a-button>
             </div>
         </div>
-        
     </a-modal>
 </template>
-
 <script>
     import Vue from 'vue';
     import store from 'vuex';
@@ -134,10 +138,27 @@
             let projectId = ref(null)
             let order_msg= ref('欠费')
             let xtitle= ref('欠费账单导入向导')
-            if(props.uploadType=='billPayExcel'){
-                xtitle.value='一次性已缴费用导入向导'
-                order_msg.value='已缴'
+            let cycleRoomOptions = ref([])
+            let cycleRoomId = ref(null)
+            let payerList = ref([])
+            let payBindId = ref(null)
+            let cashierList = ref([])
+            let cashierId = ref(null)
+            const setImportTitle = () => {
+                xtitle.value = '欠费账单导入向导'
+                order_msg.value = '欠费'
+                if(props.uploadType=='billPayExcel'){
+                    xtitle.value='一次性已缴费用导入向导'
+                    order_msg.value='已缴'
+                } else if (props.uploadType=='cycleBillExcel') {
+                    xtitle.value='周期性账单导入向导'
+                    order_msg.value='周期性'
+                } else if (props.uploadType=='cycleBillPayExcel') {
+                    xtitle.value='周期性已缴账单导入向导'
+                    order_msg.value='周期性已缴'
+                }
             }
+            setImportTitle()
             // 获取科目
             const getChargeNumber = () => {
                 Vue.prototype.request('/community/common.BillExcel/getChargeSubject', {tokenName: tokenNameSys.value}).then((res) => {
@@ -148,8 +169,12 @@
                 })
             }
             // 获取项目
+            const isCycleType = () => props.uploadType == 'cycleBillExcel' || props.uploadType == 'cycleBillPayExcel'
+            const isCyclePayType = () => props.uploadType == 'cycleBillPayExcel'
+
             const getChargeProject = (subject_id) => {
-                Vue.prototype.request('/community/common.BillExcel/getChargeProject', {subject_id: subject_id, tokenName: tokenNameSys.value}).then((res) => {
+                const url = isCycleType() ? '/community/common.BillExcel/getCycleChargeProject' : '/community/common.BillExcel/getChargeProject'
+                Vue.prototype.request(url, {subject_id: subject_id, tokenName: tokenNameSys.value}).then((res) => {
                     chargeProject.value = res
                     console.log('chargeProject', res)
                 }).catch(e => {
@@ -161,15 +186,93 @@
                 console.log('handleChargeNumberChange', value)
                 subjectId.value = value
                 projectId.value = null
+                cycleRoomId.value = null
+                payBindId.value = null
+                payerList.value = []
                 getChargeProject(value);
             }
 
             const handleChargeProjectChange = (value) => {
                 console.log('handleChargeProjectChange', value)
                 projectId.value = value
+                cycleRoomId.value = null
+                payBindId.value = null
+                payerList.value = []
             }
 
             
+
+            const formatRoomOptions = (list, isLeaf = false) => {
+                if (!list) {
+                    return []
+                }
+                return list.map(item => {
+                    return {
+                        label: item.name,
+                        value: item.id,
+                        isLeaf: isLeaf
+                    }
+                })
+            }
+
+            const getSingleListByVillage = () => {
+                Vue.prototype.request('/community/common.BasicResources/getSingleListByVillage', {tokenName: tokenNameSys.value}).then((res) => {
+                    cycleRoomOptions.value = formatRoomOptions(res, false)
+                }).catch(e => {})
+            }
+
+            const getCycleFloorList = (id) => {
+                return Vue.prototype.request('/community/common.BasicResources/getFloorList', {pid: id, tokenName: tokenNameSys.value})
+            }
+
+            const getCycleLayerList = (id) => {
+                return Vue.prototype.request('/community/common.BasicResources/getLayerList', {pid: id, tokenName: tokenNameSys.value})
+            }
+
+            const getCycleVacancyList = (id) => {
+                return Vue.prototype.request('/community/common.BasicResources/getVacancyList', {pid: id, tokenName: tokenNameSys.value})
+            }
+
+            const loadCycleRoomData = (selectedOptions) => {
+                const targetOption = selectedOptions[selectedOptions.length - 1]
+                targetOption.loading = true
+                let requestFunc = getCycleFloorList
+                let isLeaf = false
+                if (selectedOptions.length == 2) {
+                    requestFunc = getCycleLayerList
+                } else if (selectedOptions.length == 3) {
+                    requestFunc = getCycleVacancyList
+                    isLeaf = true
+                }
+                requestFunc(targetOption.value).then((res) => {
+                    targetOption.loading = false
+                    targetOption.children = formatRoomOptions(res, isLeaf)
+                    cycleRoomOptions.value = [...cycleRoomOptions.value]
+                }).catch(e => {
+                    targetOption.loading = false
+                    cycleRoomOptions.value = [...cycleRoomOptions.value]
+                })
+            }
+
+            const setCyclePayRoom = (value) => {
+                cycleRoomId.value = value && value.length > 0 ? value[value.length - 1] : null
+                payBindId.value = null
+                payerList.value = []
+                if (isCyclePayType() && value && value.length == 4) {
+                    Vue.prototype.request('/community/common.BillExcel/getCyclePayUserList', {
+                        room_id: cycleRoomId.value,
+                        tokenName: tokenNameSys.value
+                    }).then((res) => {
+                        payerList.value = res || []
+                    }).catch(e => {})
+                }
+            }
+
+            const getCyclePayCashierList = () => {
+                Vue.prototype.request('/community/common.BillExcel/getCyclePayCashierList', {tokenName: tokenNameSys.value}).then((res) => {
+                    cashierList.value = res || []
+                }).catch(e => {})
+            }
             const beforeUploadExcel = (info) => {
                 const fileType = info.name.split('.').pop();
                 if (fileType != 'xlsx' && fileType != 'xls') {
@@ -210,7 +313,8 @@
                     Vue.prototype.$message.warn('请先上传Excel文件')
                     return
                 }
-                Vue.prototype.request('/community/common.BillExcel/startImport', {
+                const startImportUrl = props.uploadType == 'cycleBillExcel' ? '/community/common.BillExcel/startCycleImport' : (props.uploadType == 'cycleBillPayExcel' ? '/community/common.BillExcel/startCyclePayImport' : '/community/common.BillExcel/startImport')
+                let startImportParam = {
                     tokenName: tokenNameSys.value,
                     subjectId: subjectId.value,
                     projectId: projectId.value,
@@ -218,8 +322,28 @@
                     worksheetName: worksheetName.value,
                     selectWorkSheetIndex:selectWorkSheetIndex.value,
                     type:props.uploadType,
-                }).then((res) => {
-                    Vue.prototype.$message.success('提交成功，准备导入，调整画面为进度条画面！')
+                }
+                if (isCycleType()) {
+                    startImportParam.charge_project_id = projectId.value
+                }
+                Vue.prototype.request(startImportUrl, startImportParam).then((res) => {
+                    if (isCycleType()) {
+                        const result = res || {}
+                        const errorNum = Number(result.errorTotal || 0)
+                        if (errorNum > 0) {
+                            Vue.prototype.$message.warn('导入完成，存在失败数据')
+                        } else {
+                            Vue.prototype.$message.success('导入成功')
+                        }
+                        readRowTotal.value = result.readRowTotal || 0
+                        successInsterTotal.value = result.successInsterTotal || 0
+                        errorTotal.value = result.errorTotal || 0
+                        percentVal.value = 100
+                        isImporting.value = true
+                        clearTimer()
+                        return
+                    }
+                    Vue.prototype.$message.success('提交成功，准备导入，页面已切换为进度条')
                     isImporting.value = true
                     interval.value = setInterval(()=> {
                         refreshProgress()
@@ -275,7 +399,8 @@
             
             
             const uploadExcelFile = (url) => {
-                Vue.prototype.request('/community/common.BillExcel/importForExcel', {
+                const importForExcelUrl = isCycleType() ? '/community/common.BillExcel/cycleImportForExcel' : '/community/common.BillExcel/importForExcel'
+                Vue.prototype.request(importForExcelUrl, {
                     inputFileName: url,
                     type:props.uploadType,
                     tokenName: tokenNameSys.value
@@ -304,7 +429,7 @@
                         successInsterTotal.value= res.processInfo.successInsterTotal
                         errorTotal.value        = res.processInfo.errorTotal
                         if (res.process == 100){
-                            Vue.prototype.$message.warn(`导入执行完毕！`);
+                            Vue.prototype.$message.warn('导入执行完毕')
                             clearTimer()
                         }
                     }
@@ -324,7 +449,24 @@
             }
 
             const downloadExcel = () => {
-                Vue.prototype.request('/community/common.BillExcel/getImportTemplateUrl', {tokenName: tokenNameSys.value,opttype:props.uploadType}).then((res) => {
+                if(!subjectId.value){
+                    Vue.prototype.$message.warn('请选择收费科目')
+                    return
+                }
+                if(!projectId.value){
+                    Vue.prototype.$message.warn('请选择收费项目')
+                    return
+                }
+                const templateUrl = props.uploadType == 'cycleBillExcel' ? '/community/common.BillExcel/getCycleImportTemplateUrl' : (props.uploadType == 'cycleBillPayExcel' ? '/community/common.BillExcel/getCyclePayImportTemplateUrl' : '/community/common.BillExcel/getImportTemplateUrl')
+                let templateParam = {
+                    tokenName: tokenNameSys.value,
+                    opttype: props.uploadType,
+                }
+                if (isCycleType()) {
+                    templateParam.subject_id = subjectId.value
+                    templateParam.charge_project_id = projectId.value
+                }
+                Vue.prototype.request(templateUrl, templateParam).then((res) => {
                     console.log('downloadExcel', res.url)
                     window.open(res.url)
                 }).catch(e => {
@@ -363,11 +505,18 @@
                 }
                 chargeNumber.value = []
                 chargeProject.value = []
+                cycleRoomOptions.value = []
+                cycleRoomId.value = null
+                payerList.value = []
+                payBindId.value = null
+                cashierList.value = []
+                cashierId.value = null
                 subjectId.value = null
                 isImporting.value=false;
                 currentKey.value=1;
                 projectId.value = null
                 console.log('val', val)
+                setImportTitle()
                 getChargeNumber()
             }, {
                 deep: true
@@ -413,6 +562,15 @@
                 sysName,
                 xtitle,
                 order_msg,
+                isCycleType,
+                isCyclePayType,
+                cycleRoomOptions,
+                loadCycleRoomData,
+                setCyclePayRoom,
+                payerList,
+                payBindId,
+                cashierList,
+                cashierId,
             }
         }
     })

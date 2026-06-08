@@ -11,7 +11,8 @@ import {
     BlankLayout,
     PageView,
     RouteView,
-    AppLayout
+    AppLayout,
+    SocialActivityBasicLayout
 } from '@/layouts'
 import userPlaformComponents from './common/plaform/user'
 import weixinPlaformComponents from './common/plaform/weixin'
@@ -104,6 +105,10 @@ import PaotuiPlatformComponents from './paotui/index'
 //问卷调查
 import QuestionnaireSurveyComponents from  './common/plaform/QuestionnaireSurvey'
 
+// 社群活动
+import SocialActivityComponents from './social_activity/index'
+import SocialActivityPlatformComponents from './social_activity/platform/index'
+
 
 const routerComponents = {
   // 基础页面 layout 必须引入
@@ -112,6 +117,7 @@ const routerComponents = {
   RouteView: RouteView,
   PageView: PageView,
   AppLayout: AppLayout,
+  SocialActivityBasicLayout: SocialActivityBasicLayout,
   // 异常页面
   '403': () => import('@/views/exception/403'),
   '404': () => import('@/views/exception/404'),
@@ -197,5 +203,7 @@ const routerComponents = {
   ...buildingPlatformComponents,
   ...PaotuiPlatformComponents,
   ...QuestionnaireSurveyComponents,
+  ...SocialActivityComponents,
+  ...SocialActivityPlatformComponents,
 }
 export default routerComponents

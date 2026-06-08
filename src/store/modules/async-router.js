@@ -2,19 +2,24 @@
  * 向后端请求用户的菜单，动态生成路由
  */
 import { constantRouterMap } from '@/config/router.config'
-import { generatorDynamicRouter } from '@/router/generator-routers'
+import { generatorDynamicRouter, generatorDynamicSocialActivityRouter } from '@/router/generator-routers'
 import Vue from 'vue'
 
 const permission = {
   state: {
     routers: constantRouterMap,
-    addRouters: []
+    addRouters: [],
+    addSocialActivityRouters: [],
   },
   mutations: {
     SET_ROUTERS: (state, routers) => {
       state.addRouters = routers
       state.routers = constantRouterMap.concat(routers)
       console.log('state.addRouters', state.addRouters)
+    },
+    SET_SOCIALACTIVITY_ROUTERS: (state, routers) => {
+      state.addSocialActivityRouters = routers
+      state.routers = constantRouterMap.concat(routers)
     }
   },
   actions: {
@@ -25,6 +30,16 @@ const permission = {
           const accessedRouters = filterAsyncRouter(routers, roles)
           console.log('accessedRouters', accessedRouters)
           commit('SET_ROUTERS', accessedRouters)
+          resolve()
+        })
+      })
+    },
+    GenerateSocialActivityRouters({ commit }, data) {
+      return new Promise(resolve => {
+        const { res, tokenName, url } = data
+        let menu = res.menu_list || []
+        generatorDynamicSocialActivityRouter(tokenName, url, menu).then(routers => {
+          commit('SET_SOCIALACTIVITY_ROUTERS', routers)
           resolve()
         })
       })

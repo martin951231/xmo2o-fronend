@@ -106,6 +106,9 @@
               <a-col :md="2" :sm="24" class="a_col_btn" v-if="role_import_bill==1">
                 <a-button type="primary" @click="importBillOrder()" >导入欠费账单</a-button>
               </a-col>
+              <a-col :md="2" :sm="24" class="a_col_btn" v-if="role_import_bill==1">
+                <a-button type="primary" @click="importCycleBillOrder()" >导入周期性账单</a-button>
+              </a-col>
 
             </a-row>
 
@@ -273,6 +276,9 @@
               </a-col>
               <a-col :md="2" :sm="24" style="margin-top: 15px;padding-left:5px;" v-if="role_import_bill==1">
                 <a-button type="primary" @click="importBillOrder()" >导入欠费账单</a-button>
+              </a-col>
+              <a-col :md="2" :sm="24" style="margin-top: 15px;padding-left:5px;width: 130px;" v-if="role_import_bill==1">
+                <a-button type="primary" @click="importCycleBillOrder()" >导入周期性账单</a-button>
               </a-col>
               </div>
             </a-row>
@@ -496,7 +502,7 @@
     <send-type ref="SendTypeModel" />
     <get-print-template ref="PrintModel" />
     <print-order ref="PrintOrderModel"/>
-    <importBill :visible="importBillVisibile" @exit="closeImportBill" uploadType="billExcel"/>
+    <importBill :visible="importBillVisibile" @exit="closeImportBill" :uploadType="importBillType"/>
   </div>
 
 </template>
@@ -635,6 +641,7 @@
                 endServiceOpen:false,
                 tabs_active_key:"2",
                 importBillVisibile: false,
+                importBillType: 'billExcel',
                 modalTitle:'Excel导出',
                 exportPattern:2,
                 export_tips_visible:false,
@@ -733,6 +740,11 @@
                 this.getList();
             },
             importBillOrder() {
+                this.importBillType = 'billExcel';
+                this.importBillVisibile = true;
+            },
+            importCycleBillOrder() {
+                this.importBillType = 'cycleBillExcel';
                 this.importBillVisibile = true;
             },
             clear () {

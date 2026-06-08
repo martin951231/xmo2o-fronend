@@ -18,6 +18,7 @@ const getters = {
   nowLang: state => state.config.nowLang,
   langData: state => state.config.langData,
   setLangFinish: state => state.config.setLangFinish,
+  addSocialActivityRouters: state => state.permission.addSocialActivityRouters,
 }
 
 export default getters

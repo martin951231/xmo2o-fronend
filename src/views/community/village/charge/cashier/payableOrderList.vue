@@ -174,9 +174,10 @@
                     v-if="orderPayTimeCheckOpen<1">
                     <a-button type="primary" @click="modifyPayTime('')">修改支付时间</a-button>
                 </a-col>
-                <a-col :md="2" :sm="24" class="suggestions_col_btn" style="padding-left: 10px;padding-right: 10px;"
+                <a-col :md="4" :sm="24" class="suggestions_col_btn" style="padding-left: 10px;padding-right: 10px;display:flex;align-items:center;white-space:nowrap;"
                     v-if="role_import_pay==1">
                     <a-button type="primary" @click="importBillPayOrder()">导入已缴账单</a-button>
+                    <a-button type="primary" style="margin-left: 8px;" @click="importCycleBillPayOrder()">导入周期性账单</a-button>
                 </a-col>
 
             </a-row>
@@ -285,7 +286,7 @@
             </div>
         </a-modal>
 
-        <importBill :visible="importBillPayVisibile" @exit="closeImportBillPay" uploadType="billPayExcel" />
+        <importBill :visible="importBillPayVisibile" @exit="closeImportBillPay" :uploadType="importBillPayType" />
     </div>
 
 </template>
@@ -484,6 +485,7 @@
                 no_ticket_order_record: '',
                 role_import_pay: false,
                 importBillPayVisibile: false,
+                importBillPayType: 'billPayExcel',
                 orderPayTimeCheckOpen: 0,
                 tmpRecord: '',
                 func_kaidalaicn_special: 0,
@@ -1127,6 +1129,11 @@
                 this.getList();
             },
             importBillPayOrder() {
+                this.importBillPayType = 'billPayExcel';
+                this.importBillPayVisibile = true;
+            },
+            importCycleBillPayOrder() {
+                this.importBillPayType = 'cycleBillPayExcel';
                 this.importBillPayVisibile = true;
             },
             disabledServiceStartDate(startValue) {

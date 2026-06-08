@@ -15,10 +15,13 @@ import { getUserMenu } from '@/api/user/user'
 import router from '@/router'
 import { message } from 'ant-design-vue'
 import Coordinate from "@/utils/coordinate"
+import BaiduMap from 'vue-baidu-map'
 
 const dateFormat = 'YYYY-MM-DD'
 const timeFormat = 'HH:mm:ss'
 const dtFormat = 'YYYY-MM-DD HH:mm:ss'
+let noOperationExitTimeOut = null
+let mapLoadingTimer = null
 
 // 获取cookie
 export function getCookie(name) {
@@ -102,6 +105,9 @@ export function getSystemTitle(url) {
             } else {
                 title = nameTitle
             }
+            break
+        case 'socialactivity':
+            title = '社群后台'
             break
     }
     return title
@@ -770,6 +776,121 @@ export function coordinateFun(_lng, _lat, type='') {
         params.lng = lng
     }
   return params
+}
+
+// 在一定时间内没有操作就会退出登录，监听鼠标
+export function noOperationExit (isLogout = false, time = 30 * 60 * 1000) {
+    const systemName = getSystemName(window.location.hash)
+    const config = Vue.ls.get('system_config')
+    if (isLogout && config && config.system_keep_login == 0) {
+        clearNoOperationExitTimeout()
+        triggerAction()
+        return
+    }
+    if (config && config.system_keep_login == 1 && !config.jz_open) {
+        clearNoOperationExitTimeout()
+        return
+    }
+    if (process.env.NODE_ENV == 'development' || location.host == 'www.group.com') {
+        return
+    }
+    if (location.hash.indexOf('/community/village/workOrder/orderTongji/platformOrderData') > -1 ||
+        location.hash.indexOf('/community/village/workOrder/orderTongji/platformBoardWorkOrder') > -1 ||
+        location.hash.indexOf('/system/community/cityRegionManage/visualizationScreen') > -1 ||
+        location.hash.indexOf('/community/platform.cockpit/dataScreen') > -1 ||
+        location.hash.indexOf('/community/platform.hardware/hardware') > -1 ||
+        location.hash.indexOf('/community/village/workOrder/orderTongji/orderTongji') > -1 ||
+        location.hash.indexOf('/user/village/datastatistics') > -1 ||
+        location.hash.indexOf('/community/platform.WatchBox/WatchBox') > -1 ||
+        location.hash.indexOf('/property/property/communityData') > -1) {
+        return
+    }
+    function triggerAction() {
+        alert('长时间未操作，已退出登录')
+        store.dispatch('Logout', systemName + '_access_token').then(() => {
+            location.reload()
+        })
+    }
+    function debounce(fn, delay) {
+        return function () {
+            clearTimeout(noOperationExitTimeOut)
+            noOperationExitTimeOut = setTimeout(fn, delay)
+        }
+    }
+    function resetTimer() {
+        clearTimeout(noOperationExitTimeOut)
+        const token = Vue.ls.get(systemName + '_access_token')
+        if (!token) {
+            return
+        }
+        noOperationExitTimeOut = setTimeout(triggerAction, time)
+    }
+    const debouncedResetTimer = debounce(resetTimer, 500)
+    document.removeEventListener('mousemove', debouncedResetTimer)
+    document.addEventListener('mousemove', debouncedResetTimer)
+    resetTimer()
+}
+
+export function clearNoOperationExitTimeout () {
+    clearTimeout(noOperationExitTimeOut)
+}
+
+export function newLoadJs(src) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = src
+        script.onload = resolve
+        script.onerror = reject
+        document.head.appendChild(script)
+    })
+}
+
+export function loadBaiduMap(config) {
+    const { baidu_map_ak_web } = config
+    if (!baidu_map_ak_web) {
+        return Promise.reject(new Error('百度地图加载失败：缺少 ak'))
+    }
+    Vue.use(BaiduMap, { ak: baidu_map_ak_web })
+    const BMap_URL = `https://api.map.baidu.com/api?ak=${baidu_map_ak_web}&v=2.0&s=1&callback=onBMapCallback`
+    const bmapWebglUrl = `https://api.map.baidu.com/api?type=webgl&v=1.0&ak=${baidu_map_ak_web}`
+    const mapvUrl = 'https://mapv.baidu.com/gl/examples/static/common.js'
+    return Promise.all([
+        newLoadJs(BMap_URL),
+        newLoadJs(bmapWebglUrl),
+        newLoadJs(mapvUrl)
+    ]).then(() => window.BMapGL)
+}
+
+export function loadAmap(config) {
+    const { amap_map_web_key } = config
+    if (!amap_map_web_key) {
+        return Promise.reject(new Error('高德地图加载失败：缺少 key'))
+    }
+    const gaodeMapUrl = `https://webapi.amap.com/maps?v=2.0&key=${amap_map_web_key}&plugin=AMap.Scale,AMap.ToolBar,AMap.ControlBar,AMap.Geocoder,AMap.MouseTool,AMap.PolygonEditor`
+    return newLoadJs(gaodeMapUrl).then(() => window.AMap)
+}
+
+export function loadTiandituMap(config) {
+    const { tianditu_web_key } = config
+    if (!tianditu_web_key) {
+        return Promise.reject(new Error('天地图加载失败：缺少 key'))
+    }
+    Vue.prototype.$tiandituMapKey = tianditu_web_key
+    const tiandituMapUrl = `https://api.tianditu.gov.cn/api?v=4.0&tk=${tianditu_web_key}`
+    return newLoadJs(tiandituMapUrl).then(() => window.T)
+}
+
+export function getSyncMapConfig(callback) {
+    clearTimeout(mapLoadingTimer)
+    mapLoadingTimer = setTimeout(() => {
+        let config = window.localStorage.getItem('webMapConfig')
+        config = config ? JSON.parse(config) : null
+        if (config) {
+            callback && callback(config)
+        } else {
+            getSyncMapConfig(callback)
+        }
+    }, 300)
 }
 /**
  * 数字转中文大写金额（支持任意小数位数，默认保留2位小数）

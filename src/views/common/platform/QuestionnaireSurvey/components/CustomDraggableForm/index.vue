@@ -32,7 +32,7 @@
             <div class="form-box rounded">
                 <!-- 表头区域 -->
                 <div class="form-header cursor-pointer" @click="formHeaderClick" :class="selectFormDataIndex == -1 ? 'rounded rounded-b-0 main-border' : ''">
-                    <div class="form-header-image" :style="{padding: formData.formHeaderImage ? '0' : '16px 0'}">
+                    <div v-if="actionType != 'signup'" class="form-header-image" :style="{padding: formData.formHeaderImage ? '0' : '16px 0'}">
                         <a-spin :spinning="loading" :tip="loadingTip">
                             <a-upload
                                 action="/v20/public/index.php/common/common.UploadFile/uploadPictures"
@@ -212,6 +212,7 @@ import PhoneComponent from './PhoneComponent'
 import SexComponent from './SexComponent'
 import AreaAddressComponent from './AreaAddressComponent'
 import RichText from '@/components/RichText/RichText2'
+import FileComponent from './FileComponent'
 export default {
     components: {
         IconFont,
@@ -228,6 +229,13 @@ export default {
         SexComponent,
         AreaAddressComponent,
         RichText,
+        FileComponent,
+    },
+    props: {
+        actionType: {
+            type: String,
+            default: '',
+        }
     },
     data() {
         return {
@@ -374,16 +382,6 @@ export default {
                                 max_count: 1,
                             },
                         },
-                        // {
-                        //     id: uuidv4(),
-                        //     title: this.L('附件'),
-                        //     type: 'file',
-                        //     required: false,
-                        //     placeholder: this.L('请上传'),
-                        //     value: '',
-                        //     max_count: 1,
-                        //     icon: 'iconFile',
-                        // },
                         {
                             id: uuidv4(),
                             title: this.L('评分'),
@@ -392,6 +390,19 @@ export default {
                             placeholder: this.L('请选择'),
                             value: '',
                             icon: 'iconStar',
+                        },
+                        {
+                            id: uuidv4(),
+                            title: this.L('附件'),
+                            type: 'file',
+                            required: false,
+                            placeholder: this.L('请上传'),
+                            value: '',
+                            max_count: 1,
+                            icon: 'iconFile',
+                            extra_config: {
+                                max_count: 1,
+                            },
                         },
                     ],
                 },
@@ -477,7 +488,12 @@ export default {
         }
     },
     computed: {},
-    created() {},
+    created() {
+        if (this.actionType == 'signup') {
+            this.leftComponentList[0].children = this.leftComponentList[0].children.filter((v) => v.type != 'rating' && v.type != 'image')
+            this.leftComponentList[1].children = this.leftComponentList[1].children.filter((v) => v.type != 'areaAddress')
+        }
+    },
     beforeDestroy() {},
     methods: {
         setFormData(data) {

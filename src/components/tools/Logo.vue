@@ -18,13 +18,18 @@
             "
         >
             <router-link
-                :to="{ name: 'index' }"
+                :to="{ name: sysName == 'socialactivity' ? 'SocialActivityIndex' : 'index' }"
                 style="display: flex; align-items: center; width: 100%; justify-content: center"
             >
-                <img style="flex-shrink: 0" v-if="show && config.system_admin_logo" :src="config.system_admin_logo" />
+                <img
+                    :class="{ socialactivityLogo: sysName == 'socialactivity' }"
+                    style="flex-shrink: 0"
+                    v-if="show && config.system_admin_logo"
+                    :src="config.system_admin_logo"
+                />
                 <h1
                     :class="show && config.system_admin_logo ? 'h1_image' : 'h1_no_image'"
-                    v-if="show && showTitle && $store.state.app.sidebar"
+                    v-if="show && showTitle && $store.state.app.sidebar && sysName != 'socialactivity'"
                     :style="logoTitleStyle == 1 ? 'font-size:18px;margin-left: 5px;' : ''"
                 >
                     <a-tooltip>
@@ -46,13 +51,18 @@
         v-else
     >
         <router-link
-            :to="{ name: 'index' }"
+            :to="{ name: sysName == 'socialactivity' ? 'SocialActivityIndex' : 'index' }"
             style="display: flex; align-items: center; width: 100%; justify-content: center"
         >
-            <img style="flex-shrink: 0" v-if="show && config.system_admin_logo" :src="config.system_admin_logo" />
+            <img
+                :class="{ socialactivityLogo: sysName == 'socialactivity' }"
+                style="flex-shrink: 0"
+                v-if="show && config.system_admin_logo"
+                :src="config.system_admin_logo"
+            />
             <h1
                 :class="show && config.system_admin_logo ? 'h1_image' : 'h1_no_image'"
-                v-if="show && showTitle && $store.state.app.sidebar"
+                v-if="show && showTitle && $store.state.app.sidebar && sysName != 'socialactivity'"
                 :style="logoTitleStyle == 1 ? 'font-size:18px;margin-left: 5px;' : ''"
             >
                 <a-tooltip>
@@ -104,6 +114,7 @@ export default {
             logoTitleStyle: 0,
             show: false,
             hasTab: true,
+            sysName: '',
         }
     },
     watch: {
@@ -131,6 +142,12 @@ export default {
         getConfig(config) {
             this.config = config
             const sysName = getSystemName(location.hash)
+            this.sysName = sysName
+            if (sysName == 'socialactivity') {
+                this.$set(this.config, 'system_admin_logo', '/static/images/socialactivity_logo.png')
+                this.show = true
+                return
+            }
             if (sysName == 'platform') {
                 this.$set(this.config, 'site_name', '系统后台')
             }
@@ -218,5 +235,10 @@ export default {
     max-width: 100%;
     white-space: nowrap;
     overflow: hidden;
+}
+
+.socialactivityLogo {
+    width: auto !important;
+    margin-top: -4px;
 }
 </style>

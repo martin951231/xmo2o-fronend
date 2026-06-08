@@ -40,6 +40,7 @@ const path = {
         'villageRtspPlayer',
         'visitorAuthList',
         'WatchBox',
+        'socialactivityLogin',
     ],
 
     // 没有左侧菜单的路由
@@ -233,11 +234,16 @@ const path = {
 
     //平台工单数据可视化
     platformOrderData: '/community/village/workOrder/orderTongji/platformOrderData', // 平台工单数据可视化
+    platformBoardWorkOrder: '/community/village/workOrder/orderTongji/platformBoardWorkOrder', // 平台工单处理中心
     // 平台小区广告审核设置
     platformAdvertCheckSet: '/system/platform.villageAdvert/checkSet',
 
     // 访客访问非业主设备权限
     visitorAuthList: '/village/village.device/visitorAuthList',
+
+    // 社群活动
+    socialactivityLogin: '/socialactivity/socialactivityLogin', // 登录
+    socialactivityIndex: '/socialactivity/socialactivityIndex', // 首页
 }
 
 export default path

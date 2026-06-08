@@ -62,7 +62,7 @@ textarea {
     border-radius: 6px;
 }
 /* 缩小版后台页面公共盒子样式 */
-.main-box-content-min{
+.main-box-content-min,.main-box-content-mini{
     background-color: #fff;
     margin-bottom: 12px;
     padding: 20px;
