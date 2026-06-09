@@ -54,6 +54,7 @@
                     <a-badge :count="apply_count" :overflow-count="100">
                       <a-button style="margin-left: 10px;" type="primary"  @click="showOrderServicetimeCheck()">申请修改计费时间记录</a-button>
                     </a-badge>
+                    <a-button style="margin-left: 16px;" type="primary" @click="openBatchTimeChange">批量修改</a-button>
             </div>
         </div>
 
@@ -136,12 +137,65 @@
         </a-modal>
         
         <orderServicetimeCheck :visible="orderServicetimeCheckVisible" xtitle="房间修改计费时间申请列表" room_id="0" @closeServicetimeCheck="closeOrderServicetimeCheck"/>
+
+        <a-modal title="批量修改房间时间" :visible="batchTimeVisible" :mask-closable="false" :width="980"
+            :confirmLoading="batchTimeSubmitting" @ok="handleBatchTimeSubmit" @cancel="handleBatchTimeCancel">
+            <div class="batch-time-form">
+                <div class="batch-time-row">
+                    <span class="batch-time-label">{{$store.getters.config.room_name}}：</span>
+                    <a-cascader class="batch-room-cascader" :options="batchOptions" :load-data="loadDataFunc"
+                        :placeholder="'请选择'+$store.getters.config.room_name" change-on-select @change="setBatchVisionsFunc" />
+                    <a-button type="primary" icon="search" @click="getBatchRoomList(true)">查询</a-button>
+                    <a-checkbox class="batch-scope-checkbox" v-model="batchTimeForm.use_scope">按当前组织范围全部房间</a-checkbox>
+                </div>
+                <div class="batch-time-row">
+                    <span class="batch-time-label">物业服务时间：</span>
+                    <a-date-picker
+                        class="batch-date-picker"
+                        :value="batchTimeForm.property_service_start_time ? moment(batchTimeForm.property_service_start_time, dateFormat) : null"
+                        format="YYYY-MM-DD"
+                        placeholder="开始日期"
+                        @change="batchPropertyStartDateChange" />
+                    <span class="batch-date-separator">至</span>
+                    <a-date-picker
+                        class="batch-date-picker"
+                        :value="batchTimeForm.property_service_end_time ? moment(batchTimeForm.property_service_end_time, dateFormat) : null"
+                        format="YYYY-MM-DD"
+                        placeholder="结束日期"
+                        @change="batchPropertyEndDateChange" />
+                </div>
+                <div class="batch-time-row">
+                    <span class="batch-time-label">交房时间：</span>
+                    <a-date-picker
+                        class="batch-date-picker"
+                        :value="batchTimeForm.delivery_time ? moment(batchTimeForm.delivery_time, dateFormat) : null"
+                        format="YYYY-MM-DD"
+                        placeholder="请选择日期"
+                        @change="batchDeliveryDateChange" />
+                </div>
+                <div class="batch-time-row">
+                    <span class="batch-time-label">申请原因：</span>
+                    <a-input class="batch-reason-input" v-model="batchTimeForm.apply_reason" placeholder="请输入申请原因" />
+                </div>
+            </div>
+            <a-table
+                rowKey="pigcms_id"
+                size="small"
+                :columns="batchRoomColumns"
+                :data-source="batchRoomList"
+                :pagination="batchPagination"
+                :loading="batchRoomLoading"
+                :row-selection="{ selectedRowKeys: batchSelectedRowKeys, onChange: onBatchSelectChange }"
+                @change="batchTableChange">
+            </a-table>
+        </a-modal>
         
     </div>
 </template>
 
 <script>
     import Vue from 'vue';
+    import moment from 'moment';
     import villageNew from "@/api/community/village/villageNewApi";
     import villageApi from '@/api/community/village';
     import roomInfo from "../building/components/roomInfo.vue";
@@ -232,6 +286,39 @@
             let room_id=ref(0)
             let orderServicetimeCheckVisible= ref(false)
             let apply_count= ref(0)
+            let batchTimeVisible = ref(false)
+            let batchTimeSubmitting = ref(false)
+            let batchRoomLoading = ref(false)
+            let batchRoomList = ref([])
+            let batchSelectedRowKeys = ref([])
+            let batchOptions = ref([])
+            let batchPagination = ref({
+                pageSize: 10,
+                current: 1,
+                total: 0,
+                showTotal: total => `共 ${total} 条`,
+                showSizeChanger: true
+            })
+            let batchSearchInfo = ref({
+                single_id: null,
+                floor_id: null,
+                layer_id: null,
+                vacancy_id: null
+            })
+            let batchTimeForm = ref({
+                property_service_start_time: '',
+                property_service_end_time: '',
+                delivery_time: '',
+                apply_reason: '',
+                use_scope: false
+            })
+            const dateFormat = ref('YYYY-MM-DD')
+            let batchRoomColumns = ref([
+                { title: '房间', dataIndex: 'address', key: 'address' },
+                { title: '物业编号', dataIndex: 'usernum', key: 'usernum', width: 160 },
+                { title: '房间状态', dataIndex: 'room_status_txt', key: 'room_status_txt', width: 120 },
+                { title: '使用状态', dataIndex: 'user_status_txt', key: 'user_status_txt', width: 120 }
+            ])
             const getSearchObj = () => {
                 Vue.prototype.request('/community/village_api.Building/getRoomListConfig', {}).then((
                 res) => {
@@ -450,6 +537,9 @@
                             });
                         })
                         options.value = array
+                        if (batchTimeVisible.value && !batchOptions.value.length) {
+                            batchOptions.value = JSON.parse(JSON.stringify(array))
+                        }
                     }
                 })
             }
@@ -548,6 +638,191 @@
                     product_1.children.find(_ => _.value === selectedOptions[2])['children'] = children;
                     options.value = options_temp
                 }
+            }
+
+            const setBatchVisionsFunc = async (selectedOptions) => {
+                batchSearchInfo.value.single_id = null
+                batchSearchInfo.value.floor_id = null
+                batchSearchInfo.value.layer_id = null
+                batchSearchInfo.value.vacancy_id = null
+                if (selectedOptions.length >= 1) {
+                    batchSearchInfo.value.single_id = selectedOptions[0]
+                }
+                if (selectedOptions.length >= 2) {
+                    batchSearchInfo.value.floor_id = selectedOptions[1]
+                }
+                if (selectedOptions.length >= 3) {
+                    batchSearchInfo.value.layer_id = selectedOptions[2]
+                }
+                if (selectedOptions.length >= 4) {
+                    batchSearchInfo.value.vacancy_id = selectedOptions[3]
+                }
+                if (selectedOptions.length === 1) {
+                    const options_temp = [...batchOptions.value];
+                    const res = await getFloorList(selectedOptions[0]);
+                    const children = [];
+                    res.map(pro => {
+                        children.push({
+                            label: pro.name,
+                            value: pro.id,
+                            isLeaf: false
+                        });
+                        return true;
+                    });
+                    options_temp.find(_ => _.value === selectedOptions[0])['children'] = children;
+                    batchOptions.value = options_temp
+                } else if (selectedOptions.length === 2) {
+                    const apps = await getLayerList(selectedOptions[1]);
+                    const options_temp = [...batchOptions.value];
+                    const children = [];
+                    apps.map(pro => {
+                        children.push({
+                            label: pro.name,
+                            value: pro.id,
+                            isLeaf: false
+                        });
+                        return true;
+                    });
+                    const product = options_temp.find(_ => _.value === selectedOptions[0]);
+                    product.children.find(_ => _.value === selectedOptions[1])['children'] = children;
+                    batchOptions.value = options_temp
+                } else if (selectedOptions.length === 3) {
+                    const apps = await getVacancyList(selectedOptions[2])
+                    const options_temp = [...batchOptions.value];
+                    const children = [];
+                    apps.map(pro => {
+                        children.push({
+                            label: pro.name,
+                            value: pro.id,
+                            isLeaf: true
+                        });
+                        return true;
+                    });
+                    const product = options_temp.find(_ => _.value === selectedOptions[0]);
+                    const product_1 = product.children.find(_ => _.value === selectedOptions[1])
+                    product_1.children.find(_ => _.value === selectedOptions[2])['children'] = children;
+                    batchOptions.value = options_temp
+                }
+            }
+
+            const openBatchTimeChange = () => {
+                batchTimeVisible.value = true
+                batchSelectedRowKeys.value = []
+                batchSearchInfo.value = {
+                    single_id: null,
+                    floor_id: null,
+                    layer_id: null,
+                    vacancy_id: null
+                }
+                batchTimeForm.value = {
+                    property_service_start_time: '',
+                    property_service_end_time: '',
+                    delivery_time: '',
+                    apply_reason: '',
+                    use_scope: false
+                }
+                batchOptions.value = JSON.parse(JSON.stringify(options.value || []))
+                if (!batchOptions.value.length) {
+                    getSingleListByVillage()
+                }
+                getBatchRoomList(true)
+            }
+
+            const getBatchRoomList = (resetPage) => {
+                if (resetPage) {
+                    batchPagination.value.current = 1
+                }
+                batchRoomLoading.value = true
+                Vue.prototype.request('/community/village_api.Building/getRoomDataList', {
+                    page: batchPagination.value.current,
+                    limit: batchPagination.value.pageSize,
+                    single_id: batchSearchInfo.value.single_id,
+                    floor_id: batchSearchInfo.value.floor_id,
+                    layer_id: batchSearchInfo.value.layer_id,
+                    vacancy_id: batchSearchInfo.value.vacancy_id,
+                }).then((res) => {
+                    batchRoomList.value = res.list || []
+                    batchPagination.value.total = res.count || 0
+                }).finally(() => {
+                    batchRoomLoading.value = false
+                })
+            }
+
+            const batchTableChange = ({ pageSize, current }) => {
+                batchPagination.value.current = current
+                batchPagination.value.pageSize = pageSize
+                getBatchRoomList(false)
+            }
+
+            const onBatchSelectChange = (rowKeys) => {
+                batchSelectedRowKeys.value = rowKeys
+            }
+
+            const batchPropertyStartDateChange = (date, dateString) => {
+                batchTimeForm.value.property_service_start_time = dateString
+            }
+
+            const batchPropertyEndDateChange = (date, dateString) => {
+                batchTimeForm.value.property_service_end_time = dateString
+            }
+
+            const batchDeliveryDateChange = (date, dateString) => {
+                batchTimeForm.value.delivery_time = dateString
+            }
+
+            const handleBatchTimeSubmit = () => {
+                if (!batchSelectedRowKeys.value.length && !batchTimeForm.value.use_scope) {
+                    Vue.prototype.$message.warning('请选择要修改的房间')
+                    return
+                }
+                if (batchTimeForm.value.use_scope && !batchSearchInfo.value.single_id && !batchSearchInfo.value.floor_id && !batchSearchInfo.value.layer_id && !batchSearchInfo.value.vacancy_id) {
+                    Vue.prototype.$message.warning('请选择楼栋、单元、楼层或房间范围')
+                    return
+                }
+                const changeFields = {}
+                if (batchTimeForm.value.property_service_start_time) {
+                    changeFields.property_service_start_time = batchTimeForm.value.property_service_start_time
+                }
+                if (batchTimeForm.value.property_service_end_time) {
+                    changeFields.property_service_end_time = batchTimeForm.value.property_service_end_time
+                }
+                if (batchTimeForm.value.delivery_time) {
+                    changeFields.delivery_time = batchTimeForm.value.delivery_time
+                }
+                if (!Object.keys(changeFields).length) {
+                    Vue.prototype.$message.warning('请选择物业服务时间或交房时间')
+                    return
+                }
+                batchTimeSubmitting.value = true
+                const postData = {
+                    room_ids: batchSelectedRowKeys.value,
+                    use_scope: batchTimeForm.value.use_scope ? 1 : 0,
+                    single_id: batchSearchInfo.value.single_id,
+                    floor_id: batchSearchInfo.value.floor_id,
+                    layer_id: batchSearchInfo.value.layer_id,
+                    vacancy_id: batchSearchInfo.value.vacancy_id,
+                }
+                Object.assign(postData, changeFields)
+                if (batchTimeForm.value.apply_reason) {
+                    postData.apply_reason = batchTimeForm.value.apply_reason
+                }
+                Vue.prototype.request(villageApi.batchRoomTimeChangeApply, postData).then((res) => {
+                    Vue.prototype.$message.success(res.msg || '申请已提交')
+                    handleBatchTimeCancel()
+                    getTableList()
+                }).finally(() => {
+                    batchTimeSubmitting.value = false
+                })
+            }
+
+            const handleBatchTimeCancel = () => {
+                batchTimeVisible.value = false
+                batchRoomList.value = []
+                batchSelectedRowKeys.value = []
+                batchTimeForm.value.property_service_start_time = ''
+                batchTimeForm.value.property_service_end_time = ''
+                batchTimeForm.value.delivery_time = ''
+                batchTimeForm.value.apply_reason = ''
             }
 
             const deleteRoom = (id) => {
@@ -712,6 +987,7 @@
                 getLayerList,
                 getVacancyList,
                 setVisionsFunc,
+                setBatchVisionsFunc,
                 loadDataFunc,
                 roomId,
                 deleteRoom,
@@ -762,7 +1038,27 @@
                 orderServicetimeCheckVisible,
                 closeOrderServicetimeCheck,
                 showOrderServicetimeCheck,
-                apply_count
+                apply_count,
+                batchTimeVisible,
+                batchTimeSubmitting,
+                batchRoomLoading,
+                batchRoomList,
+                batchSelectedRowKeys,
+                batchOptions,
+                batchPagination,
+                batchTimeForm,
+                batchRoomColumns,
+                moment,
+                dateFormat,
+                openBatchTimeChange,
+                getBatchRoomList,
+                batchTableChange,
+                onBatchSelectChange,
+                batchPropertyStartDateChange,
+                batchPropertyEndDateChange,
+                batchDeliveryDateChange,
+                handleBatchTimeSubmit,
+                handleBatchTimeCancel
             }
         }
     })
@@ -796,5 +1092,58 @@
             align-items: center;
             justify-content: flex-start;
         }
+    }
+
+    .batch-time-form {
+        margin-bottom: 14px;
+        padding: 6px 0;
+    }
+
+    .batch-time-row {
+        display: flex;
+        align-items: center;
+        min-height: 38px;
+        margin-bottom: 10px;
+    }
+
+    .batch-time-label {
+        width: 118px;
+        padding-right: 8px;
+        text-align: right;
+        color: rgba(0, 0, 0, 0.85);
+        flex: 0 0 118px;
+    }
+
+    .batch-room-cascader {
+        width: 300px;
+        margin-right: 14px;
+    }
+
+    .batch-scope-checkbox {
+        display: inline-flex;
+        align-items: center;
+        height: 32px;
+        margin-left: 24px;
+        color: rgba(0, 0, 0, 0.65);
+        font-size: 14px;
+        line-height: 32px;
+    }
+
+    .batch-scope-checkbox .ant-checkbox {
+        top: 0;
+    }
+
+    .batch-date-picker {
+        width: 220px;
+    }
+
+    .batch-date-separator {
+        width: 28px;
+        text-align: center;
+        color: rgba(0, 0, 0, 0.45);
+    }
+
+    .batch-reason-input {
+        width: 620px;
     }
 </style>

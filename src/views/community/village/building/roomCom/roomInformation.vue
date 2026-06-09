@@ -16,6 +16,35 @@
                     <a-input v-model="roomForm.room" :placeholder="'请输入'+$store.getters.config.room_name+'号'" />
                 </a-form-model-item>
 
+                <a-form-model-item label="物业服务时间" class="form_item">
+                    <a-date-picker
+                        style="width: 180px"
+                        :value="roomForm.property_service_start_time ? moment(roomForm.property_service_start_time, dateFormat) : null"
+                        format="YYYY-MM-DD"
+                        placeholder="开始日期"
+                        @change="changePropertyServiceStartTime" />
+                    <span style="display: inline-block;width: 28px;text-align: center;">至</span>
+                    <a-date-picker
+                        style="width: 180px"
+                        :value="roomForm.property_service_end_time ? moment(roomForm.property_service_end_time, dateFormat) : null"
+                        format="YYYY-MM-DD"
+                        placeholder="结束日期"
+                        @change="changePropertyServiceEndTime" />
+                </a-form-model-item>
+                <a-form-model-item label="交房时间" class="form_item">
+                    <a-date-picker
+                        style="width: 220px"
+                        v-if="roomForm.delivery_time"
+                        :value="moment(roomForm.delivery_time, dateFormat)"
+                        format="YYYY-MM-DD"
+                        @change="changeDeliveryTime" />
+                    <a-date-picker
+                        style="width: 220px"
+                        v-else
+                        format="YYYY-MM-DD"
+                        @change="changeDeliveryTime" />
+                </a-form-model-item>
+
                 <a-form-model-item class="form_item" :extra="'设置'+$store.getters.config.room_name+'时间范围，设置后物业只能收取合同时间内收费项目，未到合同开始时间或结束时间不能收费；未设置物业服务'+$store.getters.config.house_name+'时间范围，则不影响。'">
                     <span slot="label">
                         <a-tooltip
@@ -277,6 +306,9 @@
                 water_balance:'',
                 lease_time_start:'',
                 lease_time_end:'',
+                property_service_start_time:'',
+                property_service_end_time:'',
+                delivery_time:'',
             })
             let water_electric_gas_module = ref({})
             let many_water_electric_meter = ref({})
@@ -363,6 +395,14 @@
                 }
                 
             }
+
+            const changePropertyServiceStartTime = (date,dateString) => {
+                roomForm.value.property_service_start_time = dateString
+            }
+
+            const changePropertyServiceEndTime = (date,dateString) => {
+                roomForm.value.property_service_end_time = dateString
+            }
             
             // const onDateChange = (date, dateString, type) => {
             //     roomForm.value[type] = dateString
@@ -375,6 +415,9 @@
 
            const changeHouseInTime=(date,dateString)=>{
                 roomForm.value.house_in_time=dateString;
+            }
+            const changeDeliveryTime=(date,dateString)=>{
+                roomForm.value.delivery_time=dateString;
             }
             const handleSelectChange = (value, type) => {
                 roomForm.value[type] = value
@@ -468,6 +511,8 @@
                 moment,
                 dateFormat,
                 onDateChange,
+                changePropertyServiceStartTime,
+                changePropertyServiceEndTime,
                 a185_indoor_module,
                 water_electric_gas_module,
                 pageLoading,
@@ -482,6 +527,7 @@
                 handleRoomSelectChange,
                 is_aihorse_customized,
                 changeHouseInTime,
+                changeDeliveryTime,
                 room_imgs,
                 handleUploadPreviewStart,
                 handleUploadCancelStart,

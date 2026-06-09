@@ -827,6 +827,22 @@ const configVillageApi = {
     commonGetWorks: '/community/common.Materiel/getWorks',
     commonGetTypeMsgList: '/community/common.Materiel/getTypeMsgList',
     commonMaterielCheckoutsAdd: '/community/common.Materiel/materielCheckoutsAdd',
+
+    approvalFlowList: '/community/village_api.ApprovalFlow/flowList', // 审批流列表
+    approvalFlowDetail: '/community/village_api.ApprovalFlow/flowDetail', // 审批流详情
+    approvalFlowSave: '/community/village_api.ApprovalFlow/flowSave', // 新增/编辑审批流
+    approvalFlowStatus: '/community/village_api.ApprovalFlow/flowStatus', // 启用/停用审批流
+    approvalBusinessTypeList: '/community/village_api.ApprovalFlow/businessTypeList', // 审批业务类型列表
+    approvalBusinessTypeSave: '/community/village_api.ApprovalFlow/businessTypeSave', // 新增/编辑审批业务类型
+    approvalBusinessTypeStatus: '/community/village_api.ApprovalFlow/businessTypeStatus', // 启用/停用审批业务类型
+    approvalBusinessTypeOptions: '/community/village_api.ApprovalFlow/businessTypeOptions', // 审批业务类型下拉选项
+    approvalPropertyWorkers: '/community/village_api.ApprovalFlow/propertyWorkers', // 审批人列表
+    approvalInstanceList: '/community/village_api.ApprovalFlow/instanceList', // 审批记录列表
+    approvalInstanceDetail: '/community/village_api.ApprovalFlow/instanceDetail', // 审批记录详情
+    approvalAction: '/community/village_api.ApprovalFlow/approvalAction', // 审批通过/驳回/撤回
+    approvalCreate: '/community/village_api.ApprovalFlow/createInstance', // 创建审批申请
+    roomTimeChangeApply: '/community/village_api.Building/applyRoomTimeChange', // 单个房间时间修改申请
+    batchRoomTimeChangeApply: '/community/village_api.Building/batchApplyRoomTimeChange', // 批量房间时间修改申请
     
     getAihorseThirdGarageInfo:'/community/village_api.AiParking/getAihorseThirdGarageInfo', //智慧停车服务商系统
     getAihorseGaragePassageList:'/community/village_api.AiParking/getAihorseGaragePassageList', //智慧停车服务商系统
