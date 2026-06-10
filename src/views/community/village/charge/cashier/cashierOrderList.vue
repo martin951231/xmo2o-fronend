@@ -272,6 +272,18 @@
                     v-if="role_payment==1">
                     收款
                 </a-button>
+                <a-button class="margin_left_10 margin_top_20" type="primary" @click="showManualBillModal"
+                    v-if="user_info.vacancy_id && !is_car">
+                    新增账单
+                </a-button>
+                <a-button class="margin_left_10 margin_top_20" type="primary" @click="syncVacancyFeeBill"
+                    v-if="user_info.vacancy_id && !is_car">
+                    更新空置费
+                </a-button>
+                <a-button class="margin_left_10 margin_top_20" type="primary" @click="$refs.ManualBillModal.openVacancyConfig(user_info.vacancy_id)"
+                    v-if="!is_car">
+                    空置费配置
+                </a-button>
 
                 <a-button class="margin_left_10 margin_top_20" type="primary" @click="$refs.PrintModel.add(0,0,1)">
                     设置已缴打印模板
@@ -619,6 +631,15 @@
                     </div>
                     <div class="text_1" v-if="pay_type == 22">已输入金额：<span
                             style="color: red;font-size: 18px; font-weight: bold;">{{mixOfflinePayMoney}}</span></div>
+                </div>
+                <div class="flex_text_box margin_top_10" v-if="manual_deposit_available > 0 && [2, 22, 42].indexOf(Number(pay_type)) > -1">
+                    <div class="text_1">押金抵扣：</div>
+                    <div class="text_2">
+                        <a-input-number v-model="manual_deposit_money" class="input_style" :min="0"
+                            :max="Math.min(manual_deposit_available, pay_money)" :precision="4" :step="0.0001"
+                            style="width:150px;" /> 元
+                        <span style="margin-left: 8px;color:#999;">可用 {{ manual_deposit_available }} 元</span>
+                    </div>
                 </div>
 
                 <div class="flex_text_box margin_top_10 offline_con"
@@ -1202,6 +1223,7 @@
         <ChildrenPosition ref="ChildrenPositionModel"></ChildrenPosition>
         <CarList ref="CarListModel"></CarList>
         <allBalanceMoneyInfo ref="allBalanceMoneyInfo" @ok="reload"  />
+        <manual-bill-modal ref="ManualBillModal" @ok="reloadManualBill" />
     </div>
 </template>
 
@@ -1225,6 +1247,7 @@
     Vue.use(Viewer)
     import ExpressModel from "@/views/community/village/charge/components/expressModel";
     import allBalanceMoneyInfo from '@/views/community/village/storage/allBalanceInfo';
+    import ManualBillModal from '@/views/community/village/charge/cashier/manualBillModal'
     import store from '@/store';
     var _this
     const x = 3
@@ -1453,7 +1476,8 @@
             'a-collapse-panel': Collapse.Panel,
             PayableOrderList,
             marqueeLeft,
-            allBalanceMoneyInfo
+            allBalanceMoneyInfo,
+            ManualBillModal
         },
         data() {
             return {
@@ -1562,6 +1586,8 @@
                 selectedRows: [], // 选中的收费项
                 all_money: 0, // 应收金额
                 pay_money: 0, // 合计支付金额
+                manual_deposit_money: 0,
+                manual_deposit_available: 0,
                 discount_money: 0, //优惠总金额
                 prepaid_id: 0, // 预缴id
                 prepaid_list: [], // 预缴周期列表
@@ -2015,6 +2041,35 @@
                 _this.getOrderList(_this.default_key[0])
                 console.log('sdfsfsdfsdfdsfsdf')
             },
+            reloadManualBill() {
+                _this.getOrderList(_this.default_key[0])
+                _this.getCharges(_this.default_key[0])
+            },
+            showManualBillModal() {
+                if (!this.user_info.vacancy_id) {
+                    this.$message.warning('请选择房间')
+                    return
+                }
+                this.$refs.ManualBillModal.open(this.user_info.vacancy_id)
+            },
+            syncVacancyFeeBill(silent = false) {
+                if (!this.user_info.vacancy_id) {
+                    if (!silent) {
+                        this.$message.warning('请选择房间')
+                    }
+                    return
+                }
+                this.request(villageApi.syncVacancyFeeBill, {
+                    room_id: this.user_info.vacancy_id
+                }).then(res => {
+                    if (!silent) {
+                        this.$message.success(res.msg || '操作成功')
+                    }
+                    if (!silent || (res && res.data && res.data.order_id)) {
+                        this.reloadManualBill()
+                    }
+                })
+            },
             delAlert(id) {
                 _this.request(villageApi.delPosition, {
                     position_id: id
@@ -2031,6 +2086,7 @@
                     model_type: 1,
                     remark: _this.remark,
                     ticket_number: _this.ticket_number,
+                    new_deposit_money: _this.manual_deposit_money,
 		    uid:_this.user_info.uid,
                 };
         if(this.pay_type*1==9){
@@ -3198,6 +3254,15 @@
             		    _this.over_pay_money=0;
             		    _this.offline_pay_money=0;
                         _this.pay_money = res.pay_money * 1
+                        _this.manual_deposit_money = 0
+                        _this.manual_deposit_available = 0
+                        if (_this.user_info.vacancy_id && !_this.is_car) {
+                            _this.request(villageApi.depositAvailable, {
+                                room_id: _this.user_info.vacancy_id
+                            }).then(depositRes => {
+                                _this.manual_deposit_available = Number(depositRes.available_money || 0)
+                            })
+                        }
                         if (_this.pay_money <= 0) {
                             _this.pay_type = '2';
                             _this.payChange(2);
@@ -3449,6 +3514,11 @@
                     _this.is_selected = true
                     _this.getOrderList(val[0])
                     _this.getCharges(val[0])
+                    if (!_this.is_car && val[0].indexOf('|room') > -1) {
+                        setTimeout(() => {
+                            _this.syncVacancyFeeBill(true)
+                        }, 300)
+                    }
                 }
             },
             // 付款码支付
@@ -3480,6 +3550,7 @@
                     auth_code: _this.auth_code,
                     model_type: 1,
                     remark: _this.remark,
+                    new_deposit_money: _this.manual_deposit_money,
                     ticket_number: _this.ticket_number
                 }).then((res) => {
                     console.log('auth_code_pay', res)
@@ -3610,6 +3681,7 @@
                     auth_code: _this.auth_code,
                     fact_pay_money: _this.fact_pay_money,
                     pay_money: _this.pay_money,
+                    new_deposit_money: _this.manual_deposit_money,
                     model_type: 1,
                     uid: _this.user_info.uid,
 		    is_use_score:_this.is_use_score,

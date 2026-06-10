@@ -234,6 +234,18 @@ const configVillageApi = {
     getPrintCustomConfigureList: '/community/village_api.PrintTemplate/getPrintCustomConfigureList', //获取新版打印模板配置区选择字段列表
     addPrintTemplateCustom: '/community/village_api.PrintTemplate/addPrintTemplateCustom', //保存新版打印模板配置
     manualCall: '/community/village_api.cashier/manualCall', //手动生成账单
+    manualBillMeta: '/community/village_api.cashier/manualBillMeta', //新增账单初始化
+    manualBillCalc: '/community/village_api.cashier/manualBillCalc', //新增账单金额试算
+    manualBillCreate: '/community/village_api.cashier/manualBillCreate', //新增账单
+    vacancyFeeConfig: '/community/village_api.cashier/vacancyFeeConfig', //空置费配置
+    vacancyFeeConfigSave: '/community/village_api.cashier/vacancyFeeConfigSave', //保存空置费配置
+    syncVacancyFeeBill: '/community/village_api.cashier/syncVacancyFeeBill', //生成/更新空置费账单
+    thirdPartyCompanyList: '/community/village_api.cashier/thirdPartyCompanyList', //第三方承担公司列表
+    thirdPartyCompanySave: '/community/village_api.cashier/thirdPartyCompanySave', //保存第三方承担公司
+    depositAvailable: '/community/village_api.cashier/depositAvailable', //押金可用金额
+    depositFreeze: '/community/village_api.cashier/depositFreeze', //押金冻结
+    depositConfirm: '/community/village_api.cashier/depositConfirm', //押金确认抵扣
+    depositRelease: '/community/village_api.cashier/depositRelease', //押金释放
     delChargeStandardBind: '/community/village_api.cashier/delChargeStandardBind', //移除收费项
     ChargeProjectLists: '/community/village_api.cashier/ChargeProjectList', //收费项列表
     ChargeRuleLists: '/community/village_api.cashier/ChargeRuleList', //收费项目对应的标准列表
