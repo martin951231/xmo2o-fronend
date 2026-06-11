@@ -286,14 +286,8 @@
                                     </div>
                                 </a-form-model-item>
 
-                                <a-form-model-item label="场次时间" required :prop="'sessions.' + index + '.start_time'">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <a-time-picker v-model="session.start_time" format="HH:mm"
-                                            value-format="HH:mm" placeholder="开始时间" style="flex: 1;" :disabled="isView" />
-                                        <span>至</span>
-                                        <a-time-picker v-model="session.end_time" format="HH:mm"
-                                            value-format="HH:mm" placeholder="结束时间" style="flex: 1;" :disabled="isView" />
-                                    </div>
+                                <a-form-model-item label="场次时间" required :prop="'sessions.' + index + '.time_range'">
+                                    <a-range-picker v-model="session.time_range" style="width: 100%" show-time :disabled="isView" :show-time="{ format: 'HH:mm' }" format="YYYY-MM-DD HH:mm"/>
                                 </a-form-model-item>
 
                                 <a-form-model-item label="活动地点" required :prop="'sessions.' + index + '.location_type'">
@@ -550,30 +544,6 @@ export default {
                     }
                 ],
                 video: [],
-            },
-            //初始化场次信息
-            sessionsModel: {
-                name: '',
-                identity: 1,
-                gender: 1,
-                age_range: 0,
-                age_min: null,
-                age_max: null,
-                start_time: null,
-                end_time: null,
-                location_type: 1,
-                location_id: '',
-                location: '',
-                village_id: [],
-                tickets: [
-                    {
-                        name: '',
-                        price: '',
-                        num: '',
-                        point: true
-                    }
-                ],
-                ticket_time_range: null
             },
             columns: [
                 {
@@ -868,8 +838,30 @@ export default {
 
         // 添加场次
         addSession() {
-            console.log(this.sessionsModel, 33333333)
-            this.activityForm.sessions.push(this.sessionsModel)
+            let params = {
+                name: '',
+                identity: 1,
+                gender: 1,
+                age_range: 0,
+                age_min: null,
+                age_max: null,
+                start_time: null,
+                end_time: null,
+                location_type: 1,
+                location_id: '',
+                location: '',
+                village_id: [],
+                tickets: [
+                    {
+                        name: '',
+                        price: '',
+                        num: '',
+                        point: true
+                    }
+                ],
+                ticket_time_range: null
+            }
+            this.activityForm.sessions.push(params)
             // 确保响应式更新
             this.$forceUpdate()
         },
@@ -1056,7 +1048,10 @@ export default {
                             ticket_start_time: session.ticket_time_range && session.ticket_time_range[0] ? moment(session.ticket_time_range[0]).format('YYYY-MM-DD HH:mm') : '',
                             ticket_end_time: session.ticket_time_range && session.ticket_time_range[1] ? moment(session.ticket_time_range[1]).format('YYYY-MM-DD HH:mm') : '',
                             // 处理票种
-                            ticket_rule: JSON.stringify(session.tickets)
+                            ticket_rule: JSON.stringify(session.tickets),
+                            //处理场次时间
+                            start_time: session.time_range && session.time_range[0] ? moment(session.time_range[0]).format('YYYY-MM-DD HH:mm') : '',
+                            end_time: session.time_range  && session.time_range[1] ? moment(session.time_range[1]).format('YYYY-MM-DD HH:mm') : ''
                         }
                     })
 
