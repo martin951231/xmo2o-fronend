@@ -3,7 +3,7 @@
         <a-drawer
             :visible="visible"
             :title="title"
-            width="800"
+            width="1000"
             :closable="true"
             @close="handleClose"
         >
@@ -47,7 +47,6 @@
             :visible="signUpDetailVisible"
             :sessionId="currentSessionId"
             :sessionName="currentSessionName"
-            :id="id"
             @close="signUpDetailVisible = false"
             style="width: 800px;"
         />
@@ -126,6 +125,7 @@ export default {
                     showQuickJumper: true,
                     onChange: this.onPageChange,
                     onShowSizeChange: this.onPageSizeChange,
+                    showTotal: (total, range) => `共 ${total} 条记录`,
                 },
                 loading: false,
                 searchParams: {
@@ -134,7 +134,6 @@ export default {
                 signUpDetailVisible: false,
                 currentSessionId: 0,
                 currentSessionName: '',
-                id: 0, //场次关联某天id
             }
         },
     computed: {
@@ -187,8 +186,7 @@ export default {
             this.$emit('close')
         },
         showSignUpDetail(record) {
-            this.currentSessionId = record.session_id
-            this.id = record.id
+            this.currentSessionId = record.id
             this.currentSessionName = record.name
             this.signUpDetailVisible = true
         },

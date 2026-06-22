@@ -236,7 +236,10 @@ const configVillageApi = {
     manualCall: '/community/village_api.cashier/manualCall', //手动生成账单
     manualBillMeta: '/community/village_api.cashier/manualBillMeta', //新增账单初始化
     manualBillCalc: '/community/village_api.cashier/manualBillCalc', //新增账单金额试算
+    manualBillRuleList: '/community/village_api.cashier/manualBillRuleList', //新增账单可选月度收费标准
+    manualBillRuleInfo: '/community/village_api.cashier/manualBillRuleInfo', //新增账单收费标准详情
     manualBillCreate: '/community/village_api.cashier/manualBillCreate', //新增账单
+    manualBillSplit: '/community/village_api.cashier/manualBillSplit', //第三方承担拆分子账单
     vacancyFeeConfig: '/community/village_api.cashier/vacancyFeeConfig', //空置费配置
     vacancyFeeConfigSave: '/community/village_api.cashier/vacancyFeeConfigSave', //保存空置费配置
     syncVacancyFeeBill: '/community/village_api.cashier/syncVacancyFeeBill', //生成/更新空置费账单
@@ -246,6 +249,12 @@ const configVillageApi = {
     depositFreeze: '/community/village_api.cashier/depositFreeze', //押金冻结
     depositConfirm: '/community/village_api.cashier/depositConfirm', //押金确认抵扣
     depositRelease: '/community/village_api.cashier/depositRelease', //押金释放
+    depositCategoryList: '/community/village_api.cashier/depositCategoryList', //押金分类列表
+    depositCategoryOptions: '/community/village_api.cashier/depositCategoryOptions', //押金分类选项
+    depositCategorySave: '/community/village_api.cashier/depositCategorySave', //保存押金分类
+    depositCategoryStatus: '/community/village_api.cashier/depositCategoryStatus', //启用/禁用押金分类
+    depositCategoryDelete: '/community/village_api.cashier/depositCategoryDelete', //删除押金分类
+    depositBillCreate: '/community/village_api.cashier/depositBillCreate', //新增押金账单
     delChargeStandardBind: '/community/village_api.cashier/delChargeStandardBind', //移除收费项
     ChargeProjectLists: '/community/village_api.cashier/ChargeProjectList', //收费项列表
     ChargeRuleLists: '/community/village_api.cashier/ChargeRuleList', //收费项目对应的标准列表

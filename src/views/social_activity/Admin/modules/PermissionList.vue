@@ -1,7 +1,7 @@
 <template>
     <div class="permission-management">
         <div class="content-container">
-            <div v-saction:permission_create  class="action-container" >
+            <div v-saction:permission_create class="action-container">
                 <a-button type="primary" @click="showPermissionModal">添加权限角色</a-button>
             </div>
 
@@ -9,10 +9,10 @@
                 class="main-table">
                 <template slot="action" slot-scope="record">
                     <div class="action-buttons">
-                        <a v-if="!isSuperAdmin(record)" v-saction:permission_edit  href="#" class="action-btn edit-btn"
+                        <a v-if="!isSuperAdmin(record)" v-saction:permission_edit href="#" class="action-btn edit-btn"
                             @click="showEditModal(record)">编辑</a>
-                        <a v-if="!isSuperAdmin(record)" v-saction:permission_delete  href="#" class="action-btn delete-btn"
-                            @click="showDeleteModal(record)">删除</a>
+                        <a v-if="!isSuperAdmin(record)" v-saction:permission_delete href="#"
+                            class="action-btn delete-btn" @click="showDeleteModal(record)">删除</a>
                         <span v-else class="action-btn disabled-btn">超级管理员</span>
                     </div>
                 </template>
@@ -23,30 +23,55 @@
             :mask-closable="false" :closable="true" @ok="handleSubmit" @cancel="handleCancel">
             <div class="permission-content">
                 <a-form layout="horizontal">
-                    <a-form-item label="角色名称" :label-col="{ span: 2}" :wrapper-col="{ span: 10}">
+                    <a-form-item label="角色名称" :label-col="{ span: 2 }" :wrapper-col="{ span: 10 }">
                         <a-input v-model="formData.name" placeholder="请输入角色名称" />
                     </a-form-item>
                 </a-form>
 
                 <div class="permissions-section">
                     <div class="permission-table-container">
-                        <div class="permission-table">
-                            <div class="permission-header">
-                                <div class="menu-cell">菜单名称</div>
-                                <div class="actions-cell">权限操作</div>
-                            </div>
-                            <div v-for="(item, index) in menuTree" :key="item.id" class="permission-row">
-                                <div class="menu-cell">
-                                    <a-checkbox :checked="item.checked" @change="toggleMenu(item)">{{ item.title}}</a-checkbox>
+                        <template v-for="item in menuTree">
+                            <div v-if="item.type === 1" class="permission-group" :key="item.id">
+                                <div class="group-header" @click="toggleGroup(item)">
+                                    <span class="arrow" :class="{ 'arrow-open': item._open }">&#9654;</span>
+                                    <a-checkbox :checked="item.checked" :indeterminate="item.indeterminate"
+                                        @change="toggleMenu(item)" @click.native.stop>{{ item.title }}</a-checkbox>
                                 </div>
-                                <div class="actions-cell">
-                                    <div class="action-group">
-                                        <a-checkbox v-for="action in item.children" :key="action.id"
-                                            :checked="action.checked" @change="toggleAction(item, action)">{{action.title }}</a-checkbox>
+                                <div v-show="item._open" class="group-body">
+                                    <div v-for="menu in item.children" :key="menu.id" class="permission-row">
+                                        <div class="menu-cell">
+                                            <a-checkbox :checked="menu.checked" :indeterminate="menu.indeterminate"
+                                                :disabled="menu.forceChecked"
+                                                @change="toggleMenu(menu)">{{ menu.title }}</a-checkbox>
+                                        </div>
+                                        <div class="actions-cell">
+                                            <div v-if="menu.children && menu.children.length" class="action-group">
+                                                <a-checkbox v-for="action in menu.children" :key="action.id"
+                                                    :checked="action.checked" @change="toggleAction(menu, action)">{{ action.title }}</a-checkbox>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                            <div class="permission-group" v-else-if="item.type === 2">
+                                <div class="group-body">
+                                    <div class="permission-row">
+                                        <div class="menu-cell">
+                                            <a-checkbox :checked="item.checked" :indeterminate="item.indeterminate"
+                                                :disabled="item.forceChecked"
+                                                @change="toggleMenu(item)">{{ item.title }}</a-checkbox>
+                                        </div>
+                                        <div class="actions-cell">
+                                            <div v-if="item.children && item.children.length" class="action-group">
+                                                <a-checkbox v-for="action in item.children" :key="action.id"
+                                                    :checked="action.checked" @change="toggleAction(item, action)">{{
+                                                    action.title }}</a-checkbox>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -130,7 +155,6 @@ export default {
                 permissions: []
             }
             this.loadMenuTree(() => {
-                this.resetMenuTree()
                 this.modalVisible = true
             })
         },
@@ -151,76 +175,211 @@ export default {
         loadMenuTree(callback) {
             this.request(socialActivityApi.getMenuTreeList, {}).then((res) => {
                 const menuData = res.data || res || []
-                this.menuTree = menuData.filter(item => item.type === 2)
-                this.menuTree.forEach(item => {
-                    this.$set(item, 'checked', false)
-                    if (item.children) {
-                        item.children = item.children.filter(child => child.type === 3)
-                        item.children.forEach(action => {
-                            this.$set(action, 'checked', false)
-                        })
+                const list = []
+                menuData.forEach(item => {
+                    if (item.type === 1) {
+                        list.push(this.normalizeGroup(item))
+                    } else if (item.type === 2) {
+                        list.push(this.normalizeMenu(item))
                     }
                 })
+                this.menuTree = list
                 if (callback) {
                     callback()
                 }
             })
         },
 
-        resetMenuTree() {
-            this.menuTree.forEach(item => {
-                this.$set(item, 'checked', false)
-                if (item.children) {
-                    item.children.forEach(action => {
-                        this.$set(action, 'checked', false)
+        normalizeGroup(group) {
+            const result = {
+                id: group.id,
+                pid: group.pid,
+                title: group.title,
+                type: group.type,
+                _open: true,
+                checked: false,
+                indeterminate: false,
+                children: []
+            }
+            if (group.children && Array.isArray(group.children)) {
+                result.children = group.children
+                    .filter(c => c.type === 2)
+                    .map(menu => {
+                        const m = this.normalizeMenu(menu)
+                        m.pidGroup = result
+                        return m
                     })
-                }
-            })
+            }
+            return result
         },
 
-        setMenuTree(permissions) {
-            this.menuTree.forEach(item => {
-                this.$set(item, 'checked', permissions.includes(item.id))
-                if (item.children) {
-                    item.children.forEach(action => {
-                        this.$set(action, 'checked', permissions.includes(action.id))
-                    })
-                }
-            })
+        normalizeMenu(menu) {
+            const forceChecked = menu.component === 'SocialActivityIndex'
+            const result = {
+                id: menu.id,
+                pid: menu.pid,
+                title: menu.title,
+                type: menu.type,
+                forceChecked: forceChecked,
+                checked: forceChecked,
+                indeterminate: false,
+                children: []
+            }
+            if (menu.children && Array.isArray(menu.children)) {
+                result.children = menu.children
+                    .filter(c => c.type === 3)
+                    .map(action => ({
+                        id: action.id,
+                        pid: action.pid,
+                        title: action.title,
+                        type: action.type,
+                        checked: false
+                    }))
+            }
+            return result
+        },
+
+        toggleGroup(group) {
+            this.$set(group, '_open', !group._open)
         },
 
         toggleMenu(item) {
-            this.$set(item, 'checked', !item.checked)
-            if (item.children) {
+            if (item.forceChecked) return
+            const newVal = !item.checked
+            this.$set(item, 'checked', newVal)
+            this.$set(item, 'indeterminate', false)
+
+            if (item.type === 1 && item.children) {
+                item.children.forEach(menu => {
+                    if (menu.forceChecked) return
+                    this.$set(menu, 'checked', newVal)
+                    this.$set(menu, 'indeterminate', false)
+                    if (menu.children) {
+                        menu.children.forEach(action => {
+                            this.$set(action, 'checked', newVal)
+                        })
+                    }
+                })
+            } else if (item.type === 2 && item.children) {
                 item.children.forEach(action => {
-                    this.$set(action, 'checked', item.checked)
+                    this.$set(action, 'checked', newVal)
                 })
             }
         },
 
-        toggleAction(item, action) {
+        toggleAction(menu, action) {
             this.$set(action, 'checked', !action.checked)
-            if (item.children) {
-                const anyChecked = item.children.some(a => a.checked)
-                this.$set(item, 'checked', anyChecked)
+        },
+
+        collectMenuPermissions(menu, out) {
+            let hasActionChecked = false
+            if (menu.children && menu.children.length) {
+                menu.children.forEach(action => {
+                    if (action.checked) {
+                        hasActionChecked = true
+                        out.push(action.id)
+                    }
+                })
+                if (hasActionChecked || menu.checked) {
+                    out.push(menu.id)
+                }
+            } else if (menu.checked) {
+                out.push(menu.id)
             }
+        },
+
+        setMenuTree(permissions) {
+            const ids = permissions.map(Number)
+            this.menuTree.forEach(item => {
+                if (item.type === 1) {
+                    let anyMenuChecked = false
+                    item.children.forEach(menu => {
+                        if (menu.forceChecked) {
+                            this.$set(menu, 'checked', true)
+                            this.$set(menu, 'indeterminate', false)
+                            anyMenuChecked = true
+                            if (menu.children) {
+                                menu.children.forEach(action => {
+                                    this.$set(action, 'checked', true)
+                                })
+                            }
+                        } else if (menu.children && menu.children.length) {
+                            let anyActionChecked = false
+                            menu.children.forEach(action => {
+                                const checked = ids.includes(action.id)
+                                this.$set(action, 'checked', checked)
+                                if (checked) anyActionChecked = true
+                            })
+                            const menuChecked = ids.includes(menu.id) || anyActionChecked
+                            this.$set(menu, 'checked', menuChecked)
+                            this.$set(menu, 'indeterminate', false)
+                            if (menuChecked) anyMenuChecked = true
+                        } else {
+                            const checked = ids.includes(menu.id)
+                            this.$set(menu, 'checked', checked)
+                            this.$set(menu, 'indeterminate', false)
+                            if (checked) anyMenuChecked = true
+                        }
+                    })
+                    const groupChecked = ids.includes(item.id) || anyMenuChecked
+                    this.$set(item, 'checked', groupChecked)
+                    this.$set(item, 'indeterminate', false)
+                } else if (item.type === 2) {
+                    if (item.forceChecked) {
+                        this.$set(item, 'checked', true)
+                        this.$set(item, 'indeterminate', false)
+                        if (item.children) {
+                            item.children.forEach(action => {
+                                this.$set(action, 'checked', true)
+                            })
+                        }
+                    } else if (item.children && item.children.length) {
+                        let anyActionChecked = false
+                        item.children.forEach(action => {
+                            const checked = ids.includes(action.id)
+                            this.$set(action, 'checked', checked)
+                            if (checked) anyActionChecked = true
+                        })
+                        const menuChecked = ids.includes(item.id) || anyActionChecked
+                        this.$set(item, 'checked', menuChecked)
+                        this.$set(item, 'indeterminate', false)
+                    } else {
+                        this.$set(item, 'checked', ids.includes(item.id))
+                        this.$set(item, 'indeterminate', false)
+                    }
+                }
+            })
         },
 
         collectPermissions() {
             const permissions = []
             this.menuTree.forEach(item => {
-                if (item.checked) {
-                    permissions.push(item.id)
-                }
-                if (item.children) {
-                    item.children.forEach(action => {
-                        if (action.checked) {
-                            permissions.push(action.id)
-                        }
+                if (item.type === 1) {
+                    item.children.forEach(menu => {
+                        this.collectMenuPermissions(menu, permissions)
                     })
+                } else if (item.type === 2) {
+                    this.collectMenuPermissions(item, permissions)
                 }
             })
             return permissions
+        },
+
+        collectMenuPermissions(menu, out) {
+            if (menu.children && menu.children.length) {
+                let hasActionChecked = false
+                menu.children.forEach(action => {
+                    if (action.checked) {
+                        hasActionChecked = true
+                        out.push(action.id)
+                    }
+                })
+                if (hasActionChecked || menu.checked) {
+                    out.push(menu.id)
+                }
+            } else if (menu.checked) {
+                out.push(menu.id)
+            }
         },
 
         handleSubmit() {
@@ -249,10 +408,12 @@ export default {
             this.$set(this.pagination, 'pageSize', pageSize)
             this.getRoleList()
         },
+
         showDeleteModal(record) {
             this.deleteId = record.id
             this.deleteModalVisible = true
         },
+
         handleDelete() {
             this.request(socialActivityApi.deleteRole, { id: this.deleteId }).then((res) => {
                 this.$message.success('删除成功')
@@ -260,6 +421,7 @@ export default {
                 this.getRoleList()
             })
         },
+
         isSuperAdmin(record) {
             return record.id === 1
         }
@@ -453,6 +615,7 @@ export default {
 
 .permissions-section {
     margin-top: 10px;
+
     .permission-table-container {
         max-height: 500px;
         overflow-y: auto;
@@ -460,36 +623,54 @@ export default {
         border-radius: 4px;
         overflow-x: hidden;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
 
-        .permission-table {
-            .permission-header {
-                display: flex;
-                align-items: center;
-                padding: 16px 20px;
-                background-color: #f5f5f5;
-                border-bottom: 1px solid #e8e8e8;
-                font-size: 14px;
-                font-weight: 600;
-                color: #666;
+    .permission-group {
+        border-bottom: 1px solid #e8e8e8;
 
-                .menu-cell {
-                    width: 300px;
-                    flex-shrink: 0;
-                    padding-right: 24px;
-                    border-right: 1px solid #e8e8e8;
-                }
+        &:last-child {
+            border-bottom: none;
+        }
 
-                .actions-cell {
-                    flex: 1;
-                    padding-left: 24px;
-                }
+        .group-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            background-color: #f0f2f5;
+            cursor: pointer;
+            font-weight: 600;
+            color: #333;
+
+            &:hover {
+                background-color: #e6f0ff;
             }
 
+            .arrow {
+                display: inline-block;
+                width: 14px;
+                font-size: 10px;
+                color: #666;
+                margin-right: 8px;
+                transition: transform 0.2s;
+            }
+
+            .arrow-open {
+                transform: rotate(90deg);
+            }
+
+            :deep(.ant-checkbox-wrapper) {
+                font-size: 14px;
+                font-weight: 600;
+                color: #333;
+            }
+        }
+
+        .group-body {
             .permission-row {
                 display: flex;
                 align-items: flex-start;
-                padding: 20px;
-                border-bottom: 1px solid #e8e8e8;
+                padding: 14px 20px;
+                border-bottom: 1px solid #f0f0f0;
 
                 &:last-child {
                     border-bottom: none;
@@ -500,31 +681,31 @@ export default {
                 }
 
                 .menu-cell {
-                    width: 300px;
+                    width: 220px;
                     flex-shrink: 0;
-                    padding-right: 24px;
-                    border-right: 1px solid #e8e8e8;
+                    padding-right: 16px;
+                    border-right: 1px solid #f0f0f0;
 
                     :deep(.ant-checkbox-wrapper) {
-                        font-size: 14px;
-                        font-weight: 600;
+                        font-size: 13px;
+                        font-weight: 500;
                         color: #333;
                     }
                 }
 
                 .actions-cell {
                     flex: 1;
-                    padding-left: 24px;
+                    padding-left: 16px;
 
                     .action-group {
                         display: flex;
                         flex-wrap: wrap;
-                        gap: 24px;
+                        gap: 20px;
 
                         :deep(.ant-checkbox-wrapper) {
                             font-size: 13px;
                             color: #666;
-                            margin-bottom: 8px;
+                            margin-bottom: 4px;
 
                             &:hover {
                                 color: #1890FF;

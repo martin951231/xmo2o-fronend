@@ -143,6 +143,7 @@ const path = {
     houseSensorsSensorsList: '/village/village.iframe/house_sensors_sensors_list', // 门禁感应器管理
     houseRecordsRecordsList: '/village/village.iframe/house_records_records_list', // 门禁出入记录管理
     houseNonMotorizedVehicleList: '/village/village.iframe/house_non_motorized_vehicle_list', // 非机动车管理
+    houseDepositCateIndex: '/village/village.iframe/house_deposit_cate_index', // 押金分类管理
     chatRecord: '/community/village/building/roomCom/ownerCom/chatRecord', //聊天记录
     // 2.4小区-智能电表
     meterLogin: '/user/meter/login', // 登录

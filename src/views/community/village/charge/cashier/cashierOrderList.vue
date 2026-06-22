@@ -276,6 +276,10 @@
                     v-if="user_info.vacancy_id && !is_car">
                     新增账单
                 </a-button>
+                <a-button class="margin_left_10 margin_top_20" type="primary" @click="showDepositBillModal"
+                    v-if="user_info.vacancy_id && !is_car">
+                    新增押金账单
+                </a-button>
                 <a-button class="margin_left_10 margin_top_20" type="primary" @click="syncVacancyFeeBill"
                     v-if="user_info.vacancy_id && !is_car">
                     更新空置费
@@ -344,6 +348,11 @@
                     :scroll="{ x: 1100 }">
                     <a slot="name" slot-scope="text">{{ text }}</a>
                     <span slot="rule_name" slot-scope="text, record"><a-tag v-if="record.meter_reading_id*1>0 && record.order_type_flag=='split_order_by_balance'" color="orange" style="font-weight: bold;color: #f53405;">拆</a-tag>{{record.rule_name}}</span>
+                    <span slot="manual_split" slot-scope="text, record">
+                        <a v-if="!record.children && record.source_type === 'manual_new_bill' && record.is_paid*1 === 2 && record.is_discard*1 === 1"
+                            @click="openManualSplit(record)">拆分</a>
+                        <span v-else>-</span>
+                    </span>
                     <span slot="action" slot-scope="text, record">
                         <a @click="showpopup_detailsList(record)" v-if="!record.children">详情</a>
                         <span v-if="record.is_discard*1!=3">
@@ -637,7 +646,7 @@
                     <div class="text_2">
                         <a-input-number v-model="manual_deposit_money" class="input_style" :min="0"
                             :max="Math.min(manual_deposit_available, pay_money)" :precision="4" :step="0.0001"
-                            style="width:150px;" /> 元
+                            style="width:150px;" @change="manualDepositMoneyChange" /> 元
                         <span style="margin-left: 8px;color:#999;">可用 {{ manual_deposit_available }} 元</span>
                     </div>
                 </div>
@@ -1224,6 +1233,27 @@
         <CarList ref="CarListModel"></CarList>
         <allBalanceMoneyInfo ref="allBalanceMoneyInfo" @ok="reload"  />
         <manual-bill-modal ref="ManualBillModal" @ok="reloadManualBill" />
+        <deposit-bill-modal ref="DepositBillModal" @ok="reloadManualBill" />
+        <a-modal title="第三方承担拆分" :visible="manualSplitVisible" :confirm-loading="manualSplitLoading"
+            @ok="submitManualSplit" @cancel="manualSplitVisible = false">
+            <a-form-model :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
+                <a-form-model-item label="第三方公司名称">
+                    <a-input v-model="manualSplitForm.company_name" placeholder="请输入第三方公司名称" />
+                </a-form-model-item>
+                <a-form-model-item label="承担开始时间">
+                    <a-date-picker v-model="manualSplitForm.service_start_time" value-format="YYYY-MM-DD" style="width:100%" />
+                </a-form-model-item>
+                <a-form-model-item label="承担结束时间">
+                    <a-date-picker v-model="manualSplitForm.service_end_time" value-format="YYYY-MM-DD" style="width:100%" />
+                </a-form-model-item>
+                <a-form-model-item label="承担费用">
+                    <a-input-number v-model="manualSplitForm.split_money" :min="0" :precision="1" :step="0.1" style="width:100%" />
+                </a-form-model-item>
+                <a-form-model-item label="备注">
+                    <a-input v-model="manualSplitForm.remark" placeholder="请输入备注" />
+                </a-form-model-item>
+            </a-form-model>
+        </a-modal>
     </div>
 </template>
 
@@ -1248,6 +1278,7 @@
     import ExpressModel from "@/views/community/village/charge/components/expressModel";
     import allBalanceMoneyInfo from '@/views/community/village/storage/allBalanceInfo';
     import ManualBillModal from '@/views/community/village/charge/cashier/manualBillModal'
+    import DepositBillModal from '@/views/community/village/charge/cashier/depositBillModal'
     import store from '@/store';
     var _this
     const x = 3
@@ -1330,6 +1361,14 @@
             title: '合计欠费',
             dataIndex: 'pay_money',
             width: 100
+        },
+        {
+            title: '拆分',
+            dataIndex: 'manual_split',
+            width: 80,
+            scopedSlots: {
+                customRender: 'manual_split'
+            }
         },
         {
             title: '操作',
@@ -1477,7 +1516,8 @@
             PayableOrderList,
             marqueeLeft,
             allBalanceMoneyInfo,
-            ManualBillModal
+            ManualBillModal,
+            DepositBillModal
         },
         data() {
             return {
@@ -1660,6 +1700,16 @@
                 visible_apart_order: false,
                 apart_order: {},
                 confirmApartLoading: false,
+                manualSplitVisible: false,
+                manualSplitLoading: false,
+                manualSplitForm: {
+                    order_id: 0,
+                    company_name: '',
+                    service_start_time: '',
+                    service_end_time: '',
+                    split_money: 0,
+                    remark: '',
+                },
                 fact_pay_money: '',
                 tempFeeOrder: {
                     order_money: 0,
@@ -1897,6 +1947,16 @@
                 }
             }
         },
+        watch: {
+            pay_type(val) {
+                if (Number(val) === 22) {
+                    this.rebuildMixOfflinePayByDeposit()
+                }
+            },
+            pay_money() {
+                this.rebuildMixOfflinePayByDeposit()
+            }
+        },
         methods: {
             enterEvent() {
                 let that = this
@@ -2052,6 +2112,13 @@
                 }
                 this.$refs.ManualBillModal.open(this.user_info.vacancy_id)
             },
+            showDepositBillModal() {
+                if (!this.user_info.vacancy_id) {
+                    this.$message.warning('请选择房间')
+                    return
+                }
+                this.$refs.DepositBillModal.open(this.user_info.vacancy_id)
+            },
             syncVacancyFeeBill(silent = false) {
                 if (!this.user_info.vacancy_id) {
                     if (!silent) {
@@ -2068,6 +2135,32 @@
                     if (!silent || (res && res.data && res.data.order_id)) {
                         this.reloadManualBill()
                     }
+                })
+            },
+            openManualSplit(record) {
+                this.manualSplitForm = {
+                    order_id: record.order_id,
+                    company_name: '',
+                    service_start_time: record.service_start_time || '',
+                    service_end_time: record.service_end_time || '',
+                    split_money: 0,
+                    remark: '',
+                }
+                this.manualSplitVisible = true
+            },
+            submitManualSplit() {
+                const form = this.manualSplitForm
+                if (!form.company_name || !form.service_start_time || !form.service_end_time || Number(form.split_money) <= 0) {
+                    this.$message.warning('请完整填写第三方承担拆分信息')
+                    return
+                }
+                this.manualSplitLoading = true
+                this.request(villageApi.manualBillSplit, form).then(res => {
+                    this.$message.success(res.msg || '账单拆分成功')
+                    this.manualSplitVisible = false
+                    this.reloadManualBill()
+                }).finally(() => {
+                    this.manualSplitLoading = false
                 })
             },
             delAlert(id) {
@@ -2252,6 +2345,49 @@
                 this.isOpen = false
                 console.log(this.service_start_time)
             },
+            money2(value) {
+                const money = Number(value || 0)
+                return Number.isNaN(money) ? 0 : Number(money.toFixed(2))
+            },
+            getManualDepositMoney() {
+                const maxMoney = Math.min(Number(this.manual_deposit_available || 0), Number(this.pay_money || 0))
+                let money = Number(this.manual_deposit_money || 0)
+                if (Number.isNaN(money) || money < 0) {
+                    money = 0
+                }
+                if (money > maxMoney) {
+                    money = maxMoney
+                    this.manual_deposit_money = money
+                }
+                return this.money2(money)
+            },
+            getMixOfflineNeedMoney() {
+                return this.money2(Math.max(Number(this.pay_money || 0) - this.getManualDepositMoney(), 0))
+            },
+            refreshMixOfflinePayMoney() {
+                let total = 0
+                this.mixOfflinePay.forEach(item => {
+                    total += Number(item.paymoney || 0)
+                })
+                this.mixOfflinePayMoney = this.money2(total).toFixed(2)
+            },
+            rebuildMixOfflinePayByDeposit() {
+                if (Number(this.pay_type) !== 22 || !this.mixOfflinePay || this.mixOfflinePay.length < 1) {
+                    return
+                }
+                let otherPayMoney = 0
+                this.mixOfflinePay.forEach((item, index) => {
+                    if (index > 0) {
+                        otherPayMoney += Number(item.paymoney || 0)
+                    }
+                })
+                const firstPayMoney = Math.max(this.getMixOfflineNeedMoney() - this.money2(otherPayMoney), 0)
+                this.mixOfflinePay[0].paymoney = this.money2(firstPayMoney).toFixed(2)
+                this.refreshMixOfflinePayMoney()
+            },
+            manualDepositMoneyChange() {
+                this.rebuildMixOfflinePayByDeposit()
+            },
 
             addMixOfflinePay() {
                 let offlinenum = this.offline_pay_type_arr.length;
@@ -2279,7 +2415,7 @@
                 pay_money_tmp = pay_money_tmp.toFixed(2);
                 this.mixOfflinePayMoney = pay_money_tmp;
                 console.log('pay_money_tmp', pay_money_tmp, 'pay_money', this.pay_money)
-                let paymoneyTmp = this.pay_money * 1 - pay_money_tmp;
+                let paymoneyTmp = this.getMixOfflineNeedMoney() - pay_money_tmp;
                 paymoneyTmp = paymoneyTmp.toFixed(2);
                 /*
                 if(pay_money_tmp>=this.pay_money*1){
@@ -2292,7 +2428,7 @@
                     return false
                 }
                 if (this.mixOfflinePay.length < 1) {
-                    paymoneyTmp = this.pay_money;
+                    paymoneyTmp = this.getMixOfflineNeedMoney();
                 }
                 this.mixOfflinePay.push({
                     offlinepay_id: 0,
@@ -2317,7 +2453,7 @@
                         tmp_mix_money_total += ivv.paymoney * 1;
                     }
                 });
-                let thispaymoney = this.pay_money - tmp_mix_money_total;
+                let thispaymoney = this.getMixOfflineNeedMoney() - tmp_mix_money_total;
                 console.log('mixOfflinePay', this.mixOfflinePay)
                 console.log('pay_money', this.pay_money)
                 console.log('tmp_mix_money_total', tmp_mix_money_total, 'thispaymoney', thispaymoney)
@@ -2361,7 +2497,7 @@
                     this.mixOfflinePayMoney = mixOfflinePayMoneyTmp.toFixed(2);
                     return false
                 }
-                let thispaymoney = this.pay_money - pay_money_tmp;
+                let thispaymoney = this.getMixOfflineNeedMoney() - pay_money_tmp;
                 thispaymoney = thispaymoney.toFixed(2);
                 if (isNaN(thispaymoney) || thispaymoney < 0) {
                     thispaymoney = 0;
@@ -2400,7 +2536,7 @@
                 if (mix_money_total > 0) {
                     mix_money_total = mix_money_total.toFixed(2);
                 }
-                let tmp_mix_money = this.pay_money * 1 - mix_money_total;
+                let tmp_mix_money = this.getMixOfflineNeedMoney() - mix_money_total;
                 if (tmp_mix_money > 0) {
                     this.mixOfflinePay[0].paymoney = tmp_mix_money.toFixed(2);
                 } else {
@@ -3655,7 +3791,8 @@
                     });
                     offline_pay_type_tmp = offline_pay_type_tmp.join(',');
                     pay_money_tmp = pay_money_tmp.toFixed(2);
-                    if (pay_money_tmp != _this.pay_money) {
+                    const mixNeedMoney = _this.getMixOfflineNeedMoney().toFixed(2)
+                    if (pay_money_tmp != mixNeedMoney) {
                         _this.$message.error('线下支付（组合支付）：总的支付金额不正确！')
                         is_find_tmp = true;
                         return false
@@ -3840,7 +3977,7 @@
                         }
                     })
                     if (value == 22) {
-                        this.mixOfflinePay[0].paymoney = this.pay_money;
+                        this.rebuildMixOfflinePayByDeposit();
                     }
                 }
                 if (value != 3) {

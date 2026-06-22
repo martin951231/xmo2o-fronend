@@ -114,10 +114,6 @@ export default {
             type: String,
             default: ''
         },
-        id: {
-            type: Number,
-            default: 0
-        },
     },
     data() {
         return {
@@ -198,6 +194,7 @@ export default {
                 showQuickJumper: true,
                 onChange: this.onPageChange,
                 onShowSizeChange: this.onPageSizeChange,
+                showTotal: (total, range) => `共 ${total} 条记录`,
             },
             loading: false,
             searchParams: {
@@ -230,7 +227,6 @@ export default {
                 page: this.pagination.current,
                 pageSize: this.pagination.pageSize,
                 session_id: this.sessionId,
-                id: this.id,
                 start_date: this.searchParams.dateRange[0] ? this.searchParams.dateRange[0].format('YYYY-MM-DD') : '',
                 end_date: this.searchParams.dateRange[1] ? this.searchParams.dateRange[1].format('YYYY-MM-DD') : '',
                 check_in_status: this.searchParams.checkInStatus,

@@ -49,8 +49,11 @@ CREATE TABLE IF NOT EXISTS `pigcms_house_new_bill_third_party_split` (
   `property_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '物业ID',
   `village_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '小区ID',
   `order_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '主账单ID',
+  `child_order_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '第三方子账单ID',
   `company_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '第三方公司ID',
   `company_name` varchar(100) NOT NULL DEFAULT '' COMMENT '公司名称快照',
+  `service_start_time` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '承担开始时间',
+  `service_end_time` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '承担结束时间',
   `total_money` decimal(14,4) NOT NULL DEFAULT '0.0000' COMMENT '原总金额',
   `third_party_money` decimal(14,4) NOT NULL DEFAULT '0.0000' COMMENT '第三方承担金额',
   `owner_pay_money` decimal(14,4) NOT NULL DEFAULT '0.0000' COMMENT '业主应付金额',
@@ -60,6 +63,7 @@ CREATE TABLE IF NOT EXISTS `pigcms_house_new_bill_third_party_split` (
   `update_time` int(10) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `idx_order` (`order_id`),
+  KEY `idx_child_order` (`child_order_id`),
   KEY `idx_village` (`village_id`,`company_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='账单第三方承担拆分';
 

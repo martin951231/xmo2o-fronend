@@ -22,7 +22,8 @@ const fixedPathComponentMap = {
   [path.houseAccessDeviceDeviceList]: 'house_access_device_device_list',
   [path.houseSensorsSensorsList]: 'house_sensors_sensors_list',
   [path.houseRecordsRecordsList]: 'house_records_records_list',
-  [path.houseNonMotorizedVehicleList]: 'house_non_motorized_vehicle_list'
+  [path.houseNonMotorizedVehicleList]: 'house_non_motorized_vehicle_list',
+  [path.houseDepositCateIndex]: 'house_deposit_cate_index'
 }
 
 const fixedPathTitleMap = {

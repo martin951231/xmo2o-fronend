@@ -96,6 +96,7 @@ const pageVillageComunityComponents = {
     houseAdminList: () => import('@/views/community/village/houseWorker/houseAdminList'), // 工作人员
     frameworkList: () => import('@/views/community/village/framework/frameworkList'), // 组织架构
     userLabelList: () => import('@/views/community/village/charge/standard/userLabelList'), // 打印模板
+    house_deposit_cate_index: () => import('@/views/community/village/charge/deposit/categoryList'), // 押金分类管理
     parkingLot: () => import('@/views/community/village/yardManagement/parkingLot'), // 停车场管理
     parkingSpace: () => import('@/views/community/village/yardManagement/parkingSpace'), // 车位管理
     vehicleManagement: () => import('@/views/community/village/yardManagement/vehicleManagement'), // 车辆管理

@@ -50,6 +50,7 @@
 import { getTokenName, setCookie, getLangDisplay } from '@/utils/util'
 import { mapActions } from 'vuex'
 import path from '@/router/router-path.js'
+import Vue from 'vue'
 // 登录表单
 import LoginForm from './modules/LoginForm.vue'
 
@@ -82,8 +83,9 @@ export default {
         this.config = this.$store.getters.config
         this.now_lang = this.$store.getters.nowLang
         this.lang_txt = getLangDisplay(this.now_lang)
-        if (this.$route.query.token) {
-            this.handleAccountLogin({}, this.$route.query.token)
+        const tokenName = getTokenName(location.href)
+        if(this.$route.query.token){
+            this.handleAccountLogin({},this.$route.query.token)
         }
     },
     methods: {
@@ -100,13 +102,13 @@ export default {
             this.loginType = type
         },
         // 账号密码登录
-        handleAccountLogin(userInfo = {}, token = null) {
+        handleAccountLogin(userInfo={},token=null) {
             const { Login } = this
             let params = {
                 account: userInfo.account,
                 password: userInfo.pwd,
             }
-            if (token) {
+            if(token){
                 params = {
                     v20_ticket: token
                 }

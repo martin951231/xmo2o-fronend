@@ -89,7 +89,7 @@
                                         <div class="input_container_three">
                                             <div class="value_item" v-if="parking.fees_type*1==3">
                                                 <a-select style="width: 182px;" :disabled="true"
-                                                    @change="billCreateSetChange" :value="1">
+                                                    @change="billCreateSetChange" :value="2">
                                                     <a-select-option :value="item.key" v-for="item in cycle_array"
                                                         :key="item.key">
                                                         {{item.value}}
@@ -1712,17 +1712,10 @@
                 custom_give_cycle: false,
                 park_charge_type_show: 1,
                 project_type: '',
-                cycle_array: [{
-                        key: 1,
-                        value: '按日生成'
-                    },
+                cycle_array: [
                     {
                         key: 2,
                         value: '按月生成'
-                    },
-                    {
-                        key: 3,
-                        value: '按年生成'
                     }
                 ],
                 maxCount: '',
@@ -2054,7 +2047,7 @@
                     });
                     this.request(villageApi.ChargeRuleBillParam).then((data) => {
                         if (data) {
-                            this.cycle_array = data.cycle_array;
+                            this.cycle_array = (data.cycle_array || []).filter(item => Number(item.key) === 2);
                             this.arrears_array = data.arrears_array;
                             if (data.digit_type != undefined && data.digit_type > 0) {
                                 this.digit_type = data.digit_type;
@@ -2149,7 +2142,7 @@
                 };
                 this.request(villageApi.ChargeRuleBillParam).then((data) => {
                     if (data) {
-                        this.cycle_array = data.cycle_array;
+                        this.cycle_array = (data.cycle_array || []).filter(item => Number(item.key) === 2);
                         this.arrears_array = data.arrears_array;
                         if (data.digit_type != undefined && data.digit_type > 0) {
                             this.digit_type = data.digit_type;
@@ -2853,7 +2846,7 @@
                 this.isShow = false;
                 this.request(villageApi.ChargeRuleBillParam).then((data) => {
                     if (data) {
-                        this.cycle_array = data.cycle_array;
+                        this.cycle_array = (data.cycle_array || []).filter(item => Number(item.key) === 2);
                         this.arrears_array = data.arrears_array;
                     }
                 });

@@ -13,10 +13,10 @@
         >
             <template slot="action" slot-scope="text, record">
                 <a type="link" v-saction:edit @click="showEditModal(record)">编辑</a>
-                <a-divider type="vertical" />
+                <!-- <a-divider type="vertical" />
                 <a-popconfirm v-saction:delete placement="top" title="确定要删除这个分类吗？" ok-text="确认" cancel-text="取消" @confirm="handleDelete(record)">
                      <a>删除</a>
-                </a-popconfirm>
+                </a-popconfirm> -->
             </template>
         </a-table>
         
@@ -92,7 +92,7 @@ export default {
                 total: 0,
                 showSizeChanger: true,
                 showQuickJumper: true,
-                showTotal: (total, range) => `总共 ${total} 个项目`,
+                showTotal: (total, range) => `共 ${total} 条记录`,
             },
             loading: false,
             modalVisible: false,

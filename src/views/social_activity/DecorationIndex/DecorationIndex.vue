@@ -178,7 +178,7 @@ const data = [
     },
     {
         title: '往期互动',
-        desc: '开启则热门推荐内容显示，关闭则不显示',
+        desc: '开启则显示往期互动，关闭则不显示',
         button: '',
         show_switch: true,
         change: '',

@@ -137,6 +137,7 @@ export default {
                 showQuickJumper: true,
                 onChange: this.onPageChange,
                 onShowSizeChange: this.onPageSizeChange,
+                showTotal: (total, range) => `共 ${total} 条记录`,
             },
 
             searchParams: {
