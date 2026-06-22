@@ -101,9 +101,9 @@
                         <div v-saction:recommend v-if="record.recommend == 1 && record.status != 30" class="action-btn">
                         <a-popconfirm placement="top" ok-text="是" cancel-text="否" @confirm="handleRecommend(record, 0)">
                             <template slot="title">
-                                <p>确定要撤回吗？</p>
+                                <p>确定要取消推荐吗？</p>
                             </template>
-                            <a>撤回</a>
+                            <a>取消推荐</a>
                         </a-popconfirm>
                         </div>
                         <div v-saction:audit v-if="record.status == 0" class="action-btn">
@@ -117,14 +117,7 @@
                             <a>推荐</a>
                         </a-popconfirm>
                         </div>
-                        <div v-saction:cancel v-if="record.status != 30 && record.activity_status_text == '待开始'" class="action-btn">
-                        <a-popconfirm placement="top" ok-text="是" cancel-text="否" @confirm="handleCancelActivity(record)">
-                            <template slot="title">
-                                <p>确定要取消吗？</p>
-                            </template>
-                            <a class="action-btn">取消</a>
-                        </a-popconfirm>
-                        </div>
+                        <a v-saction:cancel v-if="record.status != 30 && record.activity_status_text == '待开始'" class="action-btn" @click="showCancelModal(record)">取消</a>
                         <a v-saction:preview @click="showPreviewModal(record)" class="action-btn">预览</a>
                         <a v-saction:session @click="goToSessionList(record)" class="action-btn">场次</a>
                     </div>
@@ -133,7 +126,7 @@
         </div>
 
         <!-- 创建活动弹窗 -->
-        <a-modal v-model="createModalVisible" title="创建社群活动" width="900px" @ok="handleCreate" @cancel="handleCancel">
+        <a-modal v-model="createModalVisible" title="创建社群活动" width="900px" height="800px" @ok="handleCreate" @cancel="handleCancel">
             <div class="create-modal-content">
                 <a-form-model ref="activityFormRef" :model="activityForm" :label-col="labelCol"
                     :wrapper-col="wrapperCol" :rules="rules">
@@ -154,47 +147,56 @@
                                     <a-input v-model="activityForm.name" placeholder="输入活动名称" :disabled="isView" />
                                 </a-form-model-item>
                             </a-col>
-                            <a-col :span="24">
-                                <a-form-model-item label="活动海报" required prop="poster"
-                                    :extra="'建议尺寸1:1，支持 jpg, png, jpeg, gif 等格式'">
-                                    <a-upload name="reply_pic" list-type="picture-card" :show-upload-list="true"
-                                        :data="{ upload_dir: 'activity/SocialActivity' }" :before-upload="beforeUpload"
-                                        :file-list="activityForm.poster" @preview="handlePreview"
-                                        action="/v20/public/index.php/common/common.UploadFile/uploadPictures"
-                                        @change="(info) => handleUploadImg(info, 'activityForm', 'poster', true)" :disabled="isView">
-                                        <div v-if="!activityForm.poster || activityForm.poster.length === 0">
-                                            <a-icon type="plus" />
-                                            <div class="ant-upload-text">上传</div>
-                                        </div>
-                                    </a-upload>
-                                </a-form-model-item>
-                            </a-col>
-                            <a-col :span="24">
-                                <a-form-model-item label="视频" prop="video" :style="isView?'pointer-events: none;':''">
-                                    <template v-if="activityForm.video.length">
+                            <a-col :span="24" class="activity-upload-item">
+                            <a-row>
+                                <a-col :span="13">
+                                    <a-form-model-item label="活动海报" required prop="poster"
+                                        :extra="'建议尺寸1:1.5,支持jpg,png,jpeg,gif等格式'">
+                                        <a-upload name="reply_pic" list-type="picture-card" :show-upload-list="true"
+                                            :data="{ upload_dir: 'activity/SocialActivity' }" :before-upload="beforeUpload"
+                                            :file-list="activityForm.poster" @preview="handlePreview"
+                                            action="/v20/public/index.php/common/common.UploadFile/uploadPictures"
+                                            @change="(info) => handleUploadImg(info, 'activityForm', 'poster', true)" :disabled="isView">
+                                            <div v-if="!activityForm.poster || activityForm.poster.length === 0">
+                                                <a-icon type="plus" />
+                                                <div class="ant-upload-text">上传</div>
+                                            </div>
+                                        </a-upload>
+                                    </a-form-model-item>
+                                </a-col>
+                                <a-col :span="11">
+                                    <a-form-model-item class="video-upload-item" label="视频" prop="video" :style="isView?'pointer-events: none;':''">
+                                        <template slot="extra">
+                                            建议上传视频大小50M以内<br />
+                                            支持mp4,flv,mov,rmvb,avi,wmv
+                                        </template>
+                                        <template v-if="activityForm.video.length">
+                                            <div
+                                                class="goods-img"
+                                                v-for="(video, index) of activityForm.video"
+                                                :key="'video_' + index"
+                                            >
+                                                <video :src="video" :poster="videoImage" c></video>
+                                                <a-icon
+                                                    class="delete pointer"
+                                                    style="font-size: 16px; color: red"
+                                                    type="close-circle"
+                                                    theme="filled"
+                                                    @click="removeImage('video', index)"
+                                                />
+                                            </div>
+                                        </template>
                                         <div
-                                            class="goods-img"
-                                            v-for="(video, index) of activityForm.video"
-                                            :key="'video_' + index"
+                                            v-if="activityForm.video.length < 1"
+                                            @click="chooseImage('video')"
+                                            class="b-f1 w-80 h-80 cr-99 flex ml-10 align-center justify-around pointer br-5"
+                                            style="width: 104px !important;height: 104px !important;background-color: #fafafa !important;border: 1px dashed #d9d9d9 !important;"
                                         >
-                                            <video :src="video" :poster="videoImage" c></video>
-                                            <a-icon
-                                                class="delete pointer"
-                                                style="font-size: 16px; color: red"
-                                                type="close-circle"
-                                                theme="filled"
-                                                @click="removeImage('video', index)"
-                                            />
+                                            <a-icon style="font-size: 32px" type="plus" />
                                         </div>
-                                    </template>
-                                    <div
-                                        v-if="activityForm.video.length < 1"
-                                        @click="chooseImage('video')"
-                                        class="b-f1 w-80 h-80 cr-99 flex ml-10 align-center justify-around pointer br-5"
-                                    >
-                                        <a-icon style="font-size: 32px" type="plus" />
-                                    </div>
-                                </a-form-model-item>
+                                    </a-form-model-item>
+                                </a-col>
+                            </a-row>
                             </a-col>
                             <a-col :span="24">
                                 <a-form-model-item label="社群活动位海报" prop="position_poster"
@@ -446,6 +448,19 @@
             </a-form-model>
         </a-modal>
 
+        <!-- 取消活动弹窗 -->
+        <a-modal v-model="cancelModalVisible" title="取消活动" @ok="handleCancelConfirm" @cancel="cancelModalVisible = false">
+            <a-form-model ref="cancelForm" :model="cancelForm" :rules="cancelRules">
+                <a-form-model-item label="取消原因" prop="reason">
+                    <a-textarea
+                        v-model="cancelForm.reason"
+                        placeholder="请输入取消原因"
+                        :rows="4"
+                    />
+                </a-form-model-item>
+            </a-form-model>
+        </a-modal>
+
         <!-- 场次列表弹窗 -->
         <SessionListDrawer
             :visible="sessionDrawerVisible"
@@ -497,11 +512,21 @@ export default {
             auditModalVisible: false, // 审核弹窗可见性
             auditForm: { // 审核表单
                 activityId: '',
-                status: '', // 10=通过, 20=拒绝
+                status: '', // 10=通过，20=拒绝
                 remark: ''
             },
+            cancelModalVisible: false, // 取消活动弹窗可见性
+            currentCancelRecord: null, // 当前要取消的活动记录
+            cancelForm: { // 取消原因表单
+                reason: ''
+            },
+            cancelRules: { // 取消原因验证规则
+                reason: [
+                    { required: true, message: '请输入取消原因', trigger: 'blur' }
+                ]
+            },
             sessionDrawerVisible: false, // 场次列表弹窗可见性
-            currentActivityId: 0, // 当前选中的活动ID
+            currentActivityId: 0, // 当前选中的活动 ID
             currentActivityName: '', // 当前选中的活动名称
             previewImage: '',
             labelCol: { span: 4 },
@@ -544,30 +569,6 @@ export default {
                     }
                 ],
                 video: [],
-            },
-            //初始化场次信息
-            sessionsModel: {
-                name: '',
-                identity: 1,
-                gender: 1,
-                age_range: 0,
-                age_min: null,
-                age_max: null,
-                start_time: null,
-                end_time: null,
-                location_type: 1,
-                location_id: '',
-                location: '',
-                village_id: [],
-                tickets: [
-                    {
-                        name: '',
-                        price: '',
-                        num: '',
-                        point: true
-                    }
-                ],
-                ticket_time_range: null
             },
             columns: [
                 {
@@ -661,12 +662,13 @@ export default {
             pagination: {
                 current: 1,
                 pageSize: 10,
-                total: 100,
+                total: 0,
                 showSizeChanger: true,
                 pageSizeOptions: ['10', '20', '50', '100'],
                 showQuickJumper: true,
                 onChange: this.onPageChange,
                 onShowSizeChange: this.onPageSizeChange,
+                showTotal: (total, range) => `共 ${total} 条记录`,
             },
             categoryList: [], // 活动分类列表
             statusList: [], // 审核状态列表
@@ -862,8 +864,30 @@ export default {
 
         // 添加场次
         addSession() {
-            console.log(this.sessionsModel, 33333333)
-            this.activityForm.sessions.push(this.sessionsModel)
+            let params = {
+                name: '',
+                identity: 1,
+                gender: 1,
+                age_range: 0,
+                age_min: null,
+                age_max: null,
+                start_time: null,
+                end_time: null,
+                location_type: 1,
+                location_id: '',
+                location: '',
+                village_id: [],
+                tickets: [
+                    {
+                        name: '',
+                        price: '',
+                        num: '',
+                        point: true
+                    }
+                ],
+                ticket_time_range: null
+            }
+            this.activityForm.sessions.push(params)
             // 确保响应式更新
             this.$forceUpdate()
         },
@@ -987,7 +1011,7 @@ export default {
         },
         // 处理推荐/撤回
         handleRecommend(record, recommend) {
-            const actionText = recommend === 1 ? '推荐' : '撤回'
+            const actionText = recommend === 1 ? '推荐' : '取消推荐'
             this.request(socialActivityApi.recommendActivity, {
                 id: record.id,
                 recommend: recommend
@@ -997,12 +1021,29 @@ export default {
             })
         },
         // 处理取消活动
-        handleCancelActivity(record) {
+        handleCancelActivity(record, reason = '') {
             this.request(socialActivityApi.cancelActivity, {
-                id: record.id
+                id: record.id,
+                reason: reason
             }).then(res => {
                 this.$message.success('取消成功')
                 this.getList()
+            })
+        },
+        // 显示取消弹窗
+        showCancelModal(record) {
+            this.currentCancelRecord = record
+            this.cancelForm.reason = ''
+            this.cancelModalVisible = true
+        },
+        // 处理取消确认
+        handleCancelConfirm() {
+            this.$refs.cancelForm.validate(valid => {
+                if (valid) {
+                    this.handleCancelActivity(this.currentCancelRecord, this.cancelForm.reason)
+                    this.cancelModalVisible = false
+                    this.currentCancelRecord = null
+                }
             })
         },
         // 显示场次列表弹窗
@@ -1232,15 +1273,15 @@ export default {
 
         .session-item {
             background: #f9f9f9;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
 
             .session-title {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 16px;
+                margin-bottom: 10px;
 
                 span {
                     font-weight: 500;
@@ -1256,7 +1297,11 @@ export default {
             .session-form {
                 display: flex;
                 flex-direction: column;
-                gap: 16px;
+                gap: 0px;
+
+                .ant-form-item {
+                    margin-bottom: 4px !important;
+                }
             }
         }
 
@@ -1307,6 +1352,17 @@ export default {
         position: absolute;
         right: 0px;
         top: 0px;
+    }
+}
+.activity-upload-item {
+    ::v-deep .ant-form-item-label {
+        width: 29%;
+    }
+    ::v-deep .ant-form-item-control-wrapper  {
+        width: 60%;
+    }
+    ::v-deep .video-upload-item .ant-form-extra {
+        margin: 20px 10px;
     }
 }
 </style>
