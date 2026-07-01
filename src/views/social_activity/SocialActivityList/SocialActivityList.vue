@@ -151,7 +151,7 @@
                             <a-row>
                                 <a-col :span="13">
                                     <a-form-model-item label="活动海报" required prop="poster"
-                                        :extra="'建议尺寸1:1，支持jpg, png, jpeg, gif等格式'">
+                                        :extra="'建议尺寸1:1或1:1.5，支持jpg, png, jpeg, gif等格式'">
                                         <a-upload name="reply_pic" list-type="picture-card" :show-upload-list="true"
                                             :data="{ upload_dir: 'activity/SocialActivity' }" :before-upload="beforeUpload"
                                             :file-list="activityForm.poster" @preview="handlePreview"

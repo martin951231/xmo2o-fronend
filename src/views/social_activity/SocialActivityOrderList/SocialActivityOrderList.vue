@@ -32,6 +32,17 @@
             <label>用户信息：</label>
             <a-input v-model="searchParams.nickname" placeholder="请输入用户昵称" class="search-item" />
             </a-col>
+            <a-col :span="5">
+              <label>订单状态：</label>
+              <a-select style="width: 65%" v-model="searchParams.orderStatus" placeholder="请选择订单状态" class="search-item">
+                <a-select-option :value="-1">全部</a-select-option>
+                <a-select-option v-for="item in orderStatusArr" :key="item.id" :value="item.id">{{ item.name }}</a-select-option>
+              </a-select>
+            </a-col>
+            <a-col :span="6">
+              <label>订单编号：</label>
+              <a-input v-model="searchParams.orderSn" placeholder="请输入订单编号" class="search-item" />
+            </a-col>
             <a-col :span="8">
             <label>支付时间：</label>
             <a-range-picker
@@ -131,9 +142,12 @@ export default {
                 keywords: '',
                 sessionName: '',
                 nickname: '',
-                payTimeRange: []
+                payTimeRange: [],
+                orderStatus: -1,
+                orderSn: '',
             },
             categoryList: [],
+            orderStatusArr: [],
             dataSource: [],
             pagination: {
                 current: 1,
@@ -196,15 +210,20 @@ export default {
                     render: (text) => `¥${text.toFixed(2)}`
                 },
                 {
+                  title: '状态',
+                  dataIndex: 'activity_status_text',
+                  key: 'activity_status_text',
+                  scopedSlots: { customRender: 'activity_status_text' }
+                },
+                {
                     title: '支付时间',
                     dataIndex: 'pay_time',
                     key: 'pay_time'
                 },
                 {
-                    title: '状态',
-                    dataIndex: 'activity_status_text',
-                    key: 'activity_status_text',
-                    scopedSlots: { customRender: 'activity_status_text' }
+                  title: '订单状态',
+                  dataIndex: 'status_text',
+                  key: 'status_text'
                 }
             ]
         }
@@ -224,6 +243,8 @@ export default {
                 nickname: this.searchParams.nickname,
                 start_time: this.searchParams.payTimeRange[0] ? this.searchParams.payTimeRange[0].format('YYYY-MM-DD HH:mm:ss') : '',
                 end_time: this.searchParams.payTimeRange[1] ? this.searchParams.payTimeRange[1].format('YYYY-MM-DD HH:mm:ss') : '',
+                order_status: this.searchParams.orderStatus,
+                order_sn: this.searchParams.orderSn,
                 is_export: isExport
             }
             this.request(socialActivityApi.getOrderList, params).then(res => {
@@ -237,6 +258,7 @@ export default {
                 }
                 this.categoryList = res.category || []
                 this.withdrawableAmount = res.withdrawable_amount || 0
+                this.orderStatusArr = res.order_status_arr || []
                 this.loading = false
             })
         },

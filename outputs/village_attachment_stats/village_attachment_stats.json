@@ -1,0 +1,68 @@
+[
+    {
+        "property_id": 18,
+        "village_id": 3,
+        "village_name": "晋美华府",
+        "attachment_title": "物业合同",
+        "attachment_key": "69d5ffeecc39741981",
+        "attachment_type": 6,
+        "eligible_owner_bind_count": 1136,
+        "uploaded_bind_count": 2,
+        "uploaded_file_count": 2
+    },
+    {
+        "property_id": 18,
+        "village_id": 8,
+        "village_name": "山河九里",
+        "attachment_title": "物业合同",
+        "attachment_key": "69d5ffeecc39741981",
+        "attachment_type": 6,
+        "eligible_owner_bind_count": 776,
+        "uploaded_bind_count": 0,
+        "uploaded_file_count": 0
+    },
+    {
+        "property_id": 18,
+        "village_id": 11,
+        "village_name": "和谐怡园",
+        "attachment_title": "物业合同",
+        "attachment_key": "69d5ffeecc39741981",
+        "attachment_type": 6,
+        "eligible_owner_bind_count": 295,
+        "uploaded_bind_count": 0,
+        "uploaded_file_count": 0
+    },
+    {
+        "property_id": 18,
+        "village_id": 12,
+        "village_name": "天誉公馆",
+        "attachment_title": "物业合同",
+        "attachment_key": "69d5ffeecc39741981",
+        "attachment_type": 6,
+        "eligible_owner_bind_count": 380,
+        "uploaded_bind_count": 0,
+        "uploaded_file_count": 0
+    },
+    {
+        "property_id": 18,
+        "village_id": 13,
+        "village_name": "天誉铭都",
+        "attachment_title": "物业合同",
+        "attachment_key": "69d5ffeecc39741981",
+        "attachment_type": 6,
+        "eligible_owner_bind_count": 672,
+        "uploaded_bind_count": 0,
+        "uploaded_file_count": 0
+    },
+    {
+        "property_id": 18,
+        "village_id": 14,
+        "village_name": "云台府",
+        "attachment_title": "物业合同",
+        "attachment_key": "69d5ffeecc39741981",
+        "attachment_type": 6,
+        "eligible_owner_bind_count": 426,
+        "uploaded_bind_count": 0,
+        "uploaded_file_count": 0
+    }
+]

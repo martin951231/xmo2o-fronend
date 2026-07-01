@@ -1,0 +1,96 @@
+﻿<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        table { border-collapse: collapse; }
+        th, td { border: 1px solid #999; padding: 6px 8px; mso-number-format:"\@"; }
+        th { background: #d9eaf7; font-weight: bold; }
+    </style>
+</head>
+<body>
+<table>
+    <thead>
+    <tr>
+        <th>物业ID</th>
+        <th>小区ID</th>
+        <th>小区名称</th>
+        <th>附件名称</th>
+        <th>附件key</th>
+        <th>附件类型</th>
+        <th>可统计业主绑定数</th>
+        <th>上传绑定数</th>
+        <th>上传文件数</th>
+    </tr>
+    </thead>
+    <tbody>
+            <tr>
+            <td>18</td>
+            <td>3</td>
+            <td>晋美华府</td>
+            <td>物业合同</td>
+            <td>69d5ffeecc39741981</td>
+            <td>6</td>
+            <td>1136</td>
+            <td>2</td>
+            <td>2</td>
+        </tr>
+            <tr>
+            <td>18</td>
+            <td>8</td>
+            <td>山河九里</td>
+            <td>物业合同</td>
+            <td>69d5ffeecc39741981</td>
+            <td>6</td>
+            <td>776</td>
+            <td>0</td>
+            <td>0</td>
+        </tr>
+            <tr>
+            <td>18</td>
+            <td>11</td>
+            <td>和谐怡园</td>
+            <td>物业合同</td>
+            <td>69d5ffeecc39741981</td>
+            <td>6</td>
+            <td>295</td>
+            <td>0</td>
+            <td>0</td>
+        </tr>
+            <tr>
+            <td>18</td>
+            <td>12</td>
+            <td>天誉公馆</td>
+            <td>物业合同</td>
+            <td>69d5ffeecc39741981</td>
+            <td>6</td>
+            <td>380</td>
+            <td>0</td>
+            <td>0</td>
+        </tr>
+            <tr>
+            <td>18</td>
+            <td>13</td>
+            <td>天誉铭都</td>
+            <td>物业合同</td>
+            <td>69d5ffeecc39741981</td>
+            <td>6</td>
+            <td>672</td>
+            <td>0</td>
+            <td>0</td>
+        </tr>
+            <tr>
+            <td>18</td>
+            <td>14</td>
+            <td>云台府</td>
+            <td>物业合同</td>
+            <td>69d5ffeecc39741981</td>
+            <td>6</td>
+            <td>426</td>
+            <td>0</td>
+            <td>0</td>
+        </tr>
+        </tbody>
+</table>
+</body>
+</html>
