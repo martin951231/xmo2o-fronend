@@ -16,6 +16,14 @@
                 <a-form-model-item label="车位号" prop="position_num">
                     <a-input placeholder="请输入车位号" v-model="spaceForm.position_num" style="width: 250px;" />
                 </a-form-model-item>
+
+                <a-form-model-item label="租售状态" prop="position_status">
+                    <a-select placeholder="请选择租售状态" v-model="spaceForm.position_status" style="width: 250px;">
+                        <a-select-option v-for="item in positionSaleStatusList" :key="item.value" :value="item.value">
+                            {{ item.label }}
+                        </a-select-option>
+                    </a-select>
+                </a-form-model-item>
                 
                 <!-- <a-form-model-item label="搜索业主" prop="room_data">
                    <a-input style="width: 270px;" @change = 'searchUser()' placeholder="根据手机号及业主姓名搜索业主" v-model="searchVal" />
@@ -137,8 +145,12 @@
                     <a-textarea style="padding: 5px; width:200px; height: 100px; resize:none;" placeholder="请输入" v-model="spaceForm.position_note" />
                 </a-form-model-item>
                 
-                <a-form-model-item label="租售状态" prop="position_type">
-                    <a-input :disabled="true" placeholder="请输入租售状态" v-model="spaceForm.position_status_txt" style="width: 250px;" />
+                <a-form-model-item label="租售状态" prop="position_status">
+                    <a-select placeholder="请选择租售状态" v-model="spaceForm.position_status" style="width: 250px;">
+                        <a-select-option v-for="item in positionSaleStatusList" :key="item.value" :value="item.value">
+                            {{ item.label }}
+                        </a-select-option>
+                    </a-select>
                 </a-form-model-item>
             </div>
         </a-form-model>
@@ -185,7 +197,7 @@
             position_id: {
                 immediate: true,
                 handler (val) {
-                    this.spaceForm= {garage_id: '',children_type:1,opt_type:0};
+                    this.spaceForm= {garage_id: '',children_type:1,opt_type:0,position_status:undefined};
                     this.car_ids=[];
                     if(this.space_type=='edit'){
                         this.getSpaceInfo()
@@ -207,11 +219,19 @@
                 children_type_show: false,
                 labelCol: { span: 4 },
                 wrapperCol: { span: 18 },
-                spaceForm: {garage_id: '',children_type:1,opt_type:0},
+                spaceForm: {garage_id: '',children_type:1,opt_type:0,position_status:undefined},
                 rules: {
                     garage_id: [{ required: true, message: '请选择车场', trigger: 'blur' }],
-                    position_num: [{ required: true, message: '请输入车位号', trigger: 'blur' }]
+                    position_num: [{ required: true, message: '请输入车位号', trigger: 'blur' }],
+                    position_status: [{ required: true, message: '请选择租售状态', trigger: 'change' }]
                 },
+                positionSaleStatusList: [
+                    { value: 1, label: '未售出' },
+                    { value: 2, label: '已售出已交付' },
+                    { value: 3, label: '已售出未交付' },
+                    { value: 4, label: '销控已售' },
+                    { value: 5, label: '销控未售' }
+                ],
                 garageList: [],
                 dateFormat: 'YYYY/MM/DD',
                 disabled:false,
@@ -258,7 +278,7 @@
                 })
             },
             clearForm(){
-                this.spaceForm = {garage_id: '',children_type:1,opt_type:0}
+                this.spaceForm = {garage_id: '',children_type:1,opt_type:0,position_status:undefined}
                 this.searchVal = ''
                 this.car_ids=[];
             },

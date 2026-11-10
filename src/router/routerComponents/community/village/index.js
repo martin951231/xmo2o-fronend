@@ -6,6 +6,8 @@
  *******************
  */
 const pageVillageComunityComponents = {
+    waterAlarm: () => import('@/views/community/village/waterAlarm/index'),
+    visitorRegisterNew: () => import('@/views/community/village/visitorRegister/index'),
     // 你需要动态引入的页面组件 小区基本信息
     //小区基本设置
     villageConfig: () => import('@/views/community/village/setting/baseConfig'),
@@ -14,6 +16,7 @@ const pageVillageComunityComponents = {
     approvalflow_type: () => import('@/views/community/village/approvalFlow/type'),
     approvallist_list: () => import('@/views/community/village/approvalList/list'),
     approvallist_detail: () => import('@/views/community/village/approvalList/detail'),
+    publicRevenue: () => import('@/views/community/village/publicRevenue/index'),
     dataStatisticsVillageBase: () => import('@/views/community/village/baseInfo/datastatistics'),
     engineIndex: () => import('@/views/community/village/workWx/contentEngine/engineIndex'),
     chatSidebar: () => import('@/views/community/village/workWx/contentEngine/chatSidebar'),

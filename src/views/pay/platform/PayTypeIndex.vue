@@ -1,6 +1,7 @@
 <template>
   <div class="page-header-index-wide page-header-wrapper-grid-content-main">
-    <a-row :gutter="24"  v-if="basicInfo.icon && basicInfo.text">
+    <VillageAllinpayConfig v-if="isPropertyAllinpay" />
+    <a-row :gutter="24" v-else-if="basicInfo.icon && basicInfo.text">
       <a-col :md="24" :lg="7">
         <a-card :bordered="false">
           <div class="account-center-avatarHolder">
@@ -23,7 +24,7 @@
         </a-card>
       </a-col>
     </a-row>
-    <a-row :gutter="24"  v-else>
+    <a-row :gutter="24" v-else>
       <a-col :md="24" :lg="24">
         <a-card
           style="width: 100%"
@@ -41,6 +42,7 @@
 
 <script>
 import Channel from '../modules/Channel.vue'
+import VillageAllinpayConfig from '../modules/VillageAllinpayConfig.vue'
 import payPlatformApi from '@/api/pay/platform'
 import payMerchantmApi from '@/api/pay/merchant'
 import payPropertyApi from '@/api/pay/property'
@@ -48,6 +50,7 @@ import payPropertyApi from '@/api/pay/property'
 export default {
   components: {
     Channel,
+    VillageAllinpayConfig,
   },
   data() {
     return {
@@ -67,11 +70,18 @@ export default {
       getPayTypeInfoUrl: payPlatformApi.getPayTypeInfo,
     }
   },
+  computed: {
+    isPropertyAllinpay() {
+      return this.isSystem === '2' && this.code === 'allinpay_village'
+    },
+  },
   watch: {
     '$route.query.code'(val) {
       if (val) {
         this.code = val
-        this.getInfo()
+        if (!this.isPropertyAllinpay) {
+          this.getInfo()
+        }
       }
     },
   },
@@ -91,7 +101,9 @@ export default {
     console.log(this.isSystem, 'this.isSystem')
 
     this.code = this.$route.query.code
-    this.getInfo()
+    if (!this.isPropertyAllinpay) {
+      this.getInfo()
+    }
   },
   methods: {
     getInfo() {

@@ -442,8 +442,9 @@
                             {{ printObj.top_title }}
                         </div>
                         <div class="receipt">
-                            <div class="company-info flex justify-end">
-                                <div class="text-nowrap" style="width: 150px;text-align: left;">开票日期：【开票日期】</div>
+                            <div class="company-info flex justify-end"
+                                 v-if="printList.findIndex(v=>v.print_type == 3 && v.title == '收款日期')!=-1">
+                                <div class="text-nowrap" style="width: 150px;text-align: left;">收款日期：【收款日期】</div>
                             </div>
                             <div class="info-item" v-if="printList.findIndex(v=>['房号', '小区', '住户姓名'].includes(v.title))!=-1">
                                 <div class="info-label">今收到</div>

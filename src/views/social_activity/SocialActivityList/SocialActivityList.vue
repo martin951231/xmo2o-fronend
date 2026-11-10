@@ -83,9 +83,6 @@
             <!-- 表格 -->
             <a-table :columns="columns" :data-source="dataSource" :pagination="pagination" row-key="id"
                 style="margin-top: 16px">
-                <template slot="activityPoster" slot-scope="text">
-                    <img v-if="text" :src="text" alt="活动海报" class="activity-poster" />
-                </template>
                 <template slot="activityTime" slot-scope="text, record">
                     {{ record.start_time }} - {{ record.end_time }}
                 </template>
@@ -95,8 +92,8 @@
                 <template slot="action" slot-scope="record">
                     <div class="action-buttons">
                         <div v-saction:edit v-if="record.id && record.status != 30" class="action-btn">
-                        <a v-if="record.is_view == 0" @click="showCreateModal(record.id)" class="action-btn">编辑</a>
-                        <a v-if="record.is_view == 1" @click="showCreateModal(record.id, true)" class="action-btn">查看</a>
+                        <a v-if="record.status == 0 && record.is_view == 0" @click="showCreateModal(record.id)" class="action-btn">编辑</a>
+                        <a v-else @click="showCreateModal(record.id, true)" class="action-btn">查看</a>
                         </div>
                         <div v-saction:recommend v-if="record.recommend == 1 && record.status != 30" class="action-btn">
                         <a-popconfirm placement="top" ok-text="是" cancel-text="否" @confirm="handleRecommend(record, 0)">
@@ -108,6 +105,23 @@
                         </div>
                         <div v-saction:audit v-if="record.status == 0" class="action-btn">
                         <a @click="showAuditModal(record)">审核</a>
+                        </div>
+                        <div v-saction:audit v-if="record.status == 10 || record.status == 20" class="action-btn">
+                            <a-tooltip v-if="hasSignUps(record)" title="活动已有报名，不允许消审">
+                                <span class="disabled-action">消审</span>
+                            </a-tooltip>
+                            <a-popconfirm
+                                v-else
+                                placement="top"
+                                ok-text="确定"
+                                cancel-text="取消"
+                                @confirm="handleCancelAudit(record)"
+                            >
+                                <template slot="title">
+                                    <p>消审后活动将退回到待审核状态，并可重新编辑，确定继续吗？</p>
+                                </template>
+                                <a>消审</a>
+                            </a-popconfirm>
                         </div>
                         <div v-saction:recommend v-if="record.recommend == 0 && record.status != 30" class="action-btn">
                         <a-popconfirm placement="top" ok-text="是" cancel-text="否" @confirm="handleRecommend(record, 1)">
@@ -126,7 +140,7 @@
         </div>
 
         <!-- 创建活动弹窗 -->
-        <a-modal v-model="createModalVisible" title="创建社群活动" width="900px" height="800px" @ok="handleCreate" @cancel="handleCancel">
+        <a-modal v-model="createModalVisible" title="创建社群活动" width="900px" height="800px" :maskClosable="false" :keyboard="false" :confirm-loading="hostVillageChecking" @ok="handleCreate" @cancel="handleCancel" >
             <div class="create-modal-content">
                 <a-form-model ref="activityFormRef" :model="activityForm" :label-col="labelCol"
                     :wrapper-col="wrapperCol" :rules="rules">
@@ -147,59 +161,23 @@
                                     <a-input v-model="activityForm.name" placeholder="输入活动名称" :disabled="isView" />
                                 </a-form-model-item>
                             </a-col>
-                            <a-col :span="24" class="activity-upload-item">
-                            <a-row>
-                                <a-col :span="13">
-                                    <a-form-model-item label="活动海报" required prop="poster"
-                                        :extra="'建议尺寸1:1或1:1.5，支持jpg, png, jpeg, gif等格式'">
-                                        <a-upload name="reply_pic" list-type="picture-card" :show-upload-list="true"
-                                            :data="{ upload_dir: 'activity/SocialActivity' }" :before-upload="beforeUpload"
-                                            :file-list="activityForm.poster" @preview="handlePreview"
-                                            action="/v20/public/index.php/common/common.UploadFile/uploadPictures"
-                                            @change="(info) => handleUploadImg(info, 'activityForm', 'poster', true)" :disabled="isView">
-                                            <div v-if="!activityForm.poster || activityForm.poster.length === 0">
-                                                <a-icon type="plus" />
-                                                <div class="ant-upload-text">上传</div>
-                                            </div>
-                                        </a-upload>
-                                    </a-form-model-item>
-                                </a-col>
-                                <a-col :span="11">
-                                    <a-form-model-item class="video-upload-item" label="视频" prop="video" :style="isView?'pointer-events: none;':''">
-                                        <template slot="extra">
-                                            建议上传视频大小50M以内<br />
-                                            支持mp4,flv,mov,rmvb,avi,wmv
-                                        </template>
-                                        <template v-if="activityForm.video.length">
-                                            <div
-                                                class="goods-img"
-                                                v-for="(video, index) of activityForm.video"
-                                                :key="'video_' + index"
-                                            >
-                                                <video :src="video" :poster="videoImage" c></video>
-                                                <a-icon
-                                                    class="delete pointer"
-                                                    style="font-size: 16px; color: red"
-                                                    type="close-circle"
-                                                    theme="filled"
-                                                    @click="removeImage('video', index)"
-                                                />
-                                            </div>
-                                        </template>
-                                        <div
-                                            v-if="activityForm.video.length < 1"
-                                            @click="chooseImage('video')"
-                                            class="b-f1 w-80 h-80 cr-99 flex ml-10 align-center justify-around pointer br-5"
-                                            style="width: 104px !important;height: 104px !important;background-color: #fafafa !important;border: 1px dashed #d9d9d9 !important;"
-                                        >
-                                            <a-icon style="font-size: 32px" type="plus" />
-                                        </div>
-                                    </a-form-model-item>
-                                </a-col>
-                            </a-row>
-                            </a-col>
                             <a-col :span="24">
-                                <a-form-model-item label="社群活动位海报" prop="position_poster"
+                                <a-form-model-item label="活动主办社区" required prop="host_village_id">
+                                    <a-select
+                                        v-model="activityForm.host_village_id"
+                                        placeholder="请选择活动主办社区"
+                                        :disabled="isView"
+                                        :loading="hostVillageChecking"
+                                        @change="handleHostVillageChange"
+                                    >
+                                        <a-select-option v-for="item in communityList" :key="item.id" :value="item.id">
+                                            {{ item.name }}
+                                        </a-select-option>
+                                    </a-select>
+                                </a-form-model-item>
+                            </a-col>
+                            <a-col :span="24" class="activity-upload-item">
+                                <a-form-model-item label="社群活动位海报" required prop="position_poster"
                                     :extra="'建议尺寸750px * 400px，支持 jpg, png, jpeg, gif 等格式'">
                                     <a-upload name="reply_pic" list-type="picture-card" :show-upload-list="true"
                                         :data="{ upload_dir: 'activity/SocialActivity' }" :before-upload="beforeUpload"
@@ -212,6 +190,38 @@
                                             <div class="ant-upload-text">上传</div>
                                         </div>
                                     </a-upload>
+                                </a-form-model-item>
+                            </a-col>
+                            <a-col :span="24" class="activity-upload-item">
+                                <a-form-model-item class="video-upload-item" label="视频" prop="video" :style="isView?'pointer-events: none;':''">
+                                    <template slot="extra">
+                                        建议上传视频大小50M以内<br />
+                                        支持mp4,flv,mov,rmvb,avi,wmv
+                                    </template>
+                                    <template v-if="activityForm.video.length">
+                                        <div
+                                            class="goods-img"
+                                            v-for="(video, index) of activityForm.video"
+                                            :key="'video_' + index"
+                                        >
+                                            <video :src="video" :poster="videoImage" c></video>
+                                            <a-icon
+                                                class="delete pointer"
+                                                style="font-size: 16px; color: red"
+                                                type="close-circle"
+                                                theme="filled"
+                                                @click="removeImage('video', index)"
+                                            />
+                                        </div>
+                                    </template>
+                                    <div
+                                        v-if="activityForm.video.length < 1"
+                                        @click="chooseImage('video')"
+                                        class="b-f1 w-80 h-80 cr-99 flex align-center justify-around pointer br-5"
+                                        style="width: 104px !important;height: 104px !important;background-color: #fafafa !important;border: 1px dashed #d9d9d9 !important;"
+                                    >
+                                        <a-icon style="font-size: 32px" type="plus" />
+                                    </div>
                                 </a-form-model-item>
                             </a-col>
                             <a-col :span="24">
@@ -535,7 +545,7 @@ export default {
             activityForm: {
                 category_id: null,
                 name: '',
-                poster: [],
+                host_village_id: undefined,
                 position_poster: [],
                 start_time: null,
                 end_time: null,
@@ -580,12 +590,6 @@ export default {
                     title: '活动名称',
                     dataIndex: 'name',
                     key: 'name'
-                },
-                {
-                    title: '活动海报',
-                    dataIndex: 'poster',
-                    key: 'poster',
-                    scopedSlots: { customRender: 'activityPoster' }
                 },
                 {
                     title: '活动时间',
@@ -691,10 +695,22 @@ export default {
             formList: [], // 表单列表
             pointList: [], // 积分规则列表
             communityList: [], // 小区列表
+            hostVillageChecking: false,
+            hostVillageCheckToken: 0,
             perVenueList: [], // 每个小区对应的场地列表
             rules: {
                 name: [{ required: true, message: '请输入活动名称', trigger: 'blur' }],
-                poster: [{ required: true, message: '请上传活动海报', trigger: 'blur' }],
+                host_village_id: [{ required: true, message: '请选择活动主办社区', trigger: 'change' }],
+                position_poster: [{
+                    validator: (rule, value, callback) => {
+                        if (!value || value.length === 0) {
+                            callback(new Error('请上传社群活动位海报'))
+                            return
+                        }
+                        callback()
+                    },
+                    trigger: 'change'
+                }],
                 category_id: [{ required: true, message: '请选择活动分类', trigger: 'change' }],
                 start_time: [{ required: true, message: '请选择活动开始时间', trigger: 'blur' }],
                 end_time: [{ required: true, message: '请选择活动结束时间', trigger: 'blur' }],
@@ -750,12 +766,14 @@ export default {
         },
         // 显示创建活动弹窗
         showCreateModal(id = 0, isView = false) {
+            this.hostVillageCheckToken++
+            this.hostVillageChecking = false
             this.isView = isView
             this.createModalVisible = true
             this.activityForm = {
                 category_id: null,
                 name: '',
-                poster: [],
+                host_village_id: undefined,
                 position_poster: [],
                 start_time: null,
                 end_time: null,
@@ -805,7 +823,9 @@ export default {
             this.request(socialActivityApi.getActivityDetail, { id: id, is_view: isView }).then((res) => {
                 this.activityForm = res || {}
                 this.activityForm.position_poster = res.position_poster ? imgUploadFileListHandle([res.position_poster], 'position_poster') : []
-                this.activityForm.poster = res.poster ? imgUploadFileListHandle([res.poster], 'poster') : []
+                if (!isView && res.host_village_id) {
+                    this.handleHostVillageChange(res.host_village_id)
+                }
                 this.activityForm.sessions.forEach(item => {
                     if(item.tickets && item.tickets.length <= 0){
                         item.tickets = [
@@ -859,6 +879,8 @@ export default {
 
         // 处理取消
         handleCancel() {
+            this.hostVillageCheckToken++
+            this.hostVillageChecking = false
             this.createModalVisible = false
         },
 
@@ -925,15 +947,19 @@ export default {
 
         // 图片上传前处理
         beforeUpload(file) {
-            const isImage = file.type.startsWith('image/')
-            const isVideo = file.type.startsWith('video/')
-            if (!isImage && !isVideo) {
-                this.$message.error('只能上传图片或视频文件!')
-                return false
-            }
-            const isLt1M = file.size / 1024 / 1024 < 1
+            const fileSize = parseInt(file.size, 10)
+            const isLt1M = isNaN(fileSize) || fileSize < 1024 * 1024
             if (!isLt1M) {
                 this.$message.error('文件大小不能超过 1MB!')
+                return false
+            }
+
+            const fileType = String(file.type || '').toLowerCase()
+            const fileName = String(file.name || '').toLowerCase()
+            const isImage = fileType.indexOf('image/') === 0 || /\.(jpg|jpeg|png|gif)$/.test(fileName)
+            const isVideo = fileType.indexOf('video/') === 0 || /\.(mp4|flv|mov|rmvb|avi|wmv)$/.test(fileName)
+            if (!isImage && !isVideo) {
+                this.$message.error('只能上传图片或视频文件!')
                 return false
             }
             return true
@@ -941,6 +967,12 @@ export default {
 
         // 处理图片上传
         handleUploadImg(info, formField, field, multiple = false) {
+            const uploadFile = info.file && (info.file.originFileObj || info.file)
+            const uploadFileSize = uploadFile ? parseInt(uploadFile.size, 10) : 0
+            if (field === 'position_poster' && !isNaN(uploadFileSize) && uploadFileSize >= 1024 * 1024) {
+                this.$set(this[formField], field, [])
+                return
+            }
             const { fileList = [], resultData = {} } = imgUploadHandle(info, multiple)
             this[formField][field] = fileList
         },
@@ -1009,6 +1041,56 @@ export default {
                 this.getList()
             })
         },
+
+        handleHostVillageChange(villageId) {
+            if (!villageId || this.isView) {
+                return
+            }
+            const token = ++this.hostVillageCheckToken
+            this.hostVillageChecking = true
+            this.request(socialActivityApi.getPayConfig, { village_id: villageId })
+                .then((config) => {
+                    if (token !== this.hostVillageCheckToken) {
+                        return
+                    }
+                    const isConfigured = config && Number(config.status) === 1 &&
+                        String(config.app_id || '').trim() &&
+                        String(config.merchant_no || '').trim() &&
+                        String(config.private_key || '').trim()
+                    if (!isConfigured) {
+                        this.$set(this.activityForm, 'host_village_id', undefined)
+                        this.$message.error('当前小区未配置支付账户, 请联系管理员')
+                    }
+                })
+                .catch(() => {
+                    if (token === this.hostVillageCheckToken) {
+                        this.$set(this.activityForm, 'host_village_id', undefined)
+                    }
+                })
+                .finally(() => {
+                    if (token === this.hostVillageCheckToken) {
+                        this.hostVillageChecking = false
+                    }
+                })
+        },
+        // 判断活动是否已经有人报名
+        hasSignUps(record) {
+            return Number(record.sign_up_num || 0) > 0
+        },
+        // 消审：报名情况由前端预检，后端接口仍需进行最终校验
+        handleCancelAudit(record) {
+            if (this.hasSignUps(record)) {
+                this.$message.warning('活动已有报名，不允许消审')
+                return
+            }
+
+            this.request(socialActivityApi.cancelAuditActivity, {
+                id: record.id
+            }).then(() => {
+                this.$message.success('消审成功，活动已退回待审核状态')
+                this.getList()
+            })
+        },
         // 处理推荐/撤回
         handleRecommend(record, recommend) {
             const actionText = recommend === 1 ? '推荐' : '取消推荐'
@@ -1064,6 +1146,10 @@ export default {
 
         // 处理创建活动
         handleCreate() {
+            if (this.hostVillageChecking) {
+                this.$message.warning('正在校验活动主办社区支付配置，请稍候')
+                return
+            }
             this.$refs.activityFormRef.validate((valid) => {
                 if (valid) {
                     const getImages = (fileList) => {
@@ -1075,8 +1161,8 @@ export default {
                         // 格式化时间为 YYYY-MM-DD 格式
                         start_time: this.activityForm.start_time ? moment(this.activityForm.start_time).format('YYYY-MM-DD') : '',
                         end_time: this.activityForm.end_time ? moment(this.activityForm.end_time).format('YYYY-MM-DD') : '',
-                        // 处理海报和社群活动位海报
-                        poster: getImages(this.activityForm.poster)[0],
+                        // 处理社群活动位海报
+                        poster: '',
                         position_poster: getImages(this.activityForm.position_poster)[0]
                     }
 
@@ -1162,13 +1248,6 @@ export default {
         margin-bottom: 16px;
     }
 
-    .activity-poster {
-        width: 60px;
-        height: 60px;
-        object-fit: cover;
-        border-radius: 4px;
-    }
-
     .share-link {
         color: #1890FF;
         cursor: pointer;
@@ -1195,6 +1274,11 @@ export default {
                 margin-left: 8px;
                 color: #999;
             }
+        }
+
+        .disabled-action {
+            color: #bfbfbf;
+            cursor: not-allowed;
         }
     }
 
@@ -1355,14 +1439,8 @@ export default {
     }
 }
 .activity-upload-item {
-    ::v-deep .ant-form-item-label {
-        width: 29%;
-    }
-    ::v-deep .ant-form-item-control-wrapper  {
-        width: 60%;
-    }
     ::v-deep .video-upload-item .ant-form-extra {
-        margin: 20px 10px;
+        margin: 12px 0 0;
     }
 }
 </style>

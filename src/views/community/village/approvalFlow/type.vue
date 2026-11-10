@@ -19,7 +19,7 @@
       </a-form>
     </div>
     <div class="table-operator">
-      <a-button type="primary" icon="plus" @click="openEdit()">新增业务类型</a-button>
+      <!-- <a-button type="primary" icon="plus" @click="openEdit()">新增业务类型</a-button> -->
       <a-button style="margin-left: 8px" icon="rollback" @click="goFlowList">返回审批流</a-button>
     </div>
     <a-table
@@ -33,7 +33,9 @@
         <a-tag :color="text == 1 ? 'green' : 'red'">{{ text == 1 ? '启用' : '停用' }}</a-tag>
       </span>
       <span slot="is_system" slot-scope="text">
-        <a-tag :color="text == 1 ? 'blue' : 'default'">{{ text == 1 ? '系统内置' : '自定义' }}</a-tag>
+        <a-tag :style="text == 1 ? systemSourceTagStyle : customSourceTagStyle">
+          {{ text == 1 ? '系统内置' : '自定义' }}
+        </a-tag>
       </span>
       <span slot="action" slot-scope="text, record">
         <a @click="openEdit(record)">编辑</a>
@@ -57,7 +59,10 @@
           <a-input v-model="form.type_name" placeholder="请输入类型名称" />
         </a-form-model-item>
         <a-form-model-item label="类型标识" prop="type_key">
-          <a-input v-model="form.type_key" :disabled="!!form.id && form.is_system == 1" placeholder="例如 service_time_change" />
+          <a-input
+            v-model.trim="form.type_key"
+            :disabled="!!form.id && form.is_system == 1"
+            placeholder="请输入押金分类关键字，例如 deposit_1" />
         </a-form-model-item>
         <a-form-model-item label="状态">
           <a-radio-group v-model="form.status">
@@ -100,6 +105,16 @@ export default {
                 current: 1,
                 pageSize: 10,
                 total: 0
+            },
+            systemSourceTagStyle: {
+                color: '#096dd9',
+                backgroundColor: '#e6f7ff',
+                borderColor: '#91d5ff'
+            },
+            customSourceTagStyle: {
+                color: '#595959',
+                backgroundColor: '#f0f2f5',
+                borderColor: '#d9d9d9'
             },
             columns: [
                 { title: '类型名称', dataIndex: 'type_name', key: 'type_name' },

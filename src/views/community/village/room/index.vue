@@ -72,6 +72,9 @@
             <template slot="status" slot-scope="status"> <span
                     :class="status ? 'status-color-ok' : 'status-color-fail'"> {{ status ? "开启" : "关闭" }} </span>
             </template>
+            <a-tag slot="sell_status_txt" slot-scope="text" :color="getSellStatusColor(text)" :style="getSellStatusColor(text) ? {} : { color: '#000' }">
+                {{ text }}
+            </a-tag>
             <span slot="action" slot-scope="text, record">
                 <a @click="getRoominfo(record)" v-if="role_edit==1">查看/编辑</a>
                 <a-divider type="vertical" v-if="role_del==1" />
@@ -316,8 +319,7 @@
             let batchRoomColumns = ref([
                 { title: '房间', dataIndex: 'address', key: 'address' },
                 { title: '物业编号', dataIndex: 'usernum', key: 'usernum', width: 160 },
-                { title: '房间状态', dataIndex: 'room_status_txt', key: 'room_status_txt', width: 120 },
-                { title: '使用状态', dataIndex: 'user_status_txt', key: 'user_status_txt', width: 120 }
+                { title: '房间状态', dataIndex: 'room_status_txt', key: 'room_status_txt', width: 120 }
             ])
             const getSearchObj = () => {
                 Vue.prototype.request('/community/village_api.Building/getRoomListConfig', {}).then((
@@ -326,7 +328,28 @@
                     statusList.value = res.status_list
                     explainTips.value = res.explain_tips
                     buttonList.value = res.button_list
-                    tableColumn.value = res.table_list
+                    const roomColumns = (res.table_list || [])
+                        .filter(item => item.dataIndex !== 'user_status_txt')
+                        .map(item => item.dataIndex === 'sell_status_txt' ? {
+                            ...item,
+                            scopedSlots: { customRender: 'sell_status_txt' }
+                        } : item)
+                    const hasSellStatus = roomColumns.some(item => item.dataIndex === 'sell_status_txt')
+                    if (!hasSellStatus) {
+                        const actionIndex = roomColumns.findIndex(item => item.dataIndex === 'action')
+                        const sellStatusColumn = {
+                            title: '出售状态',
+                            dataIndex: 'sell_status_txt',
+                            key: 'sell_status_txt',
+                            scopedSlots: { customRender: 'sell_status_txt' }
+                        }
+                        if (actionIndex > -1) {
+                            roomColumns.splice(actionIndex, 0, sellStatusColumn)
+                        } else {
+                            roomColumns.push(sellStatusColumn)
+                        }
+                    }
+                    tableColumn.value = roomColumns
                     // tableColumn.value.map(v=>{
                     //     if(v.dataIndex == 'sort'){
                     //         v.sorter = (a, b) => a.sort - b.sort
@@ -542,6 +565,15 @@
                         }
                     }
                 })
+            }
+
+            const getSellStatusColor = (statusText) => {
+                const colorMap = {
+                    '空置': 'cyan',
+                    '已售已交付': 'blue',
+                    '已售未交付': 'orange'
+                }
+                return colorMap[statusText]
             }
             // 单元楼
             const getFloorList = (id) => {
@@ -979,6 +1011,7 @@
                 tableColumn,
                 getTableList,
                 roomList,
+                getSellStatusColor,
                 handleSelectChange,
 
                 options,

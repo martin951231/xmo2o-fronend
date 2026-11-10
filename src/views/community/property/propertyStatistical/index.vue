@@ -1,6 +1,9 @@
 <template>
   <div class="flex flex-column container">
     <Header :title="title" :projectItem="propertyItem"></Header>
+    <DataInsightDrawer :context="insightContext" :request-headers="insightRequestHeaders" :api-base="insightApiBase" />
+    <InsightAnalysis :context="insightContext" :request-headers="insightRequestHeaders" :api-base="insightApiBase" />
+    <InsightRisks :context="insightContext" :request-headers="insightRequestHeaders" :api-base="insightApiBase" />
 
     <div class="flex flex-1 chart-box">
       <div class="flex flex-column chart-item-left">
@@ -23,6 +26,7 @@
         </ChartPanel>
 
         <ChartPanel class="flex-1" title="工单情况统计">
+          <InsightAnalysis chart-id="workorder_status" :context="{ property_id: insightContext.property_id, ...insightDates(workOrderCurrentDateRange) }" :request-headers="insightRequestHeaders" :api-base="insightApiBase" />
           <template #title>
             <charTitle
               :show-more="false"
@@ -89,6 +93,7 @@
         </ChartPanel>
 
         <ChartPanel class="flex-1" title="收入情况">
+          <InsightAnalysis chart-id="revenue" :context="{ property_id: insightContext.property_id, ...insightDates(renevueCurrentDateRange) }" :request-headers="insightRequestHeaders" :api-base="insightApiBase" />
           <template #title>
             <charTitle
               :show-more="false"
@@ -140,6 +145,7 @@
 
       <div class="flex flex-column chart-item-right">
         <ChartPanel class="flex-1" title="用户使用情况(月)">
+          <InsightAnalysis chart-id="custom_express" :context="{ property_id: insightContext.property_id, ...insightDates({}) }" :request-headers="insightRequestHeaders" :api-base="insightApiBase" />
           <template #title>
             <charTitle
               :show-more="false"
@@ -163,6 +169,7 @@
         </ChartPanel>
 
         <ChartPanel class="flex-1" title="巡检情况">
+          <InsightAnalysis chart-id="inspection" :context="{ property_id: insightContext.property_id, ...insightDates(inspectionCurrentDateRange) }" :request-headers="insightRequestHeaders" :api-base="insightApiBase" />
           <template #title>
             <charTitle
               :show-more="false"
@@ -231,6 +238,9 @@
 
 <script>
 import statisticalApi from '@/api/community/statistical'
+import InsightRisks from './datainsight/InsightRisks.vue'
+import InsightAnalysis from './datainsight/InsightAnalysis.vue'
+import DataInsightDrawer from './datainsight/DataInsightDrawer.vue'
 import Header from '@/views/community/components/chart/Header'
 import DynamicChartModal from '@/views/community/components/chart/DynamicChartModal.vue'
 import StackedRateChart from '@/views/community/components/chart/StackedRateChart.vue'
@@ -248,7 +258,11 @@ import PanelLoading from '@/views/community/components/chart/PanelLoading.vue'
 
 export default {
   name: 'index',
+  inject: { dataInsightHeaders: { default: null }, dataInsightApiBase: { default: '' } },
   components: {
+    InsightRisks,
+    InsightAnalysis,
+    DataInsightDrawer,
     EnergyHeatmap,
     CharTitle,
     CyberTable,
@@ -268,6 +282,7 @@ export default {
   data: function () {
     return {
       title: '物业驾驶舱',
+      insightPeriod: null,
       length: 6,
       projectItem: [
         { label: '项目占地面积', value: [0], unit: '万平方米' },
@@ -630,12 +645,36 @@ export default {
     }
   },
   watch: {},
-  computed: {},
+  computed: {
+    insightContext () {
+      const context = { ...this.insightDates(this.insightPeriod || this.renevueCurrentDateRange) }
+      if (this.propertyBaseData.property_id) context.property_id = Number(this.propertyBaseData.property_id)
+      // This property-level dashboard has no selected village. Clarify through /resume.
+      return context
+    },
+    insightApiBase () { return this.dataInsightApiBase || process.env.VUE_APP_DATAINSIGHT_API_BASE || '/api/v1/datainsight' }
+  },
   mounted() {
     this.originTableData = [...this.projectBaseTableData]
     this.getInitInfo()
   },
   methods: {
+    async insightRequestHeaders () {
+      if (typeof this.dataInsightHeaders !== 'function') throw new Error('数据分析暂不可用：尚未接入 P3 登录身份')
+      return this.dataInsightHeaders()
+    },
+    insightDates (params = {}) {
+      const dates = {}
+      for (const key of ['start_date', 'end_date']) {
+        const value = params[key]
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value || '')) dates[key] = value
+        else if (/^\d{4}-\d{2}$/.test(value || '')) {
+          const [year, month] = value.split('-').map(Number)
+          if (month >= 1 && month <= 12) dates[key] = value + '-' + (key === 'start_date' ? '01' : String(new Date(year, month, 0).getDate()))
+        }
+      }
+      return dates
+    },
     setPanelLoading(key, status) {
       if (Object.prototype.hasOwnProperty.call(this.loadingMap, key)) {
         this.$set(this.loadingMap, key, status)
@@ -893,22 +932,27 @@ export default {
     },
 
     handleWorkOrderDateRangeChange(params) {
+      this.insightPeriod = { ...params }
       this.getPropertyWorkOrderSituationData(params)
     },
 
     handleRenevueDateRangeChange(params) {
+      this.insightPeriod = { ...params }
       this.getRevenueData(params)
     },
 
     handleInspectionDateRangeChange(params) {
+      this.insightPeriod = { ...params }
       this.getInspectionChartData(params)
     },
 
     handleWorkOrderRespondDateRangeChange(params) {
+      this.insightPeriod = { ...params }
       this.getAllWorkOrderResponseData(params)
     },
 
     handleExpenseDateRangeChange(params) {
+      this.insightPeriod = { start_date: params, end_date: params }
       this.getExpenseTableData({ month: params })
     }
   }

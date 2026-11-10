@@ -58,6 +58,7 @@ export default {
       form: {
         id: 0,
         cate_name: '',
+        cate_key: '',
         status: 1
       },
       pagination: {
@@ -68,6 +69,7 @@ export default {
       columns: [
         { title: 'ID', dataIndex: 'id', width: 90 },
         { title: '分类名', dataIndex: 'cate_name' },
+        { title: '关键字', dataIndex: 'cate_key', width: 180 },
         { title: '状态', dataIndex: 'status', scopedSlots: { customRender: 'status' }, width: 120 },
         { title: '新增时间', dataIndex: 'add_time_text', width: 180 },
         { title: '修改时间', dataIndex: 'update_time_text', width: 180 },
@@ -107,6 +109,7 @@ export default {
       this.form = {
         id: record ? record.id : 0,
         cate_name: record ? record.cate_name : '',
+        cate_key: record ? (record.cate_key || record.category_key || '') : '',
         status: record ? Number(record.status) : 1
       }
       this.visible = true

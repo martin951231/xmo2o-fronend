@@ -333,7 +333,8 @@
             // 收费项目对应的标准列表
             ChargeRuleLists (charge_project_id) {
                 this.request(villageApi.ChargeRuleLists, {
-                    charge_project_id: charge_project_id
+                    charge_project_id: charge_project_id,
+                    key: this.key
                 }).then((res) => {
                     console.log('ChargeRuleLists', res)
                     this.rule_list = res
@@ -364,7 +365,7 @@
             // 收费项目列表
             ChargeProjectLists () {
                 this.request(villageApi.ChargeProjectLists, {
-
+                    key: this.key
                 }).then((res) => {
                     console.log('ChargeProjectLists', res)
                     this.project_list = res

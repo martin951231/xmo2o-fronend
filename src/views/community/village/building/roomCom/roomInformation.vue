@@ -75,15 +75,6 @@
                         </a-select-option>
                     </a-select>
                 </a-form-model-item>
-                <a-form-model-item label="使用状态" class="form_item" extra="">
-                    <a-select show-search placeholder="请选择" style="width: 200px" :filter-option="filterOption" :value="roomForm.user_status"
-                        @change="(value)=>handleSelectChange(value, 'user_status')">
-                        <a-select-option v-for="(item,index) in roomParams.user_status_list" :value="item.key">
-                            {{item.value}}
-                        </a-select-option>
-                    </a-select>
-                </a-form-model-item>
-                
                 <a-form-model-item label="入住日期" class="form_item" extra="填写入住日期会改变使用状态为业主入住" v-if="is_aihorse_customized">
                 <a-date-picker
                    style="width: 220px"

@@ -203,6 +203,7 @@ const configVillageApi = {
     getPayOrderInfo: '/community/village_api.Cashier/getPayOrderInfo', //收银台订单详情
     getPayOrderList: '/community/village_api.Cashier/getPayOrderList', //收银台欠费项目对应的订单列表
     discardOrder: '/community/village_api.Cashier/discardOrder', //收银台作废账单
+    checkDiscardOrder: '/community/village_api.Cashier/checkDiscardOrder', // 作废账单前置校验
     getOrderStatisticsByYears: '/community/village_api.Cashier/getOrderStatisticsByYears', //获取应收明细年月应收金额统计
     modifyMoney: '/community/village_api.Cashier/modifyMoney', //收银台修改账单金额
     getChargeSubject: '/community/village_api.Charge/getChargeSubject', //科目数据
@@ -239,6 +240,8 @@ const configVillageApi = {
     manualBillRuleList: '/community/village_api.cashier/manualBillRuleList', //新增账单可选月度收费标准
     manualBillRuleInfo: '/community/village_api.cashier/manualBillRuleInfo', //新增账单收费标准详情
     manualBillCreate: '/community/village_api.cashier/manualBillCreate', //新增账单
+    batchManualBillTargetList: '/community/village_api.cashier/batchManualBillTargetList', //批量新增账单对象列表
+    batchManualBillCreate: '/community/village_api.cashier/batchManualBillCreate', //批量新增账单
     manualBillSplit: '/community/village_api.cashier/manualBillSplit', //第三方承担拆分子账单
     vacancyFeeConfig: '/community/village_api.cashier/vacancyFeeConfig', //空置费配置
     vacancyFeeConfigSave: '/community/village_api.cashier/vacancyFeeConfigSave', //保存空置费配置
@@ -358,6 +361,8 @@ const configVillageApi = {
     getUserAttachmentList: '/community/village_api.ChatSidebar/getUserAttachmentList', // 业主附件列表
     getRoomAttachmentList: '/community/village_api.Building/getRoomAttachmentList', // 房间附件列表
     saveRoomAttachmentList: '/community/village_api.Building/saveRoomAttachmentList', // 保存房间附件
+    getDepositAttachmentList: '/community/village_api.Building/getDepositAttachmentList', // 押金附件列表
+    saveDepositAttachmentList: '/community/village_api.Building/saveDepositAttachmentList', // 保存押金附件
     getUserInfo: '/community/village_api.ChatSidebar/getUserInfo', // 获取业主资料信息
     editUserInfo: '/community/village_api.ChatSidebar/editUserInfo', // 获取业主资料信息
     getLivingPaymentLog: '/community/village_api.ChatSidebar/getLivingPaymentLog', // 获取缴费记录
@@ -862,6 +867,13 @@ const configVillageApi = {
     approvalInstanceDetail: '/community/village_api.ApprovalFlow/instanceDetail', // 审批记录详情
     approvalAction: '/community/village_api.ApprovalFlow/approvalAction', // 审批通过/驳回/撤回
     approvalCreate: '/community/village_api.ApprovalFlow/createInstance', // 创建审批申请
+    publicRevenueSubjectList: '/community/village_api.PublicRevenue/subjectList', // 公共收益项目列表
+    publicRevenueSubjectSave: '/community/village_api.PublicRevenue/subjectSave', // 保存公共收益项目
+    publicRevenueSubjectStatus: '/community/village_api.PublicRevenue/subjectStatus', // 启停公共收益项目
+    publicRevenueSubjectDelete: '/community/village_api.PublicRevenue/subjectDelete', // 删除公共收益项目
+    publicRevenuePeriodDetail: '/community/village_api.PublicRevenue/periodDetail', // 公共收益期间数据
+    publicRevenuePeriodSave: '/community/village_api.PublicRevenue/periodSave', // 保存/提交公共收益
+    publicRevenueOperationLogList: '/community/village_api.PublicRevenue/operationLogList', // 公共收益操作日志
     roomTimeChangeApply: '/community/village_api.Building/applyRoomTimeChange', // 单个房间时间修改申请
     batchRoomTimeChangeApply: '/community/village_api.Building/batchApplyRoomTimeChange', // 批量房间时间修改申请
     

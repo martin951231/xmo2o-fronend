@@ -144,10 +144,6 @@
         </div>
         <div class="flex_text_box">
           <div class="text_1">应收费用：</div>
-          <div class="text_2">{{ details_data.total_money }}元</div>
-        </div>
-        <div class="flex_text_box margin_top_10">
-          <div class="text_1">实收费用：</div>
           <div class="text_2">{{ details_data.modify_money }}元</div>
         </div>
         <div class="flex_text_box">

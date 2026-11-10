@@ -1308,6 +1308,40 @@
       }
     },
     methods: {
+        isDepositOrder(record) {
+          if (!record) {
+            return false
+          }
+          const statusText = String(record.deposit_status_text || record.deposit_status_name || record.deposit_status || '')
+          return record.order_type == 'deposit_bill' ||
+            record.order_type_flag == 'deposit_bill' ||
+            record.source_type == 'deposit_bill' ||
+            record.is_deposit_order == 1 ||
+            Number(record.deposit_category_id || 0) > 0 ||
+            !!record.deposit_category_key ||
+            !!record.deposit_cate_key ||
+            Number(record.deposit_account_status || 0) > 0 ||
+            Number(record.deposit_status || 0) > 0 ||
+            statusText.indexOf('\u51bb\u7ed3') > -1 ||
+            statusText.indexOf('\u89e3\u51bb') > -1
+        },
+        normalizeDepositRow(record) {
+          const row = Object.assign({}, record)
+          if (!this.isDepositOrder(row)) {
+            return row
+          }
+          const categoryName = row.deposit_category_name || row.deposit_cate_name || row.category_name || row.cate_name || ''
+          row.is_deposit_order = 1
+          if (categoryName) {
+            row.project_name = categoryName
+            row.charge_name = categoryName
+            row.order_name = categoryName
+          }
+          return row
+        },
+        normalizeDepositRows(list) {
+          return (list || []).map(item => this.normalizeDepositRow(item))
+        },
         expressBill(type){
           this.request(villageApi.checkTakeEffectTime).then((res) => {
             if(!res.status){
@@ -1883,7 +1917,7 @@
           console.log('+++++++', res)
           if (res) {
             _this.user_info = res.user_info
-            _this.data = res.order_list
+            _this.data = _this.normalizeDepositRows(res.order_list)
             _this.total_money = res.total_money
             _this.position_end_time = res.position_end_time
             _this.is_pay = res.is_pay_but
@@ -1979,7 +2013,7 @@
         }).then(res => {
           console.log('+++++++', res)
           if (res) {
-            _this.details_data = res;
+            _this.details_data = _this.normalizeDepositRow(res);
             _this.field_list=res.field_list
           }
         })
@@ -1996,7 +2030,7 @@
         }).then(res => {
           console.log('+++++++Single', res)
           if (res) {
-            this.$message.success('操作成功')
+            this.$message.success(res.approval_id ? '账单作废审批已提交' : '操作成功')
             _this.visible_invalid = false
             _this.invalidReasons = ''
             console.log('record_data', record_data)
@@ -2241,7 +2275,15 @@
           this.$message.warning('请填写作废原因')
           return
         }
-        _this.discardOrder(_this.record_data)
+        this.$confirm({
+          title: '提交作废审批',
+          content: '作废账单需要提起审批，是否要提起审批？',
+          okText: '提起审批',
+          cancelText: '取消',
+          onOk() {
+            _this.discardOrder(_this.record_data)
+          }
+        })
       },
       // 修改费用确定提交
       confirm_revise () {

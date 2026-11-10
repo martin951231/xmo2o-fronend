@@ -152,13 +152,14 @@
         </span>
 
         </a-table>
-         <span style="margin-left: 35px;position: relative;top: -65px;color: red;font-size: 18px;">合计金额：{{ total_refund_money }}</span>
+         <span style="margin-left: 35px;position: relative;top: -65px;color: red;font-size: 18px;">合计金额：{{ total_refund_money | formatBillTotal }}</span>
       <payable-order-info ref="OrderModel" />
       <get-print-template ref="PrintModel" @ok="printBut"/>
       <print-order ref="PrintOrderModel"/>
     </div>
 </template>
 <script>
+    import { formatBillTotal } from './billTotalFormat'
     import villageApi from '@/api/community/village'
     import PayableOrderInfo from "@/views/community/village/charge/cashier/payableOrderInfo";
     import { Collapse } from 'ant-design-vue';
@@ -170,6 +171,7 @@
         {title: '缴费人', dataIndex: 'pay_bind_name', key: 'pay_bind_name' },
         { title: '电话',  dataIndex: 'pay_bind_phone', key: 'pay_bind_phone'},
         { title: '收费项目名称',  dataIndex: 'project_name', key: 'project_name'},
+        { title: '收费标准', dataIndex: 'charge_name', key: 'charge_name', width: 150 },
         { title: '实际缴费金额',  dataIndex: 'pay_money', key: 'pay_money'},
         { title: '退款金额',  dataIndex: 'refund_money', key: 'refund_money'},
         { title: '支付方式',  dataIndex: 'pay_type', key: 'pay_type'},
@@ -183,6 +185,7 @@
     export default {
         name: 'refundOrderList',
         filters: {
+            formatBillTotal,
 
         },
         components:{
@@ -233,6 +236,41 @@
           this.getProjectRuleList()
         },
         methods: {
+            isDepositOrder(record) {
+                if (!record) {
+                    return false
+                }
+                const statusText = String(record.deposit_status_text || record.deposit_status_name || record.deposit_status || '')
+                return record.order_type == 'deposit_bill' ||
+                    record.order_type_flag == 'deposit_bill' ||
+                    record.source_type == 'deposit_bill' ||
+                    record.is_deposit_order == 1 ||
+                    Number(record.deposit_category_id || 0) > 0 ||
+                    !!record.deposit_category_key ||
+                    !!record.deposit_cate_key ||
+                    Number(record.deposit_account_status || 0) > 0 ||
+                    Number(record.deposit_status || 0) > 0 ||
+                    statusText.indexOf('\u51bb\u7ed3') > -1 ||
+                    statusText.indexOf('\u89e3\u51bb') > -1
+            },
+            normalizeDepositRow(record) {
+                const row = Object.assign({}, record)
+                if (!this.isDepositOrder(row)) {
+                    return row
+                }
+                const categoryName = row.deposit_category_name || row.deposit_cate_name || row.category_name || row.cate_name || row.order_name || ''
+                row.is_deposit_order = 1
+                    row.project_name = '押金账单'
+                if (categoryName) {
+                    row.rule_name = categoryName
+                    row.charge_name = categoryName
+                    row.order_name = categoryName
+                }
+                return row
+            },
+            normalizeDepositRows(list) {
+                return (list || []).map(item => this.normalizeDepositRow(item))
+            },
             onTableChange(page,pageSize){
                 this.page = page
                 this.pagination.current = page
@@ -249,7 +287,7 @@
                     .then((res) => {
                         this.pagination.total = res.count ? res.count : 0
                         this.pagination.pageSize = res.total_limit ? res.total_limit : 10
-                        this.data = res.list
+                        this.data = this.normalizeDepositRows(res.list)
                         if(res.role_export!=undefined){
                             this.role_export=res.role_export;
                         }else{

@@ -84,7 +84,7 @@
                 <a-tag  slot="car_status_txt" slot-scope="text, record" style="width: 50px;height: 25px;text-align: center;" :color="record.is_bind_car<=0?'green':'red'" >
                     {{ record.car_status_txt}}
                 </a-tag>
-                <a-tag  slot="position_status_txt" slot-scope="text, record" style="width: 50px;height: 25px;text-align: center;" :color="record.position_status==1?'green':'red'" >
+                <a-tag slot="position_status_txt" slot-scope="text, record" style="min-width: 100px;height: 25px;text-align: center;" :color="positionSaleStatusColor[record.position_status]">
                     {{ record.position_status_txt}}
                 </a-tag>
                 <span slot="action" slot-scope="text, record" >
@@ -377,7 +377,8 @@
                 spaceList: [],
                 garageList: [],
                 positionStatus: [{position_status: 0, label:'全部'},{position_status: 1, label:'空置'}, {position_status: 2, label: '已使用'}],
-                positionBindStatus: [{position_status: 0, label:'全部'},{position_status: 1, label:'未售出'}, {position_status: 2, label: '已售出'}],
+                positionBindStatus: [{position_status: 0, label:'全部'},{position_status: 1, label:'未售出'}, {position_status: 2, label: '已售出已交付'}, {position_status: 3, label: '已售出未交付'}, {position_status: 4, label: '销控已售'}, {position_status: 5, label: '销控未售'}],
+                positionSaleStatusColor: {1: 'green', 2: 'blue', 3: 'orange', 4: 'purple', 5: 'cyan'},
                 frequency: false,
                 position_id: '',
                 children_type: 0,

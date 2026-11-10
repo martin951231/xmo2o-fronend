@@ -4,11 +4,13 @@ CREATE TABLE IF NOT EXISTS `house_new_deposit_category` (
   `property_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '物业ID',
   `village_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '小区ID',
   `cate_name` varchar(50) NOT NULL DEFAULT '' COMMENT '分类名',
+  `cate_key` varchar(80) NOT NULL DEFAULT '' COMMENT '分类关键字，对应审批业务类型标识',
   `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '状态 1启用 0禁用',
   `is_del` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除 0否 1是',
   `add_time` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '新增时间',
   `update_time` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '修改时间',
   PRIMARY KEY (`id`),
+  KEY `idx_village_cate_key` (`village_id`,`cate_key`,`is_del`),
   KEY `idx_village_status` (`village_id`,`status`,`is_del`),
   KEY `idx_property` (`property_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='押金分类表';

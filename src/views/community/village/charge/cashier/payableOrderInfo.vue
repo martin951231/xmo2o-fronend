@@ -1,40 +1,14 @@
 <template>
-    <a-modal :title="title" :width="1000" :visible="visible" :maskClosable="false" :footer="null"
+    <a-modal :title="title" :width="1300" :visible="visible" :maskClosable="false" :footer="null"
         :confirmLoading="confirmLoading" @cancel="handleCancel">
         <a-spin :spinning="confirmLoading" :height="800">
-            <a-card>
-                <div v-if="currentIndex == 0">
-                    <a-button type="primary" @click="changeXTab(0)" style="margin-right: 30px">订单基本信息</a-button>
-                    <a-button type="default" @click="changeXTab(1)" style="margin-right: 30px" v-if="post.pay_type_way>0" >订单退款记录</a-button>
-                    <a-button type="default" @click="changeXTab(2)" style="margin-right: 30px" v-if="show_check_detail">
-                        退款审核记录</a-button>
-                        <a-button type="default" @click="changeXTab(3)" style="margin-right: 30px" v-if="pay_time_modify_record.length>0">
-                            支付时间修改记录</a-button>
-                        
-                </div>
-                <div v-else-if="currentIndex == 1">
-                    <a-button type="default" @click="changeXTab(0)" style="margin-right: 30px">订单基本信息</a-button>
-                    <a-button type="primary" @click="changeXTab(1)" style="margin-right: 30px" v-if="post.pay_type_way>0" >订单退款记录</a-button>
-                    <a-button type="default" @click="changeXTab(2)" style="margin-right: 30px" v-if="show_check_detail">
-                        退款审核记录</a-button>
-                     <a-button type="default" @click="changeXTab(3)" style="margin-right: 30px" v-if="pay_time_modify_record.length>0">
-                            支付时间修改记录</a-button>
-                </div>
-                <div v-else-if="currentIndex == 2">
-                    <a-button type="default" @click="changeXTab(0)" style="margin-right: 30px">订单基本信息</a-button>
-                    <a-button type="default" @click="changeXTab(1)" style="margin-right: 30px" v-if="post.pay_type_way>0"  >订单退款记录</a-button>
-                    <a-button type="primary" @click="changeXTab(2)" style="margin-right: 30px" v-if="show_check_detail">
-                        退款审核记录</a-button>
-                <a-button type="default" @click="changeXTab(3)" style="margin-right: 30px" v-if="pay_time_modify_record.length>0">
-                            支付时间修改记录</a-button>
-                </div>
-                <div v-else>
-                    <a-button type="default" @click="changeXTab(0)" style="margin-right: 30px">订单基本信息</a-button>
-                    <a-button type="default" @click="changeXTab(1)" style="margin-right: 30px" v-if="post.pay_type_way>0" >订单退款记录</a-button>
-                    <a-button type="default" @click="changeXTab(2)" style="margin-right: 30px" v-if="show_check_detail">
-                        退款审核记录</a-button>
-                <a-button type="primary" @click="changeXTab(3)" style="margin-right: 30px" v-if="pay_time_modify_record.length>0">
-                            支付时间修改记录</a-button>
+            <a-card class="order-info-tab-card">
+                <div class="order-info-tabs">
+                    <a-button :type="currentIndex == 0 ? 'primary' : 'default'" @click="changeXTab(0)">订单基本信息</a-button>
+                    <a-button :type="currentIndex == 1 ? 'primary' : 'default'" @click="changeXTab(1)" v-if="post.pay_type_way>0">订单退款记录</a-button>
+                    <a-button :type="currentIndex == 2 ? 'primary' : 'default'" @click="changeXTab(2)" v-if="show_check_detail">退款审核记录</a-button>
+                    <a-button :type="currentIndex == 3 ? 'primary' : 'default'" @click="changeXTab(3)" v-if="pay_time_modify_record.length>0">支付时间修改记录</a-button>
+                    <a-button :type="currentIndex == 4 ? 'primary' : 'default'" @click="changeXTab(4)" v-if="hasDepositDeductInfo()">押金抵扣记录</a-button>
                 </div>
             </a-card>
             <div class="order_list_box" v-if="currentIndex == 0">
@@ -87,6 +61,10 @@
                         <span class="ant-card-span1">
                             <label>收费标准:</label>
                             <a-input class="ant-card-input" :disabled="true" v-model="post.charge_name" />
+                        </span>
+                        <span class="ant-card-span2" v-if="isDepositOrder(post)">
+                            <label>押金状态:</label>
+                            <a-input class="ant-card-input" :disabled="true" v-model="post.deposit_status_text" />
                         </span>
                         <span class="ant-card-span2" v-if="post.is_split_order">
                             <label>账单合并生成：</label>
@@ -363,6 +341,67 @@
                  :loading="loading">
                 </a-table>
             </div>
+            <div class="deposit-deduct-box" v-if="currentIndex == 4" style="margin-top: 10px;">
+                <a-card>
+                    <span class="ant-card-head-title"
+                        style="font-size: 16px;font-weight: 600; border-bottom: 1px solid #eee; width: 100%; padding-bottom: 3px;">押金余额</span>
+                    <span class="ant-card-span1">
+                        <label>押金总额:</label>
+                        <a-input class="ant-card-input" :disabled="true" :value="depositDeductInfo.balance.total_money" />
+                    </span>
+                    <span class="ant-card-span2">
+                        <label>已抵扣金额:</label>
+                        <a-input class="ant-card-input" :disabled="true" :value="depositDeductInfo.balance.used_money" />
+                    </span>
+                    <span class="ant-card-span1">
+                        <label>押金余额:</label>
+                        <a-input class="ant-card-input" :disabled="true" :value="depositDeductInfo.balance.available_money" />
+                    </span>
+                </a-card>
+                <a-card style="margin-top: 16px;" v-if="depositAttachmentRoomId">
+                    <span class="ant-card-head-title"
+                        style="font-size: 16px;font-weight: 600; border-bottom: 1px solid #eee; width: 100%; padding-bottom: 3px;">押金附件</span>
+                    <div class="deposit-attachment-box">
+                        <a-upload
+                            name="file"
+                            :multiple="true"
+                            :show-upload-list="false"
+                            :accept="depositAttachmentGroup.accept"
+                            :data="{ path: 'houseRoomAttachment' }"
+                            action="/v20/public/index.php/community/village_api.ChatSidebar/uploadFile"
+                            :headers="uploadHeaders"
+                            :before-upload="beforeDepositAttachmentUpload"
+                            @change="handleDepositAttachmentUpload"
+                        >
+                            <a-button type="primary" :loading="depositAttachmentLoading">
+                                <a-icon type="upload" />
+                                上传
+                            </a-button>
+                        </a-upload>
+                        <span class="deposit-attachment-tip">仅同步这里上传的押金附件到业主房间信息</span>
+                        <div class="deposit-attachment-list" v-if="depositAttachmentFiles.length">
+                            <template v-for="file in depositAttachmentFiles">
+                                <span :key="depositAttachmentFileKey(file, 'file')" class="deposit-attachment-file">
+                                    <a :href="file.file_url_full || file.url" target="_blank">{{ file.original_name || file.name }}</a>
+                                </span>
+                                <a
+                                    :key="depositAttachmentFileKey(file, 'delete')"
+                                    class="deposit-attachment-delete"
+                                    @click="removeDepositAttachment(file)"
+                                >删除</a>
+                            </template>
+                        </div>
+                        <div class="deposit-attachment-empty" v-else>暂无押金附件</div>
+                    </div>
+                </a-card>
+                <a-card style="margin-top: 16px;">
+                    <span class="ant-card-head-title"
+                        style="font-size: 16px;font-weight: 600; border-bottom: 1px solid #eee; width: 100%; padding-bottom: 3px;">押金抵扣记录</span>
+                    <a-table :columns="columnsDepositDeduct" :data-source="depositDeductInfo.list" class="components-table-demo-nested deposit-deduct-table"
+                        :pagination="false" :loading="loading" rowKey="origin_order_no" :scroll="{ x: 1300 }">
+                    </a-table>
+                </a-card>
+            </div>
             
         </a-spin>
 
@@ -440,6 +479,12 @@
             key: 'refund_money'
         },
         {
+            title: '退款明细',
+            dataIndex: 'refund_detail_text',
+            key: 'refund_detail_text',
+            width: 260
+        },
+        {
             title: '线上退款金额',
             dataIndex: 'refund_online_money',
             key: 'refund_online_money'
@@ -506,6 +551,66 @@
             key: 'check_time_str'
         },
     ];
+    const columnsDepositDeduct = [{
+            title: '缴费人',
+            dataIndex: 'pay_bind_name',
+            key: 'pay_bind_name'
+        },
+        {
+            title: '收款人',
+            dataIndex: 'role_name',
+            key: 'role_name'
+        },
+        {
+            title: '抵扣金额',
+            dataIndex: 'deduct_money',
+            key: 'deduct_money'
+        },
+        {
+            title: '抵扣后余额',
+            dataIndex: 'after_balance',
+            key: 'after_balance'
+        },
+        {
+            title: '抵扣时间',
+            dataIndex: 'deduct_time',
+            key: 'deduct_time'
+        },
+        {
+            title: '抵扣备注',
+            dataIndex: 'remark',
+            key: 'remark'
+        },
+        {
+            title: '抵扣原订单编号',
+            dataIndex: 'origin_order_no',
+            key: 'origin_order_no'
+        },
+        {
+            title: '抵扣原订单收费项目名称',
+            dataIndex: 'origin_project_name',
+            key: 'origin_project_name'
+        },
+        {
+            title: '抵扣原订单收费项目周期',
+            dataIndex: 'origin_project_period',
+            key: 'origin_project_period'
+        },
+    ];
+    const depositDeductColumnWidth = {
+        pay_bind_name: 90,
+        role_name: 90,
+        deduct_money: 100,
+        after_balance: 110,
+        deduct_time: 160,
+        remark: 120,
+        origin_order_no: 160,
+        origin_project_name: 190,
+        origin_project_period: 220
+    };
+    columnsDepositDeduct.forEach(item => {
+        item.width = depositDeductColumnWidth[item.dataIndex] || 120
+    });
     const dataRefund = [];
     export default {
         name: 'payableOrderInfo',
@@ -542,6 +647,7 @@
                 currentIndex: 0,
                 columnsRefund,
                 columnsPayTimeModify,
+                columnsDepositDeduct,
                 dataRefund,
                 dataCheckDetail: [],
                 pagination: {
@@ -558,6 +664,7 @@
                 post: {
                     deposit_money: '',
                     order_id: '',
+                    room_id: '',
                     order_no: '',
                     order_serial: '',
                     numbers: '',
@@ -599,9 +706,28 @@
                 },
                 apply_check_info: {},
                 pay_time_modify_record:[],
+                depositDeductInfo: {
+                    show: 0,
+                    balance: {},
+                    list: []
+                },
+                depositAttachmentGroup: {
+                    accept: '.jpg,.jpeg,.png,.gif,.bmp,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar',
+                    allow_exts: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'zip', 'rar']
+                },
+                depositAttachmentFiles: [],
+                depositAttachmentLoading: false,
+                uploadHeaders: {
+                    authorization: 'authorization-text'
+                },
             }
         },
         mounted() {},
+        computed: {
+            depositAttachmentRoomId() {
+                return this.post && this.post.room_id ? this.post.room_id : 0
+            }
+        },
         methods: {
             add(id, check_apply_id) {
                 this.title = '订单详情';
@@ -613,6 +739,7 @@
                 this.post = {
                     deposit_money: '',
                     order_id: '',
+                    room_id: '',
                     order_no: '',
                     order_serial: '',
                     numbers: '',
@@ -650,6 +777,13 @@
                     func_kaidalaicn_special:0,
                 };
                 this.pay_time_modify_record=[];
+                this.depositDeductInfo = {
+                    show: 0,
+                    balance: {},
+                    list: []
+                };
+                this.depositAttachmentFiles = [];
+                this.depositAttachmentLoading = false;
                 this.getOrderInfo();
                 if (this.check_apply_id > 0) {
                     this.show_check_detail = true;
@@ -664,7 +798,7 @@
                         id: this.id
                     })
                     .then((res) => {
-                        this.post = res
+                        this.post = this.normalizeDepositDeductMoney(res)
                         if (res.order_type == 'water' || res.order_type == 'electric' || res.order_type == 'gas') {
                             this.is_show = true
                         }
@@ -674,6 +808,11 @@
                         }
                         if(res.pay_time_modify_record){
                            this.pay_time_modify_record= res.pay_time_modify_record;
+                        }
+                        this.depositDeductInfo = res.deposit_deduct_info || {
+                            show: 0,
+                            balance: {},
+                            list: []
                         }
                         this.loading = false
                     })
@@ -687,9 +826,159 @@
                     this.getRefundList()
                 } else if(this.currentIndex == 2) {
                     this.getCheckauthDetail()
+                } else if(this.currentIndex == 4) {
+                    this.getDepositAttachmentList()
+                    this.loading = false
                 }else{
                     
                 }
+            },
+            isDepositOrder(record) {
+                if (!record) {
+                    return false
+                }
+                const statusText = String(record.deposit_status_text || record.deposit_status_name || record.deposit_status || '')
+                return record.order_type == 'deposit_bill' ||
+                    record.order_type_flag == 'deposit_bill' ||
+                    record.source_type == 'deposit_bill' ||
+                    record.is_deposit_order == 1 ||
+                    Number(record.deposit_category_id || 0) > 0 ||
+                    !!record.deposit_category_key ||
+                    !!record.deposit_cate_key ||
+                    Number(record.deposit_account_status || 0) > 0 ||
+                    Number(record.deposit_status || 0) > 0 ||
+                    statusText.indexOf('\u51bb\u7ed3') > -1 ||
+                    statusText.indexOf('\u89e3\u51bb') > -1
+            },
+            normalizeDepositProjectName(info) {
+                const post = Object.assign({}, info)
+                if (!this.isDepositOrder(post)) {
+                    return post
+                }
+                const categoryName = post.deposit_category_name || post.deposit_cate_name || post.category_name || post.cate_name || ''
+                post.is_deposit_order = 1
+                if (categoryName) {
+                    post.project_name = categoryName
+                    post.charge_name = categoryName
+                    post.order_name = categoryName
+                }
+                return post
+            },
+    normalizeDepositDeductMoney(info) {
+        const post = this.normalizeDepositProjectName(info)
+        const depositMoney = this.parseMoney(post.deposit_money)
+        const totalMoney = this.parseMoney(post.total_money)
+        const modifyMoneyText = post.modify_money === undefined || post.modify_money === null
+            ? ''
+            : String(post.modify_money).trim()
+        const hasModifyMoney = /-?\d+(?:\.\d+)?/.test(modifyMoneyText)
+        const payableMoney = hasModifyMoney ? this.parseMoney(post.modify_money) : totalMoney
+        const realPayMoney = Math.max(payableMoney - depositMoney, 0)
+        post.pay_money = this.formatMoney(realPayMoney)
+        post.pay_money_real = this.formatMoney(realPayMoney)
+        return post
+    },
+            parseMoney(value) {
+                const money = parseFloat(String(value || '').replace(/[^\d.-]/g, ''))
+                return isNaN(money) ? 0 : money
+            },
+            formatMoney(value) {
+                return Number(value || 0).toFixed(2)
+            },
+            hasDepositDeductInfo() {
+                if (this.post && this.post.order_type == 'deposit_bill') {
+                    return true
+                }
+                if (this.depositDeductInfo && Number(this.depositDeductInfo.show) > 0) {
+                    return true
+                }
+                if (this.depositDeductInfo && this.depositDeductInfo.list && this.depositDeductInfo.list.length > 0) {
+                    return true
+                }
+                const depositMoney = parseFloat(String(this.post.deposit_money || '').replace(/[^\d.-]/g, ''))
+                return depositMoney > 0
+            },
+            getDepositAttachmentList() {
+                if (!this.depositAttachmentRoomId) {
+                    this.depositAttachmentFiles = []
+                    return
+                }
+                this.request(villageApi.getDepositAttachmentList, {
+                    vacancy_id: this.depositAttachmentRoomId
+                }).then((res) => {
+                    const group = res.group || {}
+                    this.depositAttachmentGroup = {
+                        ...this.depositAttachmentGroup,
+                        ...group
+                    }
+                    this.depositAttachmentFiles = group.files || []
+                })
+            },
+            beforeDepositAttachmentUpload(file) {
+                const ext = (file.name || '').split('.').pop().toLowerCase()
+                const allowExts = this.depositAttachmentGroup.allow_exts || []
+                if (allowExts.length && allowExts.indexOf(ext) === -1) {
+                    this.$message.error('押金附件格式不支持')
+                    return false
+                }
+                if (file.size > 20 * 1024 * 1024) {
+                    this.$message.error('单个附件不能超过20M')
+                    return false
+                }
+                return true
+            },
+            handleDepositAttachmentUpload(info) {
+                this.depositAttachmentLoading = info.file.status === 'uploading'
+                if (info.file.status === 'done') {
+                    this.depositAttachmentLoading = false
+                    if (info.file.response.status === 1000) {
+                        const fileData = info.file.response.data || {}
+                        this.depositAttachmentFiles = this.depositAttachmentFiles.concat([{
+                            file_url: fileData.url,
+                            original_name: fileData.name || info.file.name,
+                            size: info.file.size || 0,
+                            suffix: (info.file.name || '').split('.').pop(),
+                            add_time: Math.floor(Date.now() / 1000)
+                        }])
+                        this.saveDepositAttachmentList()
+                    } else {
+                        this.$message.error(info.file.response.msg || `${info.file.name} 上传失败`)
+                    }
+                } else if (info.file.status === 'error') {
+                    this.depositAttachmentLoading = false
+                    this.$message.error(`${info.file.name} 上传失败`)
+                }
+            },
+            removeDepositAttachment(file) {
+                this.depositAttachmentFiles = this.depositAttachmentFiles.filter(item => item.file_url !== file.file_url)
+                this.saveDepositAttachmentList()
+            },
+            saveDepositAttachmentList() {
+                if (!this.depositAttachmentRoomId) {
+                    return
+                }
+                this.depositAttachmentLoading = true
+                this.request(villageApi.saveDepositAttachmentList, {
+                    vacancy_id: this.depositAttachmentRoomId,
+                    files: this.depositAttachmentFiles
+                }).then((res) => {
+                    const group = res.group || {}
+                    this.depositAttachmentGroup = {
+                        ...this.depositAttachmentGroup,
+                        ...group
+                    }
+                    this.depositAttachmentFiles = group.files || []
+                    this.$emit('deposit-attachment-change', {
+                        order_id: this.post.order_id,
+                        has_deposit_attachment: this.depositAttachmentFiles.length > 0 ? 1 : 0
+                    })
+                    this.$message.success('押金附件已同步')
+                }).finally(() => {
+                    this.depositAttachmentLoading = false
+                })
+            },
+            depositAttachmentFileKey(file, suffix) {
+                return `${file.uid || file.file_url || file.name}_${suffix}`
             },
             getRefundList() {
                 this.loading = true;
@@ -753,5 +1042,63 @@
     .ant-card-head-title {
         padding-bottom: 3px;
         color: #000;
-    } 
+    }
+
+    .order-info-tab-card /deep/ .ant-card-body {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        padding-left: 24px;
+        overflow-x: auto;
+    }
+
+    .order-info-tab-card /deep/ .ant-card-body > div {
+        display: inline-flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+    }
+
+    .order-info-tab-card /deep/ .ant-btn {
+        flex: 0 0 auto;
+        margin-right: 30px;
+    }
+
+    .deposit-deduct-table /deep/ .ant-table-thead > tr > th,
+    .deposit-deduct-table /deep/ .ant-table-tbody > tr > td {
+        white-space: nowrap;
+    }
+
+    .deposit-attachment-box {
+        padding-top: 16px;
+    }
+
+    .deposit-attachment-tip {
+        margin-left: 12px;
+        color: #999;
+    }
+
+    .deposit-attachment-list {
+        margin-top: 12px;
+        line-height: 28px;
+    }
+
+    .deposit-attachment-file {
+        display: inline-block;
+        margin-right: 8px;
+        padding: 0 8px;
+        background: #f5f5f5;
+        border: 1px solid #e8e8e8;
+        border-radius: 2px;
+    }
+
+    .deposit-attachment-delete {
+        margin-right: 16px;
+        color: #f5222d;
+    }
+
+    .deposit-attachment-empty {
+        margin-top: 12px;
+        color: #999;
+    }
 </style>

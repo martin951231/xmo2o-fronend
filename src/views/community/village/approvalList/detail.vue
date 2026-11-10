@@ -21,6 +21,9 @@
         <a-descriptions-item label="变更内容" :span="2">
           <pre class="change-content">{{ info.change_content_text || '-' }}</pre>
         </a-descriptions-item>
+        <a-descriptions-item label="账单信息" :span="2">
+          <pre class="change-content">{{ info.bill_info_text || '-' }}</pre>
+        </a-descriptions-item>
       </a-descriptions>
       <a-divider orientation="left">审批节点</a-divider>
       <a-timeline>
@@ -30,20 +33,36 @@
             <a-tag style="margin-left: 8px">{{ node.status_text }}</a-tag>
           </div>
           <div>审批人：{{ node.approver_name }}</div>
+          <div v-if="node.approver_organization">组织架构：{{ node.approver_organization }}</div>
+          <a-tag
+            v-if="node.approver_account || node.approver_login_role_text || node.approver_login_role"
+            class="developer-hidden-tag"
+            :data-account="node.approver_account"
+            :data-login-role="node.approver_login_role"
+            :data-login-role-text="node.approver_login_role_text">
+            账号：{{ node.approver_account || '-' }}；登录身份：{{ node.approver_login_role_text || node.approver_login_role || '-' }}
+          </a-tag>
           <div v-if="node.approve_time_text">审批时间：{{ node.approve_time_text }}</div>
           <div v-if="node.remark">备注：{{ node.remark }}</div>
         </a-timeline-item>
       </a-timeline>
-      <template v-if="info.can_approve || info.can_withdraw">
+      <template v-if="(showActions && info.can_approve) || (allowWithdraw && info.can_withdraw)">
         <a-divider />
         <a-form-model :label-col="{ span: 3 }" :wrapper-col="{ span: 20 }">
-          <a-form-model-item label="审批备注" v-if="info.can_approve">
-            <a-textarea v-model="remark" placeholder="请输入审批备注" :rows="3" />
+          <a-form-model-item :label="showActions && info.can_approve ? '审批备注' : '撤回原因'">
+            <a-textarea
+              v-model="remark"
+              :placeholder="showActions && info.can_approve ? '请输入审批备注' : '请输入撤回原因（必填）'"
+              :rows="3" />
           </a-form-model-item>
           <a-form-model-item :wrapper-col="{ span: 20, offset: 3 }">
-            <a-button type="primary" v-if="info.can_approve" :loading="actionLoading" @click="submitAction('pass')">通过</a-button>
-            <a-button type="danger" v-if="info.can_approve" :loading="actionLoading" style="margin-left: 8px" @click="submitAction('reject')">驳回</a-button>
-            <a-button v-if="info.can_withdraw" :loading="actionLoading" style="margin-left: 8px" @click="submitAction('withdraw')">撤回</a-button>
+            <a-button type="primary" v-if="showActions && info.can_approve" :loading="actionLoading" @click="submitAction('pass')">通过</a-button>
+            <a-button type="danger" v-if="showActions && info.can_approve" :loading="actionLoading" style="margin-left: 8px" @click="submitAction('reject')">驳回</a-button>
+            <a-button
+              v-if="allowWithdraw && info.can_withdraw"
+              :loading="actionLoading"
+              :style="showActions && info.can_approve ? { marginLeft: '8px' } : {}"
+              @click="submitAction('withdraw')">撤回</a-button>
           </a-form-model-item>
         </a-form-model>
       </template>
@@ -56,6 +75,16 @@ import villageApi from '@/api/community/village'
 
 export default {
     name: 'ApprovalDetail',
+    props: {
+        showActions: {
+            type: Boolean,
+            default: true
+        },
+        allowWithdraw: {
+            type: Boolean,
+            default: true
+        }
+    },
     data () {
         return {
             visible: false,
@@ -108,6 +137,10 @@ export default {
             return 'blue'
         },
         submitAction (action) {
+            if (action === 'withdraw' && !this.remark.trim()) {
+                this.$message.warning('请输入撤回原因')
+                return
+            }
             const actionText = {
                 pass: '通过',
                 reject: '驳回',
@@ -146,5 +179,8 @@ export default {
 }
 .node-line {
     margin-bottom: 4px;
+}
+.developer-hidden-tag {
+    display: none;
 }
 </style>

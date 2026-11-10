@@ -4,27 +4,40 @@
         <a-tabs :default-active-key="1" @change="tabChange">
             <a-tab-pane :key="1" tab="导入操作">
                 <div class="step_one" v-show="firstStep && !isImporting">
-                    <h4>步骤一：选择需要上传【{{ order_msg }}账单】所属【收费项目】</h4>
-                    <h5 v-if="!isCycleType()"><span style="color: #ff4d4f;">注意：</span>1. 仅支持<span style="color: #ff4d4f;">【收费模式：一次性费用】</span>的<span style="color: #ff4d4f;">【收费项目】</span>。</h5>
+                    <h4>{{ isParkingPayType() ? '步骤一：确认导入账单类型' : `步骤一：选择需要上传【${order_msg}账单】所属【收费项目】` }}</h4>
+                    <h5 v-if="isParkingPayType()"><span style="color: #ff4d4f;">注意：</span>系统将按车库 ID 和车位号定位车位，并自动使用该车位当前绑定的车位管理费收费项目及收费标准。</h5>
+                    <h5 v-else-if="!isCycleType()"><span style="color: #ff4d4f;">注意：</span>1. 仅支持<span style="color: #ff4d4f;">【收费模式：一次性费用】</span>的<span style="color: #ff4d4f;">【收费项目】</span>。</h5>
                     <h5 v-else-if="isCyclePayType()"><span style="color: #ff4d4f;">注意：</span>1. 仅支持<span style="color: #ff4d4f;">【收费模式：周期性费用】</span>的<span style="color: #ff4d4f;">【收费项目】</span>，下载模板前请先选择收费科目和收费项目；房间、缴费人和收款人按 Excel 每行校验。</h5>
                     <h5 v-else><span style="color: #ff4d4f;">注意：</span>1. 仅支持<span style="color: #ff4d4f;">【收费模式：周期性费用】</span>的<span style="color: #ff4d4f;">【收费项目】</span>，下载模板前请先选择收费科目和收费项目。</h5>
-                    <div>
+                    <div v-if="isParkingPayType()">
+                        <span class="label_col" style="color:rgba(0, 0, 0, 0.85)">收费科目：</span>
+                        <a-input value="车位管理费" disabled style="width: 282px;margin-left:20px;" />
+                    </div>
+                    <div v-else>
                         <span class="label_col" style="color:rgba(0, 0, 0, 0.85)">收费科目：</span>
                         <a-select v-model="subjectId" show-search style="width: 282px;margin-left:20px;" @change="handleChargeNumberChange">
                             <a-select-option v-for="(item1, index1) in chargeNumber" :value="item1.id" :key="index1">{{ item1.name }}</a-select-option>
                         </a-select>
                     </div>
-                    <div style="padding-top:10px;">
+                    <div v-if="isParkingPayType()" style="padding-top:10px;">
+                        <span class="label_col" style="color:rgba(0, 0, 0, 0.85)">收费项目：</span>
+                        <a-input value="车位管理费" disabled style="width: 282px;margin-left:20px;" />
+                    </div>
+                    <div v-else style="padding-top:10px;">
                         <span class="label_col" style="color:rgba(0, 0, 0, 0.85)">收费项目：</span>
                         <a-select v-model="projectId" show-search style="width: 282px;margin-left:20px;" @change="handleChargeProjectChange">
                             <a-select-option v-for="(item2, index2) in chargeProject" :value="item2.id" :key="index2">{{ item2.name }}</a-select-option>
                         </a-select>
                     </div>
-                    <div v-if="projectId">
+                    <div v-if="projectId || isParkingPayType()">
                         <h4>步骤二：上传 Excel 文件</h4>
                         <template v-if="!isCycleType()">
                             <h5><span style="color: #ff4d4f;">注意：</span>1. 导入的{{ order_msg }}账单会归属到所选<span style="color: #ff4d4f;">【收费项目】</span>下，以导入表中<span style="color: #ff4d4f;">[{{ uploadType=='billPayExcel' ? '已缴' : '欠缴' }}费用名称]</span>为名称的<span style="color: #ff4d4f;">【计费模式：固定费用】</span>的<span style="color: #ff4d4f;">【收费标准】</span>中。</h5>
                             <h5 style="padding-left:35px;">2. 表中相同<span style="color: #ff4d4f;">[{{ uploadType=='billPayExcel' ? '已缴' : '欠缴' }}费用名称]</span>不同<span style="color: #ff4d4f;">[{{ uploadType=='billPayExcel' ? '已缴' : '欠缴' }}金额]</span>会生成不同的<span style="color: #ff4d4f;">【收费标准】</span>。</h5>
+                        </template>
+                        <template v-else-if="isParkingPayType()">
+                            <h5><span style="color: #ff4d4f;">注意：</span>1. 表中<span style="color: #ff4d4f;">【车库名称】、【车库ID】、【车位号】</span>必须与系统数据完全一致。</h5>
+                            <h5 style="padding-left:35px;">2. <span style="color: #ff4d4f;">【收费标准名称】</span>必须与该车位当前绑定的车位管理费收费标准名称完全一致；未绑定或名称不一致的数据不会导入，失败原因可在导入日志中下载。</h5>
                         </template>
                         <template v-else>
                             <h5><span style="color: #ff4d4f;">注意：</span>1. 导入的{{ isCyclePayType() ? '周期性已缴' : '周期性' }}账单会归属到所选<span style="color: #ff4d4f;">【收费项目】</span>下，表中<span style="color: #ff4d4f;">【收费标准名称】</span>必须是当前项目下已存在且房间已绑定的收费标准。</h5>
@@ -49,7 +62,12 @@
                             <div style="color: red;margin-left: 10px;">总数据量：{{ selectObj.totalRows ? (selectObj.totalRows - 1) : 0 }} 条</div>
                         </div>
                         <h5>导入步骤：</h5>
-                        <h5>
+                        <h5 v-if="isParkingPayType()">
+                            <span style="color: #ff4d4f;">注意：</span>
+                            1. <span style="color: #ff4d4f;">【车库名称】、【车库ID】、【车位号】</span>
+                            均采用<span style="color: #ff4d4f;">全匹配</span>，请与系统中的车库和车位信息保持完全一致。
+                        </h5>
+                        <h5 v-else>
                             <span style="color: #ff4d4f;">注意：</span>
                             1.
                             <span style="color: #ff4d4f;">【{{ $store.getters.config.single_name }}】</span>、
@@ -156,6 +174,9 @@
                 } else if (props.uploadType=='cycleBillPayExcel') {
                     xtitle.value='周期性已缴账单导入向导'
                     order_msg.value='周期性已缴'
+                } else if (props.uploadType=='parkingBillPayExcel') {
+                    xtitle.value='车位管理费导入向导'
+                    order_msg.value='车位管理费已缴'
                 }
             }
             setImportTitle()
@@ -169,8 +190,9 @@
                 })
             }
             // 获取项目
-            const isCycleType = () => props.uploadType == 'cycleBillExcel' || props.uploadType == 'cycleBillPayExcel'
-            const isCyclePayType = () => props.uploadType == 'cycleBillPayExcel'
+            const isParkingPayType = () => props.uploadType == 'parkingBillPayExcel'
+            const isCycleType = () => props.uploadType == 'cycleBillExcel' || props.uploadType == 'cycleBillPayExcel' || isParkingPayType()
+            const isCyclePayType = () => props.uploadType == 'cycleBillPayExcel' || isParkingPayType()
 
             const getChargeProject = (subject_id) => {
                 const url = isCycleType() ? '/community/common.BillExcel/getCycleChargeProject' : '/community/common.BillExcel/getChargeProject'
@@ -293,11 +315,11 @@
             
         
             const startImport = () =>{
-                if(!subjectId.value){
+                if(!isParkingPayType() && !subjectId.value){
                     Vue.prototype.$message.warn('请选择收费科目')
                     return
                 }
-                if(!projectId.value){
+                if(!isParkingPayType() && !projectId.value){
                     Vue.prototype.$message.warn('请选择收费项目')
                     return
                 }
@@ -313,7 +335,13 @@
                     Vue.prototype.$message.warn('请先上传Excel文件')
                     return
                 }
-                const startImportUrl = props.uploadType == 'cycleBillExcel' ? '/community/common.BillExcel/startCycleImport' : (props.uploadType == 'cycleBillPayExcel' ? '/community/common.BillExcel/startCyclePayImport' : '/community/common.BillExcel/startImport')
+                const startImportUrl = props.uploadType == 'cycleBillExcel'
+                    ? '/community/common.BillExcel/startCycleImport'
+                    : (props.uploadType == 'cycleBillPayExcel'
+                        ? '/community/common.BillExcel/startCyclePayImport'
+                        : (isParkingPayType()
+                            ? '/community/common.BillExcel/startParkingPayImport'
+                            : '/community/common.BillExcel/startImport'))
                 let startImportParam = {
                     tokenName: tokenNameSys.value,
                     subjectId: subjectId.value,
@@ -323,7 +351,7 @@
                     selectWorkSheetIndex:selectWorkSheetIndex.value,
                     type:props.uploadType,
                 }
-                if (isCycleType()) {
+                if (isCycleType() && !isParkingPayType()) {
                     startImportParam.charge_project_id = projectId.value
                 }
                 Vue.prototype.request(startImportUrl, startImportParam).then((res) => {
@@ -449,20 +477,26 @@
             }
 
             const downloadExcel = () => {
-                if(!subjectId.value){
+                if(!isParkingPayType() && !subjectId.value){
                     Vue.prototype.$message.warn('请选择收费科目')
                     return
                 }
-                if(!projectId.value){
+                if(!isParkingPayType() && !projectId.value){
                     Vue.prototype.$message.warn('请选择收费项目')
                     return
                 }
-                const templateUrl = props.uploadType == 'cycleBillExcel' ? '/community/common.BillExcel/getCycleImportTemplateUrl' : (props.uploadType == 'cycleBillPayExcel' ? '/community/common.BillExcel/getCyclePayImportTemplateUrl' : '/community/common.BillExcel/getImportTemplateUrl')
+                const templateUrl = props.uploadType == 'cycleBillExcel'
+                    ? '/community/common.BillExcel/getCycleImportTemplateUrl'
+                    : (props.uploadType == 'cycleBillPayExcel'
+                        ? '/community/common.BillExcel/getCyclePayImportTemplateUrl'
+                        : (isParkingPayType()
+                            ? '/community/common.BillExcel/getParkingPayImportTemplateUrl'
+                            : '/community/common.BillExcel/getImportTemplateUrl'))
                 let templateParam = {
                     tokenName: tokenNameSys.value,
                     opttype: props.uploadType,
                 }
-                if (isCycleType()) {
+                if (isCycleType() && !isParkingPayType()) {
                     templateParam.subject_id = subjectId.value
                     templateParam.charge_project_id = projectId.value
                 }
@@ -517,7 +551,9 @@
                 projectId.value = null
                 console.log('val', val)
                 setImportTitle()
-                getChargeNumber()
+                if (!isParkingPayType()) {
+                    getChargeNumber()
+                }
             }, {
                 deep: true
             })
@@ -564,6 +600,7 @@
                 order_msg,
                 isCycleType,
                 isCyclePayType,
+                isParkingPayType,
                 cycleRoomOptions,
                 loadCycleRoomData,
                 setCyclePayRoom,

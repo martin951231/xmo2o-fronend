@@ -128,7 +128,7 @@
               <a @click="send_message(1,record)" v-if="role_callpay==1" >一键催缴</a>
             </span>
           </a-table>
-          <span style="margin-left: 20px;position: relative;top: -65px;color: red;font-size: 18px;">合计金额：{{ total_money }}</span>
+          <span style="margin-left: 20px;position: relative;top: -65px;color: red;font-size: 18px;">合计金额：{{ total_money | formatBillTotal }}</span>
         </div>
       </a-tab-pane>
       <a-tab-pane key="2">
@@ -296,7 +296,8 @@
             :loading="loading_detail" >
             <span slot="numbers_action" slot-scope="text, record"><a-tag v-if="record.meter_reading_id*1>0 && record.order_type_flag=='split_order_by_balance'" color="orange" style="font-weight: bold;color: #f53405;">拆</a-tag>{{record.number}}</span>
             <span slot="action_detail" slot-scope="text, record">
-              <a v-if="(!record.my_check_status || record.my_check_status==0) && role_discard==1" @click="discard_order(record.order_id)">作废账单</a>
+              <a v-if="record.discard_approval_pending === 1" style="color: #fa8c16;">作废审批中</a>
+              <a v-else-if="(!record.my_check_status || record.my_check_status==0) && role_discard==1" @click="discard_order(record.order_id)">作废账单</a>
               <a v-if="record.my_check_status==3" style="color: #808080;">已审核</a>
               <a-divider type="vertical" v-if="record.my_check_status>0"/>
               <a v-if="record.my_check_status==2" @click="$refs.checkRefundModel.add(record.order_id,record.order_apply_info,record.orderApplyType)">需审核</a>
@@ -304,7 +305,7 @@
               <a v-if="record.my_check_status>0" @click="showpopup_detailsList(record)">审核详情</a>
             </span>
           </a-table>
-          <span style="margin-left: 20px;position: relative;top: -65px;color: red;font-size: 18px;">合计金额：{{ total_2money }}</span>
+          <span style="margin-left: 20px;position: relative;top: -65px;color: red;font-size: 18px;">合计金额：{{ total_2money | formatBillTotal }}</span>
           <a-modal
             :width="500"
             title="作废账单"
@@ -377,10 +378,6 @@
         </div>
         <div class="flex_text_box">
           <div class="text_1">应收费用：</div>
-          <div class="text_2">{{ details_data.total_money }}元</div>
-        </div>
-        <div class="flex_text_box margin_top_10">
-          <div class="text_1">实收费用：</div>
           <div class="text_2">{{ details_data.modify_money }}元</div>
         </div>
         <div class="flex_text_box">
@@ -507,6 +504,7 @@
 
 </template>
 <script>
+    import { formatBillTotal } from './billTotalFormat'
     import villageApi from '@/api/community/village'
     import receivableModal from '../components/receivableModal.vue'
     import SendType from '@/views/community/village/charge/cashier/sendType'
@@ -547,6 +545,7 @@
     export default {
         name: 'ReceivableOrderList',
         filters: {
+            formatBillTotal,
 
         },
         props:{
@@ -735,6 +734,41 @@
         },
         methods: {
             moment,
+            isDepositOrder(record) {
+                if (!record) {
+                    return false
+                }
+                const statusText = String(record.deposit_status_text || record.deposit_status_name || record.deposit_status || '')
+                return record.order_type == 'deposit_bill' ||
+                    record.order_type_flag == 'deposit_bill' ||
+                    record.source_type == 'deposit_bill' ||
+                    record.is_deposit_order == 1 ||
+                    Number(record.deposit_category_id || 0) > 0 ||
+                    !!record.deposit_category_key ||
+                    !!record.deposit_cate_key ||
+                    Number(record.deposit_account_status || 0) > 0 ||
+                    Number(record.deposit_status || 0) > 0 ||
+                    statusText.indexOf('\u51bb\u7ed3') > -1 ||
+                    statusText.indexOf('\u89e3\u51bb') > -1
+            },
+            normalizeDepositRow(record) {
+                const row = Object.assign({}, record)
+                if (!this.isDepositOrder(row)) {
+                    return row
+                }
+                const categoryName = row.deposit_category_name || row.deposit_cate_name || row.category_name || row.cate_name || row.order_name || ''
+                row.is_deposit_order = 1
+                    row.project_name = '押金账单'
+                if (categoryName) {
+                    row.rule_name = categoryName
+                    row.charge_name = categoryName
+                    row.order_name = categoryName
+                }
+                return row
+            },
+            normalizeDepositRows(list) {
+                return (list || []).map(item => this.normalizeDepositRow(item))
+            },
             closeImportBill() {
                 this.importBillVisibile = false;
                 this.getList();
@@ -805,7 +839,7 @@
                     .then((res) => {
                         this.pagination.total = res.count ? res.count : 0
                         this.pagination.pageSize = res.total_limit ? res.total_limit : 10
-                        this.data = res.list
+                        this.data = this.normalizeDepositRows(res.list)
                         this.loading = false
                         this.total_money = res.total_money
                         this.selectedRows=[]
@@ -836,7 +870,7 @@
                     .then((res) => {
                         this.pagination_detail.total = res.count ? res.count : 0
                         this.pagination_detail.pageSize = res.total_limit ? res.total_limit : 10
-                        this.data_detail = res.list
+                        this.data_detail = this.normalizeDepositRows(res.list)
                         this.selectedRows_detail=[]
                         if(res.role_callpay!=undefined){
                             this.role_callpay=res.role_callpay;
@@ -862,9 +896,11 @@
             },
             // 作废账单
             discard_order (order_id) {
-                this.is_many_discard_order=0
-                this.visible_invalid = true
-                this.order_id = order_id
+                this.request(villageApi.checkDiscardOrder, { order_id: order_id }).then(() => {
+                    this.is_many_discard_order=0
+                    this.visible_invalid = true
+                    this.order_id = order_id
+                })
             },
             // 作废确定提交
             confirm_invalid () {
@@ -872,7 +908,13 @@
                     this.$message.warning('请填写作废原因')
                     return
                 }
-                this.discardOrder(this.order_id)
+                this.$confirm({
+                    title: '提交作废审批',
+                    content: '作废账单需要提起审批，是否要提起审批？',
+                    okText: '提起审批',
+                    cancelText: '取消',
+                    onOk: () => this.discardOrder(this.order_id)
+                })
             },
             // 作废账单
             discardOrder (order_id) {
@@ -927,9 +969,15 @@
                     this.$message.error('请至少勾选一个账单！')
                     return false
                 }
-                this.is_many_discard_order=1
-                this.visible_invalid = true
-                this.order_id = 0
+                const orderIdArr = []
+                for (let mc = 0; mc < this.choice_nopay_ids.length; mc++) {
+                    orderIdArr.push(this.choice_nopay_ids[mc].orderid)
+                }
+                this.request(villageApi.checkDiscardOrder, { order_id: orderIdArr.join(',') }).then(() => {
+                    this.is_many_discard_order=1
+                    this.visible_invalid = true
+                    this.order_id = 0
+                })
             },
             // 添加
             addActive (val) {
@@ -1047,7 +1095,7 @@
                     if (!res['orderApplyType']) {
                       res['orderApplyType'] = 'order_discard';
                     }
-                    this.details_data = res
+                    this.details_data = this.normalizeDepositRow(res)
                   }
                 })
             },

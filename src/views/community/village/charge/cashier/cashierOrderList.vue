@@ -34,6 +34,19 @@
                         style="color: #409EFF; font-size: 30px;" />
                 </div>
                 <div v-show="showLeft">
+                    <div class="batch_bill_actions">
+                        <a-button type="primary" @click="showBatchManualBillModal('bill')">
+                            批量新增账单
+                        </a-button>
+                        <a-button class="margin_left_8" type="primary"
+                            @click="showBatchManualBillModal('parking_management')">
+                            批量新增车位管理费账单
+                        </a-button>
+                        <a-button class="margin_left_8" type="primary"
+                            @click="showBatchManualBillModal('deposit')">
+                            批量新增押金账单
+                        </a-button>
+                    </div>
                     <div class="flex_text_box">
                         <div class="text_1">筛选条件：</div>
                         <a-select default-value="1" style="width: 120px" @change="screenChange">
@@ -268,6 +281,10 @@
                 <a-button class="margin_left_10 margin_top_20" type="primary" @click="showpopup">
                     添加收费项
                 </a-button>
+                <a-button class="margin_left_10 margin_top_20" type="primary" @click="showManualBillModal"
+                    v-if="is_car && user_info.position_id">
+                    新增账单
+                </a-button>
                 <a-button class="margin_left_10 margin_top_20" type="primary" @click="showpopup_collet"
                     v-if="role_payment==1">
                     收款
@@ -490,7 +507,7 @@
             <div class="modal_box" style="width:500px;">
                 <div class="flex_text_box">
                     <div class="text_1">应收费用：</div>
-                    <div class="text_2">{{ record.total_money?record.total_money:0.00 }}</div>
+                    <div class="text_2">{{ record.modify_money != null ? record.modify_money : 0.00 }}</div>
                 </div>
                 <div class="flex_text_box margin_top_10" v-if="record.modify_time > 0">
                     <div class="text_1">上次修改后费用：</div>
@@ -1958,6 +1975,41 @@
             }
         },
         methods: {
+            isDepositOrder(record) {
+                if (!record) {
+                    return false
+                }
+                const statusText = String(record.deposit_status_text || record.deposit_status_name || record.deposit_status || '')
+                return record.order_type == 'deposit_bill' ||
+                    record.order_type_flag == 'deposit_bill' ||
+                    record.source_type == 'deposit_bill' ||
+                    record.is_deposit_order == 1 ||
+                    Number(record.deposit_category_id || 0) > 0 ||
+                    !!record.deposit_category_key ||
+                    !!record.deposit_cate_key ||
+                    Number(record.deposit_account_status || 0) > 0 ||
+                    Number(record.deposit_status || 0) > 0 ||
+                    statusText.indexOf('\u51bb\u7ed3') > -1 ||
+                    statusText.indexOf('\u89e3\u51bb') > -1
+            },
+            normalizeDepositRow(record) {
+                const row = Object.assign({}, record)
+                if (!this.isDepositOrder(row)) {
+                    return row
+                }
+                const categoryName = row.deposit_category_name || row.deposit_cate_name || row.category_name || row.cate_name || ''
+                row.is_deposit_order = 1
+                if (categoryName) {
+                    row.project_name = '押金账单'
+                    row.rule_name = categoryName
+                    row.charge_name = '押金账单'
+                    row.order_name = categoryName
+                }
+                return row
+            },
+            normalizeDepositRows(list) {
+                return (list || []).map(item => this.normalizeDepositRow(item))
+            },
             enterEvent() {
                 let that = this
                 document.onkeydown = e => {
@@ -2102,15 +2154,28 @@
                 console.log('sdfsfsdfsdfdsfsdf')
             },
             reloadManualBill() {
-                _this.getOrderList(_this.default_key[0])
-                _this.getCharges(_this.default_key[0])
+                if (_this.default_key && _this.default_key[0]) {
+                    _this.getOrderList(_this.default_key[0])
+                    _this.getCharges(_this.default_key[0])
+                }
+            },
+            showBatchManualBillModal(billKind) {
+                this.$refs.ManualBillModal.openBatch(billKind)
             },
             showManualBillModal() {
+                if (this.is_car) {
+                    if (!this.user_info.position_id) {
+                        this.$message.warning('请选择车位')
+                        return
+                    }
+                    this.$refs.ManualBillModal.openPosition(this.user_info.position_id, this.data)
+                    return
+                }
                 if (!this.user_info.vacancy_id) {
                     this.$message.warning('请选择房间')
                     return
                 }
-                this.$refs.ManualBillModal.open(this.user_info.vacancy_id)
+                this.$refs.ManualBillModal.open(this.user_info.vacancy_id, this.data)
             },
             showDepositBillModal() {
                 if (!this.user_info.vacancy_id) {
@@ -3079,7 +3144,7 @@
                 }).then(res => {
                     if (res) {
                         _this.user_info = res.user_info
-                        _this.data = res.order_list
+                        _this.data = _this.normalizeDepositRows(res.order_list)
                         _this.x_total_money = res.total_money
                         _this.x_pay_money = res.pay_money
                         _this.position_end_time = res.position_end_time
@@ -3191,7 +3256,10 @@
                 }).then(res => {
                     console.log('+++++++', res)
                     if (res) {
-                        _this.details_data = res;
+                        _this.details_data = _this.normalizeDepositRow(res);
+                    if (_this.isDepositOrder(_this.details_data)) {
+                        _this.details_data.charge_name = _this.details_data.deposit_category_name || _this.details_data.rule_name;
+                    }
                         _this.field_list = res.field_list
                     }
                 })
@@ -3208,7 +3276,7 @@
                 }).then(res => {
                     console.log('+++++++Single', res)
                     if (res) {
-                        this.$message.success('操作成功')
+                        this.$message.success(res.approval_id ? '账单作废审批已提交' : '操作成功')
                         _this.visible_invalid = false
                         _this.invalidReasons = ''
                         _this.order_ids = '';
@@ -3241,7 +3309,7 @@
                 this.request(villageApi.modifyMoney, postTmpArr).then(res => {
                     //console.log('+++++++Single', res)
                     if (res) {
-                        this.$message.success('操作成功！')
+                        this.$message.success('已提交金额修改审批，审批通过后生效')
                         _this.modify_money = ''
                         _this.modify_reason = ''
                         _this.getOrderList(_this.default_key[0])
@@ -3615,7 +3683,15 @@
                     this.$message.warning('请填写作废原因')
                     return
                 }
-                _this.discardOrder(_this.record_data)
+                this.$confirm({
+                    title: '提交作废审批',
+                    content: '作废账单需要提起审批，是否要提起审批？',
+                    okText: '提起审批',
+                    cancelText: '取消',
+                    onOk() {
+                        _this.discardOrder(_this.record_data)
+                    }
+                })
             },
             // 修改费用确定提交
             confirm_revise() {
@@ -3769,29 +3845,34 @@
 
                 let pay_type_tmp = _this.pay_type;
                 let offline_pay_type_tmp = _this.offline_pay_type;
+                let offlinePayTypeMixTmp = _this.mixOfflinePay
                 if (_this.pay_type == 22) {
                     let is_find_tmp = false
                     let pay_money_tmp = 0;
+                    const mixNeedMoney = _this.getMixOfflineNeedMoney().toFixed(2)
                     offline_pay_type_tmp = [];
-                    _this.mixOfflinePay.forEach((ivv, mm) => {
-                        if (ivv.offlinepay_id < 1) {
-                            _this.$message.error('线下支付方式： 第' + (mm + 1) + '项，支付方式没选！')
-                            is_find_tmp = true;
-                            return false
-                        } else if (ivv.paymoney == '' || ivv.paymoney == '0' || ivv.paymoney <= 0) {
-                            _this.$message.error('线下支付方式： 第' + (mm + 1) + '项，支付金额未填写正确！')
-                            is_find_tmp = true;
-                            return false
-                        }
-                        if (ivv.paymoney) {
-                            pay_money_tmp += ivv.paymoney * 1;
-                        }
+                    if (Number(mixNeedMoney) > 0) {
+                        _this.mixOfflinePay.forEach((ivv, mm) => {
+                            if (ivv.offlinepay_id < 1) {
+                                _this.$message.error('线下支付方式： 第' + (mm + 1) + '项，支付方式没选！')
+                                is_find_tmp = true;
+                                return false
+                            } else if (ivv.paymoney == '' || ivv.paymoney == '0' || ivv.paymoney <= 0) {
+                                _this.$message.error('线下支付方式： 第' + (mm + 1) + '项，支付金额未填写正确！')
+                                is_find_tmp = true;
+                                return false
+                            }
+                            if (ivv.paymoney) {
+                                pay_money_tmp += ivv.paymoney * 1;
+                            }
 
-                        offline_pay_type_tmp.push(ivv.offlinepay_id);
-                    });
+                            offline_pay_type_tmp.push(ivv.offlinepay_id);
+                        });
+                    } else {
+                        offlinePayTypeMixTmp = []
+                    }
                     offline_pay_type_tmp = offline_pay_type_tmp.join(',');
                     pay_money_tmp = pay_money_tmp.toFixed(2);
-                    const mixNeedMoney = _this.getMixOfflineNeedMoney().toFixed(2)
                     if (pay_money_tmp != mixNeedMoney) {
                         _this.$message.error('线下支付（组合支付）：总的支付金额不正确！')
                         is_find_tmp = true;
@@ -3824,7 +3905,7 @@
 		    is_use_score:_this.is_use_score,
          	    surplus_pay_money:_this.surplus_pay_money,
                     ticket_number: _this.ticket_number,
-                    offline_pay_type_mix: _this.mixOfflinePay
+                    offline_pay_type_mix: offlinePayTypeMixTmp
                 }).then((res) => {
                     _this.remark = ''
                     _this.btn_loading = true;
@@ -4535,6 +4616,12 @@
 
     .margin_left_8 {
         margin-left: 8px;
+    }
+
+    .batch_bill_actions {
+        padding: 10px 0;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #e8e8e8;
     }
 
     .flex_text_box {

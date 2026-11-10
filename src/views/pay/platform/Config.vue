@@ -6,7 +6,7 @@
           <a-card :hoverable="true" @click="gotoconfig(item.code)">
             <a-card-meta>
               <a slot="title">{{ item.text }}</a>
-              <a-avatar class="card-avatar" slot="avatar" :src="item.icon" size="large" />
+              <a-avatar v-if="item.icon" class="card-avatar" slot="avatar" :src="item.icon" size="large" />
               <div class="meta-content" slot="description">{{ item.introduce }}</div>
             </a-card-meta>
             <template class="ant-card-actions" slot="actions">
@@ -56,7 +56,15 @@ export default {
     getPayTypes() {
       this.request(this.getPayTypesUrl).then((res) => {
         console.log('res', res)
-        this.dataSource = res
+        this.dataSource = (res || []).slice()
+        if (this.isSystem === 2) {
+          this.dataSource.push({
+            code: 'allinpay_village',
+            text: '通联支付',
+            icon: '',
+            introduce: '按小区配置通联支付的 AppID、商户号及启停状态',
+          })
+        }
       })
     },
     gotoconfig(code) {

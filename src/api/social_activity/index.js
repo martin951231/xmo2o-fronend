@@ -1,4 +1,6 @@
 const socialActivityApi = {
+  getRefundList: '/social_activity/socialactivity.SocialActivityRefund/getList',
+  queryRefundStatus: '/social_activity/socialactivity.SocialActivityRefund/queryStatus',
   //订单管理接口
   getOrderList: '/social_activity/socialactivity.SocialActivityOrder/getOrderList', //获取订单列表
   applyWithdraw: '/social_activity/socialactivity.SocialActivityOrder/applyWithdraw', //申请提现
@@ -21,6 +23,7 @@ const socialActivityApi = {
   getActivityDetail: '/social_activity/socialactivity.SocialActivity/getDetail', //获取活动详情
   saveActivity: '/social_activity/socialactivity.SocialActivity/saveActivity', //保存活动（新增/编辑）
   auditActivity: '/social_activity/socialactivity.SocialActivity/auditActivity', //审核活动
+  cancelAuditActivity: '/social_activity/socialactivity.SocialActivity/cancelAuditActivity', // 消审活动
   recommendActivity: '/social_activity/socialactivity.SocialActivity/recommendActivity', //推荐/撤回活动
   cancelActivity: '/social_activity/socialactivity.SocialActivity/cancelActivity', //取消活动
   getSessionList: '/social_activity/socialactivity.SocialActivity/getSessionList', //获取场次列表
@@ -48,6 +51,9 @@ const socialActivityApi = {
     //评论设置
     getCommentSettings: '/social_activity/socialactivity.SocialActivityComment/getSettings', //获取评论设置
     saveCommentSettings: '/social_activity/socialactivity.SocialActivityComment/saveSettings', //保存评论设置
+    // 支付设置
+    getPayConfig: '/social_activity/socialactivity.SocialActivityPayConfig/getConfig', // 获取支付配置
+    savePayConfig: '/social_activity/socialactivity.SocialActivityPayConfig/saveConfig', // 保存支付配置
     //敏感词管理
     getSensitiveWordList: '/social_activity/socialactivity.SocialActivitySensitiveWord/getList', //获取敏感词列表
     saveSensitiveWord: '/social_activity/socialactivity.SocialActivitySensitiveWord/save', //保存敏感词（新增/编辑）

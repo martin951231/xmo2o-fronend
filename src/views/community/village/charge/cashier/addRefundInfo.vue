@@ -250,10 +250,10 @@
                 return false;
             }
         }
-        if(this.pay_type_way==2 && this.post.refund_reason.length<1){
-            this.$refs.textareax.focus(); 
-            this.$message.warning('线下支付的订单，退款时请写上退款原因！');
-            return false;
+        if (!this.post.refund_reason || this.post.refund_reason.trim().length < 1) {
+            this.$refs.textareax.focus()
+            this.$message.warning('请填写退款原因！')
+            return false
         }
       let contentStr='';
       let titleStr='';
@@ -264,15 +264,17 @@
           titleStr='退款确认（退款且还原账单）';
           contentStr="将当前已缴账单的费用进行退款变更账单状态且将对应产生的服务时间进行退回还原，自动生成一个相同的未缴账单；";
       }
+      contentStr = '退款账单需要提起审批，是否要提起审批？' + contentStr
       var _this=this;
       this.$confirm({
         title: titleStr,
         content: contentStr,
         onOk() {
+            _this.confirmLoading = true
             _this.request(villageApi.addRefundInfo, _this.post)
               .then((res) => {
                 console.log('res', res)
-                _this.$message.success('操作成功')
+                _this.$message.success('退款审批已提交')
                 setTimeout(() => {
                   _this.form = _this.$form.createForm(_this)
                   _this.visible = false
@@ -282,6 +284,9 @@
                   _this.$emit('ok')
                 }, 1500)
 
+              })
+              .catch(() => {
+                _this.confirmLoading = false
               })
         },
         onCancel() {},

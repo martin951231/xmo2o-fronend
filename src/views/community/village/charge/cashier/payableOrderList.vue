@@ -174,10 +174,11 @@
                     v-if="orderPayTimeCheckOpen<1">
                     <a-button type="primary" @click="modifyPayTime('')">修改支付时间</a-button>
                 </a-col>
-                <a-col :md="4" :sm="24" class="suggestions_col_btn" style="padding-left: 10px;padding-right: 10px;display:flex;align-items:center;white-space:nowrap;"
+                <a-col :md="6" :sm="24" class="suggestions_col_btn" style="padding-left: 10px;padding-right: 10px;display:flex;align-items:center;white-space:nowrap;"
                     v-if="role_import_pay==1">
                     <a-button type="primary" @click="importBillPayOrder()">导入已缴账单</a-button>
                     <a-button type="primary" style="margin-left: 8px;" @click="importCycleBillPayOrder()">导入周期性账单</a-button>
+                    <a-button type="primary" style="margin-left: 8px;" @click="importParkingBillPayOrder()">导入车位管理费</a-button>
                 </a-col>
 
             </a-row>
@@ -193,8 +194,15 @@
              <span slot="numbers_action" slot-scope="text, record"><a-tag v-if="record.meter_reading_id*1>0 && record.order_type_flag=='split_order_by_balance'" color="orange" style="font-weight: bold;color: #f53405;">拆</a-tag>{{record.numbers}}</span>
             <span slot="action" slot-scope="text, record">
                 <a @click="$refs.OrderModel.add(record.order_id,record.check_apply_id)">详情</a>
+                <template v-if="isDepositFrozen(record)">
+                    <a-divider type="vertical" />
+                    <a v-if="hasPendingDepositRelease(record)" style="color: #fa8c16;"
+                        @click="openDepositReleaseApproval(record)">解冻中</a>
+                    <a v-else @click="applyDepositRelease(record)">解冻押金</a>
+                </template>
                 <a-divider type="vertical" />
-                <a v-if="record.fact_pay_all_money*1>0 && role_refund==1 && record.pay_type_way >0 && (!record.my_check_status || record.my_check_status==0)"
+                <a v-if="record.refund_approval_pending === 1" style="color: #fa8c16;">退款审批中</a>
+                <a v-else-if="role_refund==1 && record.pay_type_way >0 && (!record.my_check_status || record.my_check_status==0)"
                     @click="$refs.RefundModel.add(record.order_id,record.pay_money,record.pay_type_way, [{title: $store.getters.config.room_name+'号/车位号',value:record.numbers},{title:'缴费人',value:record.pay_bind_name},{title:'电话',value:record.pay_bind_phone},{title:'收费项目名称',value:record.project_name}], record.order_type,record)">退款</a>
                 <a v-if="record.my_check_status==3" style="color: #808080;">已审核</a>
                 <a v-if="record.my_check_status==2 && record.check_apply_type=='order_refund'"
@@ -210,14 +218,15 @@
 
         </a-table>
         <span
-            style="margin-left: 35px;position: relative;top: -65px;color: red;font-size: 18px;">实际缴费总金额：{{ total_pay_money }}</span>
+            style="margin-left: 35px;position: relative;top: -65px;color: red;font-size: 18px;">实际缴费总金额：{{ total_pay_money | formatBillTotal }}</span>
         <span
-            style="margin-left: 35px;position: relative;top: -65px;color: red;font-size: 18px;">实际到账金额：{{ total_pay_money_real }}</span>
-        <payable-order-info ref="OrderModel" />
+            style="margin-left: 35px;position: relative;top: -65px;color: red;font-size: 18px;">实际到账金额：{{ total_pay_money_real | formatBillTotal }}</span>
+        <payable-order-info ref="OrderModel" @deposit-attachment-change="handleDepositAttachmentChange" />
         <add-refund-info ref="RefundModel" @ok="bindOk" />
         <check-refund-info ref="checkRefundModel" @ok="bindOk" />
         <get-print-template ref="PrintModel" @ok="printBut" />
         <print-order ref="PrintOrderModel" />
+        <approval-detail ref="DepositReleaseApprovalDetail" :show-actions="false" :allow-withdraw="true" @ok="getList" />
 
         <a-modal :title="modalTitle" :width="600" :visible="visible" v-if="visible" :maskClosable="false"
             :confirmLoading="confirmLoading" @ok="excelExport" @cancel="handleCancel">
@@ -291,8 +300,10 @@
 
 </template>
 <script>
+    import { formatBillTotal } from './billTotalFormat'
     import villageApi from '@/api/community/village'
     import PayableOrderInfo from '@/views/community/village/charge/cashier/payableOrderInfo'
+    import ApprovalDetail from '@/views/community/village/approvalList/detail'
     import AddRefundInfo from '@/views/community/village/charge/cashier/addRefundInfo'
     import GetPrintTemplate from '@/views/community/village/charge/cashier/getPrintTemplate'
     import checkRefundInfo from '@/views/community/village/charge/cashier/checkRefundInfo'
@@ -330,6 +341,7 @@
             key: 'project_name',
             width: 150,
         },
+        { title: '收费标准', dataIndex: 'charge_name', key: 'charge_name', width: 150 },
         {
             title: '实际缴费金额',
             dataIndex: 'pay_money',
@@ -350,12 +362,6 @@
             dataIndex: 'pay_time',
             key: 'pay_time',
             width: 120,
-        },
-        {
-            title: '开票状态',
-            dataIndex: 'record_status',
-            key: 'record_status',
-            width: 70
         },
         {
             title: '账单状态',
@@ -381,7 +387,7 @@
         {
             title: '操作',
             key: 'action',
-            width: 150,
+            width: 220,
             dataIndex: '',
             scopedSlots: {
                 customRender: 'action'
@@ -392,6 +398,7 @@
     export default {
         name: 'PayableOrderList',
         filters: {
+            formatBillTotal,
 
         },
         props: {
@@ -409,6 +416,7 @@
             }
         },
         components: {
+            ApprovalDetail,
             GetPrintTemplate,
             AddRefundInfo,
             PayableOrderInfo,
@@ -573,7 +581,7 @@
                     .then((res) => {
                         this.pagination.total = res.count ? res.count : 0
                         this.pagination.pageSize = res.total_limit ? res.total_limit : 10
-                        this.data = res.list
+                        this.data = (res.list || []).map(item => this.normalizeDepositRow(item))
                         if (res.role_refund != undefined) {
                             this.role_export = res.role_export;
                             this.role_refund = res.role_refund;
@@ -712,6 +720,200 @@
             bindOk() {
                 this.getList()
             },
+            handleDepositAttachmentChange(payload) {
+                const orderId = Number(payload && payload.order_id || 0)
+                const hasAttachment = Number(payload && payload.has_deposit_attachment || 0)
+                this.data = this.data.map(item => Number(item.order_id) === orderId
+                    ? Object.assign({}, item, { has_deposit_attachment: hasAttachment })
+                    : item)
+            },
+            isDepositOrder(record) {
+                if (!record) {
+                    return false
+                }
+                const statusText = String(record.deposit_status_text || record.deposit_status_name || record.deposit_status || '')
+                return record.order_type == 'deposit_bill' ||
+                    record.order_type_flag == 'deposit_bill' ||
+                    record.source_type == 'deposit_bill' ||
+                    record.is_deposit_order == 1 ||
+                    Number(record.deposit_category_id || 0) > 0 ||
+                    !!record.deposit_category_key ||
+                    !!record.deposit_cate_key ||
+                    Number(record.deposit_account_status || 0) > 0 ||
+                    Number(record.deposit_status || 0) > 0 ||
+                    statusText.indexOf('\u51bb\u7ed3') > -1 ||
+                    statusText.indexOf('\u89e3\u51bb') > -1
+            },
+            normalizeDepositRow(record) {
+                const row = Object.assign({}, record)
+                const categoryName = row.deposit_category_name || row.deposit_cate_name || row.category_name || row.cate_name || row.order_name || ''
+                const isDeposit = this.isDepositOrder(row)
+                if (isDeposit) {
+                    row.is_deposit_order = 1
+                    row.project_name = '押金账单'
+                    if (categoryName) {
+                        row.rule_name = categoryName
+                        row.charge_name = categoryName
+                        row.order_name = categoryName
+                    }
+                }
+                if (row.show_deposit_release_btn === undefined && isDeposit) {
+                    const status = Number(row.deposit_account_status || row.deposit_status || 0)
+                    row.show_deposit_release_btn = status === 1 ? 1 : 0
+                }
+                return row
+            },
+            isDepositFrozen(record) {
+                if (!this.isDepositOrder(record)) {
+                    return false
+                }
+                const statusText = String(record.deposit_status_text || record.deposit_status_name || record.deposit_status || '')
+                if (statusText.indexOf('\u5df2\u89e3\u51bb') > -1) {
+                    return false
+                }
+                const status = Number(record.deposit_account_status || record.deposit_status || 0)
+                if (status === 2) {
+                    return false
+                }
+                return true
+            },
+            getDepositCategoryKey(record) {
+                return record.deposit_category_key || record.category_key || record.cate_key || record.deposit_cate_key || ''
+            },
+            hasPendingDepositRelease(record) {
+                return Number(record.deposit_release_approval_id || 0) > 0 &&
+                    Number(record.deposit_release_approval_status || 0) === 0
+            },
+            openDepositReleaseApproval(record) {
+                const approvalId = Number(record.deposit_release_approval_id || 0)
+                if (approvalId <= 0) {
+                    this.$message.warning('未找到解冻审批记录')
+                    this.getList()
+                    return
+                }
+                this.$refs.DepositReleaseApprovalDetail.open(approvalId)
+            },
+            parseDepositMoney(value) {
+                const money = parseFloat(String(value || '').replace(/[^\d.-]/g, ''))
+                return isNaN(money) ? 0 : money
+            },
+            getDepositReleaseMoney(record) {
+                const moneyFields = [
+                    record.deposit_money_origin,
+                    record.deposit_order_money,
+                    record.deposit_bill_money,
+                    record.total_money,
+                    record.pay_money
+                ]
+                for (const value of moneyFields) {
+                    const money = this.parseDepositMoney(value)
+                    if (money > 0) {
+                        return money.toFixed(2)
+                    }
+                }
+                return '0.00'
+            },
+            hasDepositAttachment(record) {
+                return Number(record && record.has_deposit_attachment || 0) === 1
+            },
+            applyDepositRelease(record) {
+                if (!this.hasDepositAttachment(record)) {
+                    this.$message.warning('没有上传押金附件的不允许解冻押金，请到押金详情 -> 押金抵扣记录 -> 押金附件中上传')
+                    return
+                }
+                this.getDepositReleaseOrder(record).then(order => {
+                    if (!this.isDepositFrozen(order)) {
+                        this.$message.warning('当前押金不是冻结状态，不能解冻')
+                        this.getList()
+                        return
+                    }
+                    this.$confirm({
+                        title: '解冻押金',
+                        content: '解冻需要提交审批，是否解冻该笔押金',
+                        okText: '确定',
+                        cancelText: '取消',
+                        onOk: () => this.submitDepositRelease(order)
+                    })
+                }).catch(error => {
+                    if (error && error.message === 'NO_DEPOSIT_RELEASE_ORDER') {
+                        return
+                    }
+                    this.$message.error('获取押金订单详情失败')
+                })
+            },
+            submitDepositRelease(order) {
+                this.confirmLoading = true
+                return new Promise((resolve, reject) => {
+                    this.checkDepositReleaseFlow().then(businessType => {
+                        return this.createDepositReleaseApproval(order, businessType)
+                    }).then(resolve).catch(reject)
+                }).catch(error => {
+                    if (error && error.message && error.message.indexOf('NO_DEPOSIT_APPROVAL') === 0) {
+                        return
+                    }
+                    this.$message.error('提交解冻押金审批失败')
+                }).finally(() => {
+                    this.confirmLoading = false
+                })
+            },
+            getDepositReleaseOrder(record) {
+                return this.request(villageApi.payOrderInfo, {
+                    id: record.order_id
+                }).then(res => {
+                    return Object.assign({}, record, res || {})
+                }).catch(() => {
+                    return Promise.reject(new Error('NO_DEPOSIT_RELEASE_ORDER'))
+                })
+            },
+            checkDepositReleaseFlow() {
+                return this.request(villageApi.approvalBusinessTypeOptions, {}).then(typeRes => {
+                    const businessTypes = typeRes.list || []
+                    const businessType = businessTypes.find(item => item.type_key === 'deposit_release' && Number(item.status) !== 0)
+                    if (!businessType) {
+                        this.$message.warning('当前小区未配置押金解冻审批业务类型')
+                        return Promise.reject(new Error('NO_DEPOSIT_APPROVAL_TYPE'))
+                    }
+                    return this.request(villageApi.approvalFlowList, {
+                        business_type_id: businessType.id,
+                        status: 1,
+                        page: 1,
+                        page_size: 1
+                    }).then(flowRes => {
+                        const hasFlow = Number(flowRes.count || 0) > 0 || (flowRes.list && flowRes.list.length > 0)
+                        if (!hasFlow) {
+                            this.$message.warning('当前小区未配置启用中的押金解冻审批流')
+                            return Promise.reject(new Error('NO_DEPOSIT_APPROVAL_FLOW'))
+                        }
+                        return businessType
+                    })
+                })
+            },
+            createDepositReleaseApproval(record, businessType) {
+                const categoryName = record.deposit_category_name || record.category_name || record.cate_name || record.project_name || ''
+                const title = '解冻押金-' + (record.order_no || record.order_id)
+                return this.request(villageApi.approvalCreate, {
+                    business_type_id: businessType.id,
+                    business_type: businessType.type_key,
+                    business_id: record.order_id,
+                    title,
+                    apply_remark: '申请解冻押金订单',
+                    apply_reason: '申请解冻押金订单',
+                    change_data: {
+                        action: 'deposit_release',
+                        order_id: record.order_id,
+                        order_no: record.order_no,
+                        category_id: record.category_id || record.deposit_category_id || 0,
+                        category_key: this.getDepositCategoryKey(record),
+                        category_name: categoryName,
+                        deposit_money: this.getDepositReleaseMoney(record),
+                        room_id: record.room_id || 0,
+                        pigcms_id: record.pigcms_id || 0
+                    }
+                }).then(() => {
+                    this.$message.success('解冻押金审批已提交')
+                    this.getList()
+                })
+            },
             getProjectList() {
                 this.request(villageApi.ChargeProjectList, {
                         type: 'selectdata'
@@ -802,6 +1004,7 @@
                               key: 'project_name',
                               width: 150,
                           },
+        { title: '收费标准', dataIndex: 'charge_name', key: 'charge_name', width: 150 },
                           {
                               title: '实际缴费金额',
                               dataIndex: 'pay_money',
@@ -822,12 +1025,6 @@
                               dataIndex: 'pay_time',
                               key: 'pay_time',
                               width: 120,
-                          },
-                          {
-                              title: '开票状态',
-                              dataIndex: 'record_status',
-                              key: 'record_status',
-                              width: 70
                           },
                           {
                               title: '账单状态',
@@ -858,7 +1055,7 @@
                           {
                               title: '操作',
                               key: 'action',
-                              width: 150,
+                              width: 220,
                               dataIndex: '',
                               scopedSlots: {
                                   customRender: 'action'
@@ -1070,13 +1267,21 @@
             // 导出Excel
             excelExport() {
                 this.loading = true
-                this.search['exportPattern'] = this.exportPattern
-                this.search['is_asyn_export'] = 1;
+                const orderIds = this.choice_ids.map(item => item.orderid)
+                const exportParams = orderIds.length > 0 ? {
+                    exportPattern: this.exportPattern,
+                    is_asyn_export: 1,
+                    order_id_arr: orderIds
+                } : Object.assign({}, this.search, {
+                    exportPattern: this.exportPattern,
+                    is_asyn_export: 1,
+                    order_id_arr: []
+                })
                 this.excelExportOutFileUrl = '';
-                console.log(this.search)
+                console.log(exportParams)
                 this.visible = false;
                 this.export_tips_visible = true;
-                this.request(villageApi.printPayOrderList, this.search).then((res) => {
+                this.request(villageApi.printPayOrderList, exportParams).then((res) => {
                     this.loading = false
                     if (res.excelExportOutFileUrl != undefined && res.export_id != undefined && res.export_id) {
                         this.excelExportOutFileUrl = res.excelExportOutFileUrl;
@@ -1134,6 +1339,10 @@
             },
             importCycleBillPayOrder() {
                 this.importBillPayType = 'cycleBillPayExcel';
+                this.importBillPayVisibile = true;
+            },
+            importParkingBillPayOrder() {
+                this.importBillPayType = 'parkingBillPayExcel';
                 this.importBillPayVisibile = true;
             },
             disabledServiceStartDate(startValue) {

@@ -106,7 +106,13 @@
                     this.$message.warning('请填写作废原因');
                     return
                 }
-                this.discardOrder(this.order_id)
+                this.$confirm({
+                    title: '提交作废审批',
+                    content: '作废账单需要提起审批，是否要提起审批？',
+                    okText: '提起审批',
+                    cancelText: '取消',
+                    onOk: () => this.discardOrder(this.order_id)
+                })
             },
             // 作废账单
             discardOrder(order_id) {
@@ -116,7 +122,7 @@
                 }).then(res => {
                     console.log('+++++++Single', res);
                     if (res) {
-                        this.$message.success('作废成功');
+                        this.$message.success(res.approval_id ? '账单作废审批已提交' : '作废成功');
                         this.invalidReasons = '';
                         this.order_id = 0;
                         this.visible_invalid = false;

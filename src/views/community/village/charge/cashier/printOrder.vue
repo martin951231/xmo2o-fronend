@@ -5,8 +5,11 @@
             <div v-for="(item_list,index_list) in tableList">
                 <span v-if="is_title" style="width: 100%; text-align: center;display: inline-block;font-size: 20px;font-weight: bold;">{{ print_title }}</span>
                 <div class="receipt">
-                    <div class="company-info" style="display: flex;justify-content: flex-end;">
-                        <div v-if="1" class="text-nowrap" style="width: 200px;text-align: left;">开票日期：{{current_date}}</div>
+                    <div class="company-info" style="display: flex;justify-content: flex-end;"
+                         v-if="printList3.findIndex(v=>v.title == '收款日期')!=-1">
+                        <div class="text-nowrap" style="width: 200px;text-align: left;">
+                            收款日期：{{ receiptDate(index_list) }}
+                        </div>
                     </div>
                     <div class="info-item" v-if="printList1.findIndex(v=>['房号', '小区', '住户姓名'].includes(v.title))!=-1">
                         <div class="info-label">今收到</div>
@@ -20,7 +23,7 @@
                     <div class="info-item" v-if="printList2.findIndex(v=>['收费项目', '起始日期', '终止日期'].includes(v.title))!=-1">
                         <div class="info-label">交来</div>
                         <div class="info-content">
-                          <span v-if="printList2.findIndex(v=>v.title=='收费项目')!=-1">&nbsp;&nbsp;{{item_list[0]}}</span>
+                          <span v-if="printList2.findIndex(v=>v.title=='收费项目')!=-1">{{item_list[0]}}</span>
                           （
                           <span v-if="printList2.findIndex(v=>v.title=='起始日期')!=-1">{{item_list[1]}}</span>
                           -
@@ -31,7 +34,7 @@
                     <div class="info-item" style="display:flex;justify-content: space-between;" v-if="printList2.findIndex(v=>v.title=='实收金额')!=-1">
                         <div style="display:flex;">
                             <div class="info-label">人民币(大写)</div>
-                            <div class="text-underline">&nbsp;&nbsp;{{numberToChinese(item_list[3] || item_list[0])}}&nbsp;&nbsp;</div>
+                            <div class="text-underline">{{numberToChinese(item_list[3] || item_list[0])}}&nbsp;&nbsp;</div>
                         </div>
                         <div style="display:flex;width: 200px;">
                             <div class="">小写：</div>
@@ -44,7 +47,6 @@
                         </div>
                     </div>
                 </div>
-                <div v-if="index_list < data.length-1" class="page-break"></div>
             </div>
         </div>
         <div v-else :id="table_id">
@@ -215,11 +217,10 @@
                         <span :style="font3style">{{ item1.value }}</span>
                     </a-descriptions-item>
                 </a-descriptions>
-                <div v-if="index_p != tableList.length - 1" class="page-break"></div>
             </div>
         </div>
         <span class="table-operator" style="text-align: center;display: inline-block;width: 100%" v-if="is_show">
-            <a-button type="primary" @click="print">打印</a-button>
+            <a-button type="primary" :loading="printPreparing" @click="print">打印</a-button>
         </span>
     </a-modal>
 </template>
@@ -459,7 +460,8 @@
 <script>
 import villageApi from '@/api/community/village'
 import { numberToChineseCapital } from '@/utils/util'
-import print from 'print-js'
+import printJS from 'print-js'
+import { createReceiptPrintDocument, createReceiptPrintStyle } from '@/utils/receiptPrintLayout'
 
 const columns = []
 const data = []
@@ -468,6 +470,7 @@ export default {
     data() {
         return {
             title: '打印预览',
+            printPreparing: false,
             list1: [],
             list2: [],
             print_title: '',
@@ -575,27 +578,25 @@ export default {
             blankline: 0,
             not_house_rate_desc: '',
             seal_img: '',
-            current_date: '',
-            current_userinfo: this.$store.state.user.info,
+            current_userinfo: this.$store.state.user.info
         }
-    },
-    mounted() {
-        // 获取当前日期
-        const date = new Date();
-
-        // 获取年、月、日（月份从0开始，需要+1）
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // 确保两位数
-        const day = String(date.getDate()).padStart(2, '0'); // 确保两位数
-
-                // 拼接成目标格式
-        this.current_date = `${year}-${month}-${day}`;
-        console.log( ' 当前用户信息', this.$store.state )
     },
     methods: {
         //中文金额大写转换
         numberToChinese(price){
             return numberToChineseCapital(price)
+        },
+
+        receiptDate(index) {
+            // data_order 和 tab_list 均由同一个 order_body 顺序生成。
+            // 必须使用当前收据的收款日期，不能使用批次汇总的最早/最晚日期。
+            const order = this.data[index]
+            return this.formatReceiptDate(order ? order.pay_time : '')
+        },
+
+        formatReceiptDate(value) {
+            const match = String(value || '').trim().match(/^(\d{4}-\d{2}-\d{2})(?:[ T]\d{2}:\d{2}(?::\d{2})?)?$/)
+            return match ? match[1] : ''
         },
 
         getReduceRes(list) {
@@ -928,30 +929,26 @@ export default {
             }
 
         },
-        print() {
-            /*
-            console.log({
-                printable: this.table_id, // 标签元素id
-                type: 'html',
-                targetStyles: ['*'],
-                maxWidth: '100%',
-                style: style,
-                scanStyles: false
-            }) */
-            let styleC = ''
-            if (this.printType == 3) {
-                styleC = '@page {  } ' +
-                    '@media print { .text-underline{ text-decoration-line: underline } .print_container{ .receipt { width: 90%; margin: 0 auto; padding: 20px; background-color: #fff; } .title { text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 20px; } .company-info { margin-bottom: 15px; } .company-name { font-size: 18px; font-weight: bold; text-align: center; } .invoice-date { text-align: right; margin-top: 5px; } .info-item { margin-bottom: 20px; overflow: hidden; zoom: 1; } .info-label { width: 120px; font-weight: bold; float: left; } .info-content {  text-decoration-line: underline; } .amount-capital { font-weight: bold; } .amount-small { text-align: right; font-size: 16px; } .handler { text-align: right; margin-top: 20px; } } .page-break { page-break-before: always; } .ant-table-tbody > tr > td {border-bottom: 1px solid #000000;-webkit-transition: all 0.3s, border 0s;transition: all 0.3s, border 0s;}   .ant-table-bordered .ant-table-thead > tr > th, .ant-table-bordered .ant-table-tbody > tr > td {border-right: 1px solid #000000;}  .ant-table-bordered .ant-table-header > table, .ant-table-bordered .ant-table-body > table, .ant-table-bordered .ant-table-fixed-left table, .ant-table-bordered .ant-table-fixed-right table {border: 1px solid #000000;border-right: 0;border-bottom: 0;} .ant-table-thead > tr > th {color: rgba(0, 0, 0, 1);font-weight: 600;text-align: left;background: #fafafa;border-bottom: 1px solid #000000;-webkit-transition: background 0.3s ease;transition: background 0.3s ease;} .ant-descriptions-item-colon::after {content:"";} .ant-table table {width: 100%;} .ant-descriptions-row td { width:3%;padding-bottom: 8px; } .template3type {text-align: center;} .template3type .ant-descriptions-item:last-child {text-align: right;} .template3type .ant-descriptions-item:first-child {text-align: left;}'
-            } else {
-                styleC = '@page {  } ' +
-                    '@media print { .text-underline{ text-decoration-line: underline } .print_container{ .receipt { width: 90%; margin: 0 auto; padding: 20px; background-color: #fff; } .title { text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 20px; } .company-info { margin-bottom: 15px; } .company-name { font-size: 18px; font-weight: bold; text-align: center; } .invoice-date { text-align: right; margin-top: 5px; } .info-item { margin-bottom: 20px; overflow: hidden; zoom: 1; } .info-label { width: 120px; font-weight: bold; float: left; } .info-content {  text-decoration-line: underline; } .amount-capital { font-weight: bold; } .amount-small { text-align: right; font-size: 16px; } .handler { text-align: right; margin-top: 20px; } } .page-break { page-break-before: always; } .ant-table-tbody > tr > td {border-bottom: 1px solid #000000;-webkit-transition: all 0.3s, border 0s;transition: all 0.3s, border 0s;}   .ant-table-bordered .ant-table-thead > tr > th, .ant-table-bordered .ant-table-tbody > tr > td {border-right: 1px solid #000000;}  .ant-table-bordered .ant-table-header > table, .ant-table-bordered .ant-table-body > table, .ant-table-bordered .ant-table-fixed-left table, .ant-table-bordered .ant-table-fixed-right table {border: 1px solid #000000;border-right: 0;border-bottom: 0;} .ant-table-thead > tr > th {color: rgba(0, 0, 0, 1);font-weight: 600;text-align: left;background: #fafafa;border-bottom: 1px solid #000000;-webkit-transition: background 0.3s ease;transition: background 0.3s ease;} .ant-descriptions-item-colon::after {content:"";} .ant-table table {width: 100%;} .ant-descriptions-row td { width:3%;padding-bottom: 8px; }  '
+        async print() {
+            if (this.confirmLoading || this.printPreparing) return
+            this.printPreparing = true
+            let printable
+            try {
+                await this.$nextTick()
+                const root = document.getElementById(this.table_id)
+                if (!root || !root.children.length) return
+                printable = await createReceiptPrintDocument(root)
+            } catch (error) {
+                this.$message.error('打印内容准备失败，请重试')
+                return
+            } finally {
+                this.printPreparing = false
             }
             printJS({
-                printable: this.table_id, // 标签元素id
+                printable,
                 type: 'html',
-                targetStyles: ['*'],
                 maxWidth: '100%',
-                style: styleC,
+                style: createReceiptPrintStyle(),
                 scanStyles: false,
                 onPrintDialogClose: () => {
                     console.log('回调================', this.printRecordStatus)

@@ -140,6 +140,11 @@ export default {
                     node_name: item.node_name,
                     approver_wid: item.approver_wid,
                     approver_name: item.approver_name,
+                    approver_account: item.approver_account || '',
+                    approver_phone: item.approver_phone || '',
+                    approver_organization: item.approver_organization || '',
+                    approver_login_role: item.approver_login_role || '',
+                    approver_login_role_text: item.approver_login_role_text || '',
                     status: item.status
                 }))
             }).finally(() => {
@@ -183,6 +188,11 @@ export default {
                 node_name: '',
                 approver_wid: undefined,
                 approver_name: '',
+                approver_account: '',
+                approver_phone: '',
+                approver_organization: '',
+                approver_login_role: '',
+                approver_login_role_text: '',
                 status: 1
             })
         },
@@ -197,6 +207,11 @@ export default {
         setApproverName (record, value) {
             const worker = this.workers.find(item => Number(item.wid) === Number(value))
             record.approver_name = worker ? worker.name : ''
+            record.approver_account = worker ? (worker.account || '') : ''
+            record.approver_phone = worker ? (worker.phone || '') : ''
+            record.approver_organization = worker ? (worker.organization || worker.department_name || '') : ''
+            record.approver_login_role = worker ? (worker.login_role || '') : ''
+            record.approver_login_role_text = worker ? (worker.login_role_text || '') : ''
         },
         onWorkerTreeExpand (expandedKeys) {
             this.workerExpandedKeys = expandedKeys

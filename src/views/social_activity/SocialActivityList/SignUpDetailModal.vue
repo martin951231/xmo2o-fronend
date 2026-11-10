@@ -207,6 +207,7 @@ export default {
             },
             qrcodeUrl: '',
             h5Qrcode: '',
+            checkInMsg: '',
             qrcodePreviewVisible: false,
             surveyDetailVisible: false,
             orderId: 0
@@ -245,6 +246,7 @@ export default {
                     checkInNum: res.checkInNum || 0
                 };
                 this.h5Qrcode = ''
+                this.checkInMsg = res.check_in_msg || ''
                 this.qrcodeUrl = res.qrcode_url || ''
                 if (this.qrcodeUrl) {
                     var url = encodeURIComponent(this.qrcodeUrl)
@@ -384,6 +386,22 @@ export default {
     cursor: pointer;
 }
 
+.qrcode-disabled {
+    width: 90px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #faad14;
+    background: #fff7e6;
+    border: 1px solid #ffd591;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 18px;
+    padding: 6px;
+}
+
 .qrcode-preview {
     position: fixed;
     top: 50%;
@@ -416,6 +434,15 @@ export default {
 
 .link-item:hover {
     text-decoration: underline;
+}
+
+.link-item.disabled {
+    color: #bfbfbf;
+    cursor: not-allowed;
+}
+
+.link-item.disabled:hover {
+    text-decoration: none;
 }
 
 .search-bar {
